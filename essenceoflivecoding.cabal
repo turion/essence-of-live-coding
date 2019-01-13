@@ -1,0 +1,57 @@
+name:                essenceoflivecoding
+version:             0.1.0.0
+-- synopsis:
+-- description:
+license:             BSD3
+license-file:        LICENSE
+author:              Manuel Bärenz
+maintainer:          programming@manuelbaerenz.de
+-- copyright:
+-- category:
+build-type:          Simple
+extra-source-files:  CHANGELOG.md
+cabal-version:       >=1.10
+
+library
+  exposed-modules:
+      LiveCoding
+    , LiveCoding.ApplicativeCellExcept
+    , LiveCoding.Bind
+    , LiveCoding.Cell
+    , LiveCoding.CellExcept
+    , LiveCoding.Commutable
+    , LiveCoding.Debugger
+    , LiveCoding.Exceptions
+    , LiveCoding.Forever
+    , LiveCoding.Migrate
+    , LiveCoding.RuntimeIO
+
+  other-extensions:    DeriveDataTypeable
+  build-depends:
+      base >=4.11 && <4.13
+    , transformers == 0.5.*
+    , syb == 0.7.*
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+
+test-suite essenceoflivecoding
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      TestData.Foo1
+    , TestData.Foo2
+  hs-source-dirs: test
+  build-depends:
+      base >=4.11 && <4.13
+    , syb == 0.7.*
+    , essenceoflivecoding
+
+executable Demo
+  main-is: Demo.hs
+  other-modules:
+      Examples
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+
