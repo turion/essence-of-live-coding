@@ -3,6 +3,9 @@ Could write the final article as a big literate haskell containing the whole sho
 
 # Introduction
 
+The main point of this article is to extract the essence of what is live coding,
+and to implement it in a type-safe and type-driven way in Haskell as a functional reactive programming framework.
+
 Live coding comes in a variety of applications:
 Music and visual arts, and hot code swap.
 In arts, it often works by having a server that produces the actual media,
