@@ -13,17 +13,23 @@ and a DSL that sends requests to the server like ``add a cell'', ''delete that c
 So the server holds the state and infers a behaviour from it, and we're only allowed to update the state.
 This kind of live coding is usually restricted to a domain,
 because the server needs to have all possible behaviour implemented ahead of time.
-With hot code swap (e.g. in Erlang/Elixir?), the issue is different.
+With hot code swap (e.g. in Erlang/Elixir, and also Elm), the issue is different.
 There we can write very general programs and exchange them.
+In Erlang we have GenServers which keep some state and have some API that allows you to interact with that state.
 What we generally do is the key mantra of live coding:
 
 ``Change the program, keep the state.''
 
 Often one uses dynamically typed languages (statically typed languages are rare) for ``real'' live coding,
 and here is a reason why.
-When changing the program, the type of the state will change,
-and that's a no-go in statically typed languages at first.
-But we'll see how to get around this.
+In Erlang you may change the API and how it interacts with the state.
+When changing the program, the type of the state will change.
+This means you typically need a migration function that updates the state,
+and then you still have some danger of crashing the new program.
+Changing the state is a no-go in statically typed languages at first because the new program won't compile with the old state type.
+But we'll see how to get around this and get a migration for free.
+This only works in a language with a proper type system like Haskell,
+you won't get this in a hobby project like Elm because they don't have type classes.
 
 Then we'll package everything up into an arrowized FRP framework and add some simple control flow.
 We develop a simple wrapper and an example application.
@@ -32,6 +38,7 @@ We develop a simple wrapper and an example application.
 
 Let's assume our main loop programs will look like this:
 
+TODO: Rewrite with record syntax
 ```
 data LiveProg where
   LiveProg :: s -> (s -> IO s) -> LiveProg
