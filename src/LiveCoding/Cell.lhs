@@ -212,7 +212,11 @@ constM = arrM . const
 \end{code}
 \end{comment}
 
-But so far, none of the functions presented actually create state!
+We would like to have all basic primitives needed to develop standard synchronous signal processing components,
+without touching the \mintinline{haskell}{Cell} constructor anymore.
+One crucial bit is missing:
+Encapsulating state.
+The most general such construction is the feedback loop:
 \begin{code}
 data Feedback s s' = Feedback s s'
   deriving Data
@@ -222,13 +226,30 @@ feedback
   => s
   -> Cell m (a, s) (b, s)
   -> Cell m  a      b
+\end{code}
+\begin{comment}
+\begin{code}
 feedback s (Cell state step) = Cell { .. }
   where
     cellState = Feedback state s
     cellStep (Feedback state s) a = do
       ((b, s'), state') <- step state (a, s)
       return (b, Feedback state' s')
+\end{code}
+\end{comment}
+It enables us to write delays:
+\begin{code}
+delay :: Data s => s -> Cell m s s
+delay s = feedback s $ arr $ \(sNew, sOld) -> (sOld, sNew)
+\end{code}
+\mintinline{haskell}{feedback} can be used for accumulation of data.
+For example, \mintinline{haskell}{sumC} now becomes:
+\begin{code}
+sumFeedback :: (Monad m, Num a) => Cell m a a
+sumFeedback = feedback 0 $ arr $ \(a, accum) -> let accum' in (accum', accum')
+\end{code}
 
+\begin{code}
 instance Monad m => ArrowChoice (Cell m) where
   left (Cell state step) = Cell { cellState = state, .. }
     where

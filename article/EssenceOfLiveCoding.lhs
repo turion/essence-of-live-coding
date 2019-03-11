@@ -2,6 +2,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage{minted}
+\usepackage[draft]{fixme}
 
 \newenvironment{code}{\VerbatimEnvironment\begin{minted}{haskell}}{\end{minted}}
 \newenvironment{spec}{\VerbatimEnvironment\begin{minted}{haskell}}{\end{minted}}
