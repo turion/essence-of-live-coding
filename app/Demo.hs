@@ -1,20 +1,19 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 -- base
+import Control.Arrow
 import Control.Concurrent (threadDelay)
 import Control.Monad (forever)
 
--- dunai-live
-import Data.MonadicStreamFunction
-import Control.Monad.Trans.MSF.Except hiding (forever)
-
+-- TODO Fix imports to a single one
 -- essenceoflivecoding
 import LiveCoding
-
-prog n = saw n >>> arrM print >>> constM (threadDelay 1000000)
+import LiveCoding.Cell
 
 main = do
   putStrLn "Let's go!"
-  var <- launch $ prog 4
+  var <- launch $ example1 10
   forever $ do
     n <- readLn
-    update var $ prog n
+    update var $ example2 n
+    n <- readLn
+    update var $ example1 n
