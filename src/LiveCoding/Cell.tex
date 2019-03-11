@@ -1,0 +1,81 @@
+\{-\protect\hypertarget{ux20LANGUAGEux20GADTsux20}{}{}-\}
+\{-\protect\hypertarget{ux20LANGUAGEux20RankNTypesux20}{}{}-\}
+\{-\protect\hypertarget{ux20LANGUAGEux20RecordWildCardsux20}{}{}-\}
+module LiveCoding.Cell where
+
+\begin{itemize}
+\item
+  - base import Control.Arrow import Control.Category import Data.Data
+  import Prelude hiding ((.), id)
+\item
+  - transformers import Control.Monad.Trans.Except
+\item
+  - \textbar{} A cell data Cell m a b where Cell :: Data s
+  =\textgreater{} \{ cellState :: s , cellStep :: s -\textgreater{} a
+  -\textgreater{} m (b, s) \}
+\end{itemize}
+
+step :: Monad m =\textgreater{} Cell m a b -\textgreater{} a
+-\textgreater{} m (b, Cell a b) step Cell \{ .. \} a = do (b,
+cellState') \textless{}- cellStep cellState a return Cell \{ cellState',
+.. \}
+
+type LiveProgram = Cell IO () ()
+
+hoistCell :: (forall x . m1 x -\textgreater{} m2 x) -\textgreater{} Cell
+m1 a b -\textgreater{} Cell m2 a b hoistCell morph Cell \{ .. \} = Cell
+\{ cellStep = s a -\textgreater{} morph \$ cellStep s a , .. \}
+
+liftCell :: MonadTrans t =\textgreater{} Cell m a b -\textgreater{} Cell
+(t m) a b liftCell = hoistCell lift
+
+instance Monad m =\textgreater{} Category (Cell m) where id = Cell \{
+cellState = () , cellStep = () a -\textgreater{} return (a, ()) \}
+
+cell1 \textgreater{}\textgreater{}\textgreater{} cell2 = Cell \{
+cellState = (cellState cell1, cellState cell2) , cellStep = a
+(cellState1, cellState2) -\textgreater{} do (b, cellState1')
+\textless{}- cellStep cell1 cellState1 a (c, cellState2') \textless{}-
+cellStep cell2 cellState2 b return (c, (cellState1', cellState2')) \}
+
+instance Monad m =\textgreater{} Arrow (Cell m) where arr f = Cell \{
+cellState = () , cellStep = () a -\textgreater{} return (f a, ()) \}
+
+first Cell \{ .. \} = Cell \{ .. \} where cellStep cellState (a, c) = do
+(b, cellState') \textless{}- cellStep cellState a return ((b, c),
+cellState')
+
+arrM :: (a -\textgreater{} m b) -\textgreater{} Cell m a b arrM f = Cell
+\{ cellState = () , cellStep = () a -\textgreater{} (, ()) \url{$} f a
+\}
+
+constM :: m b -\textgreater{} Cell m a b constM = arrM . const
+
+instance Monad m =\textgreater{} ArrowChoice (Cell m) where left Cell \{
+.. \} = Cell \{ .. \} where cellStep cellState (Left a) = do (b,
+cellState') \textless{}- cellStep cellState a return (Left b,
+cellState') cellStep cellState (Right b) = return (Right b, cellState)
+
+data CellExcept m a b e where CellExcept :: Data e' =\textgreater{} \{
+fmapExcept :: e' -\textgreater{} e , cellExcept :: Cell (ExceptT e' m) a
+b \}
+
+runCellExcept :: CellExcept m a b e -\textgreater{} Cell (ExceptT e m) a
+b runCellExcept CellExcept \{ .. \} = hoistCell (withExceptT fmapExcept)
+cellExcept
+
+try :: Cell (ExceptT e m) a b -\textgreater{} CellExcept m a b e try =
+CellExcept id
+
+safely :: CellExcept m a b Void -\textgreater{} Cell m a b safely =
+hoistCell discardVoid . runCellExcept where discardVoid = fromLeft
+(error "safely: Received Left") . runExceptT
+
+safe :: Cell m a b -\textgreater{} CellExcept m a b void safe = try .
+liftCell
+
+andThen :: Cell (ExceptT e1 m) a b -\textgreater{} Cell (ExceptT e2 m) a
+b -\textgreater{} Cell (ExceptT (e1, e2) m) a b cell1
+\VERB|\NormalTok{andThen}| cell2 = Cell \{ .. \} where cellState = Right
+(cellState cell1, cellState cell2) cellStep (Right (cellState1,
+cellState2)) a = do continueExcept \textless{}- cellStep thing

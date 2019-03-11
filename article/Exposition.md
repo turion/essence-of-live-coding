@@ -20,6 +20,9 @@ What we generally do is the key mantra of live coding:
 
 ``Change the program, keep the state.''
 
+This kind of thing is actually well-known from databases, there it's called a schema migration.
+So what we're looking for here is some kind of reactive, stateful framework where we can hot-swap the program and perform a ``type migration'' on the state.
+
 Often one uses dynamically typed languages (statically typed languages are rare) for ``real'' live coding,
 and here is a reason why.
 In Erlang you may change the API and how it interacts with the state.
@@ -118,11 +121,9 @@ TODO Reorder this possibly?
 Abstractly we're looking for something like this:
 
 ```
-updateWith :: a -> b -> a
+migrate :: a -> b -> a
 ```
-TODO: Looking at it like that it's a confusing name because it says "update something new with something old".
-      Other possible names: tryPreserve or so? migrate!!
-`updateWith aNew bOld` takes a new initial state `a` and tries to update with the old state `b`,
+`migrate aNew bOld` takes a new initial state `a` and tries to update with the old state `b`,
 preserving as much information as can be cast to `a`.
 Whatever can't be preserved needs to be thrown away or taken from `a`.
 But that can't work in all generality.
@@ -144,23 +145,49 @@ We then compare the types, constructors and record fields by their names and kee
 Since this is all syb, users of the library can later add their own migrations.
 Hmm maybe we want to offer a few helper functions for that?
 
+## Execution
+
+We now put the live program in an mvar and then we have a thread that takes it from there, executes one step, and puts it back.
+This thread can run in the background.
+In the foreground, we keep this mvar and allow the user to update it, automatically migrating the state.
+We can also offer debug hooks that can be executed whenever the program is exchanged, or when a step is performed.
+These can inspect the state my means of generic programming `Data`.
+They can even interrupt the execution temporarily and allow you to interfere with the state.
+
 ## A first example
 
 ...
 
 # Making this into an FRP framework
 
-## Arrowized FRP
-Arrowized FRP is cool yadda yadda.
-Dunai shows that monadic FRP works.
-Let's adopt this effectful Mealy machine here:
+Of course noone wants to write out the state manually.
+Haskell is a functional language after all,
+so the central object of study should be some kind of function.
+Obviously, a live coding framework is a reactive framework,
+so it makes sense to build an effectful FRP framework.
+So we want some signal processing with reusable components.
 
+Instead of sharing a global state (which is unsafe und unwieldy),
+we _encapsulate_ state in each component.
+So an FRP component is a stateful, effectful function, `a -> StateT s m b`.
+Together with its current state,
+we can encapsulate it by making `s` existential,
+so the state isn't visible to the outside anymore.
 ```
 data Cell m a b where
   Cell :: Data s => s -> (a -> StateT s m b) -> Cell m a b
 ```
 TODO I think it's easier to expand the StateT in order not to confuse with later effects.
-This is an `Arrow`, an `ArrowChoice` and whatnot.
+This is an effectful Mealy machine,
+and we'll show now that it is the basic building block of a an arrowized FRP framework.
+
+## Arrowized FRP
+
+Arrowized FRP is cool yadda yadda.
+Dunai shows that monadic FRP works.
+`Cell` is an `Arrow`, an `ArrowChoice` and whatnot.
+`Arrow` means that we can compose the signal processing components,
+`ArrowChoice` means that we have control flow (as we'll see later in detail).
 This means we can modularly build our program from deterministic building blocks,
 while the state is encapsulated/private, so the cells behave nearly like functions.
 We can do simple signal processing with feedback,
@@ -256,6 +283,7 @@ So we can interpret bind as handling a `Reader` effect.
 Remember that for arrows, a `Reader` effect is just adding another input.
 What we can do is this:
 ```
+-- TODO Is it worth calling it Reader? We could also write it out as Cell m (e, a) b
 (>>>=) :: Cell (ExceptT e1 m) a b -> Cell (ReaderT e1 (ExceptT e2 m)) a b -> Cell (ExceptT e2 m) a b
 ```
 You can think of this as bind except that the second argument is not a function, but rather an `Arrow` input,
@@ -267,13 +295,15 @@ Cell (ExceptT e1 m) () b -> Cell (ExceptT e2 m) e1 b -> Cell (ExceptT e2 m) () b
 This is strictly less general than `(>>=)` because we have `Cell (ReaderT r m) a b -> ReaderT r (Cell m a b)`,
 but not the other way around, since `Cell (ReaderT r m) a b` accepts a bigger class of inputs:
 `r` may vary at every tick.
+(This is ironic because we're not using it to vary `r` at every tick.)
+
 But it's still more general than `Applicative`s,
 we get `Applicative` back from this.
 
 ## Applicative control flow
 
 Effects encoded in `Applicative`s can be sequentialised.
-(That's the monoidality of the functor.)
+(That's the (lax) monoidality of the functor.)
 Since it requires `Functor`, we can apply functions to the effect output (the exceptions).
 So we can run a lot of cells after each other,
 collect their exceptions and compute value and return that,
@@ -331,10 +361,27 @@ This gives rise to an `ifS`.
 Or you can just use the `if` expression inside `Arrow`.
 TODO: Example
 
+Trouble was, `ReaderT e` and `\m -> Cell m a b` do not commute,
+i.e. `ReaderT e (Cell m a b)` is not isomorphic to `Cell (ReaderT e m) a b`.
+Worse even, there is a map `Cell (ReaderT e m) a b -> ReaderT e (Cell m a b)`,
+but not the other way around in general.
+
+But imagine that `e` is _finite_ and satisfies `Data`.
+Say we have `handler :: e -> Cell m a b` given.
+With `ArrowChoice`, we can lazily instantiate every possible `handler e` and fan them next to each other.
+Then the live input in `Cell m (e, a) b` can decide which of the choices to go down.
+Because of the existential state type,
+GHC has to be able to type check each state and verify its `Data` instance,
+that's why `e` needs to be finite.
+With dependent types, we could just say that the existential state in `handler e` simply depends on `e`,
+but unfortunately we can't, so we have to go through type classes that do that for us.
+Luckily, we have GHC Generics, and I've implemented this function for products and sums,
+so you can derive it with a single line of boiler plate for any non-recursive algebraic data type.
+
 ## Loop
 
-We could just `fmap fromLeft $ runExceptT $ reactimate prog` to run one iteration of our cell and return the exception.
-The last exception can 
+We could just `fmap fromLeft $ runExceptT $ reactimate prog` to run our cell until it throws an exception, and return it.
+The last exception can be thought of as some kind of return code.
 But that's often not what we want.
 Often, in live coding, we want to have some kind of loop through control flow.
 
@@ -348,17 +395,32 @@ We have to explicitly forget them.
 But sometimes we want to pass on some state to the next iteration of the loop.
 We do this by passing the last exception explicitly:
 ```
-forever :: Cell (ReaderT (Maybe e) (ExceptT e m)) a b -> Cell m a b
+forever :: Cell (ReaderT e (ExceptT e m)) a b -> e -> Cell m a b
+forever :: Cell (ReaderT e (ExceptT e m)) a b -> Reader e (Cell m a b)
 ```
+They commute, so order doesn't matter.
+\begin{spec}
+ExceptT e (ReaderT r m) a
+== ReaderT r m (Either e a)
+== r -> m (Either e a)
+ReaderT r (ExceptT e m) a
+== r -> ExceptT e m a
+== r -> m (Either e a)
+\end{spec}
 After an `e` has been thrown,
 it's put into the `ReaderT` environment
-(which is initialised with `Nothing`),
 and the `Cell` is restarted.
 It is the user's responsibility that `e` is calculated in a forcing way,
 and actually used,
 to avoid bigger and bigger thunks building up.
 
 # Live coding
+
+## Execution
+
+We have a simple
+
+## Example
 
 Putting everything together,
 we have this cute little program now:
