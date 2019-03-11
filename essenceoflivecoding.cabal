@@ -16,6 +16,7 @@ library
   exposed-modules:
       LiveCoding
     , LiveCoding.Cell
+    , LiveCoding.Bind
   -- other-modules:
   other-extensions:    DeriveDataTypeable
   build-depends:
