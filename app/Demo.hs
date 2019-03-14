@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+
 -- base
 import Control.Arrow
 import Control.Concurrent (threadDelay)
@@ -6,8 +7,10 @@ import Control.Monad (forever)
 
 -- TODO Fix imports to a single one
 -- essenceoflivecoding
+import Examples
 import LiveCoding
 import LiveCoding.Cell
+import LiveCoding.RuntimeIO
 
 main = do
   putStrLn "Let's go!"

@@ -1,10 +1,12 @@
-\fxfatal{If more space left, show definitions and explain}
+\fxerror{If more space left, show definitions and explain}
+\fxerror{Reorganise in modules properly. For now, don't worry too much.}
 \begin{comment}
 \begin{code}
 -- | TODO: Proper haddock docs
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -19,19 +21,10 @@ import Prelude hiding ((.), id)
 
 -- transformers
 import Control.Monad.Trans.Class
-import Control.Monad.Trans.Except
-import Control.Monad.Trans.Reader
 
 \end{code}
 \end{comment}
 
-\section{Livecoding as arrowized FRP}
-
-\subsection{Arrowized FRP with effects}
-
-Writing out the complete state of the live program explicitly is, of course, tedious.
-Worse even, it prevents us from writings programs in a modular fashion.
-But composing simple reusable building blocks is a key tenet in functional programming which we would not want to miss.
 Indeed, we would want these building blocks to be some flavour of functions!
 In our definition of live programs as pairs of state and state steppers,
 we can generalise the step functions to an additional input and output type:
@@ -40,6 +33,9 @@ ioStep :: a -> s -> IO (b, s)
 \end{spec}
 The reader may have rightfully become weary of the ubiquitous \mintinline{haskell}{IO} monad;
 and promoting it to an arbitrary monad will turn out shortly to be a very useful generalisation.
+
+\subsection{Cells}
+\label{sec:cells}
 
 We collect these insights in a definition,
 calling them cells,
@@ -73,11 +69,12 @@ step Cell { .. } a = do
 As a simple example, consider the following \mintinline{haskell}{Cell} which adds all input and returns the accumulated sum each step:
 
 \begin{code}
-sumC :: (Monad m, Num a) => Cell m a a
+sumC :: (Monad m, Num a, Data a) => Cell m a a
 sumC = Cell { .. }
   where
     cellState = 0
-    cellStep accum a = let accum' = accum + a in return (accum', accum')
+    cellStep accum a = let accum' = accum + a
+      in return (accum', accum')
 \end{code}
 
 \fxerror{Possibly put IO later because here we can't explain yet how we'll end up with () input/output}
@@ -239,16 +236,140 @@ feedback s (Cell state step) = Cell { .. }
 \end{comment}
 It enables us to write delays:
 \begin{code}
-delay :: Data s => s -> Cell m s s
-delay s = feedback s $ arr $ \(sNew, sOld) -> (sOld, sNew)
+delay :: (Data s, Monad m) => s -> Cell m s s
+delay s = feedback s $ arr
+  $ \(sNew, sOld) -> (sOld, sNew)
 \end{code}
 \mintinline{haskell}{feedback} can be used for accumulation of data.
 For example, \mintinline{haskell}{sumC} now becomes:
 \begin{code}
-sumFeedback :: (Monad m, Num a) => Cell m a a
-sumFeedback = feedback 0 $ arr $ \(a, accum) -> let accum' in (accum', accum')
+sumFeedback
+  :: (Monad m, Num a, Data a)
+  => Cell m a a
+sumFeedback = feedback 0 $ arr $ \(a, accum) ->
+  let accum' = a + accum in (accum', accum')
 \end{code}
+\fxwarning{Possibly remark on Data instance of s?}
 
+\subsection{Monadic stream functions and final coalgebras}
+
+\label{sec:msfs and final coalgebras}
+
+As mentioned earlier, our \mintinline{haskell}{Cell}s follow Dunai's monadic stream functions (\mintinline{haskell}{MSF}s) closely.
+But can they fill their footsteps completely in terms of expressiveness?
+If not, which programs exactly can be represented as \mintinline{haskell}{MSF}s and which can't?
+To find the answer to these questions,
+let us reexamine both types.
+
+With the help of a simple type synonym,
+the \mintinline{haskell}{MSF} definition can be recast in explicit fixpoint form:
+
+\begin{code}
+type StateTransition m a b s = a -> m (b, s)
+
+data MSF m a b = MSF (StateTransition m a b (MSF m a b))
+\end{code}
+This definition tells us that monadic stream functions are so-called \emph{final coalgebras} of the \mintinline{haskell}{StateTransition} functor
+(for fixed \mintinline{haskell}{m}, \mintinline{haskell}{a}, and \mintinline{haskell}{b}).
+An ordinary coalgebra for this functor is given by some type \mintinline{haskell}{s} and a coalgebra structure map:
+\begin{code}
+data Coalg m a b where
+  Coalg
+    :: s
+    -> (s -> StateTransition m a b s)
+    -> Coalg m a b
+\end{code}
+But hold on, the astute reader will intercept,
+is this not simply the definition of \mintinline{haskell}{Cell}?
+Alas, it is not, for it lacks the type class restriction \mintinline{haskell}{Data s},
+which we need so dearly for the type migration.
+Any cell is a coalgebra,
+but only those coalgebras that satisfy this type class are a cell.
+
+Oh, if only there were no such distinction.
+By the very property of the final coalgebra,
+we can embed every coalgebra therein:
+\begin{code}
+finality :: Monad m => Coalg m a b -> MSF m a b
+finality (Coalg state step) = MSF $ \a -> do
+  (b, state') <- step state a
+  return (b, finality $ Coalg state' step)
+\end{code}
+And analogously, every cell can be easily made into an \mintinline{haskell}{MSF} without loss of information:
+\begin{code}
+finalityC :: Monad m => Cell m a b -> MSF m a b
+finalityC Cell { .. } = MSF $ \a -> do
+  (b, cellState') <- cellStep cellState a
+  return (b, finalityC $ Cell cellState' cellStep)
+\end{code}
+And the final coalgebra is of course a mere coalgebra itself:
+\begin{code}
+unMSF
+  :: MSF m a b
+  -> StateTransition m a b (MSF m a b)
+unMSF (MSF f) a = f a
+\end{code}
+\begin{code}
+coalgebra :: MSF m a b -> Coalg m a b
+coalgebra msf = Coalg msf unMSF
+\end{code}
+But we miss the abilty to encode \mintinline{haskell}{MSF}s as \mintinline{haskell}{Cell}s by just the \mintinline{haskell}{Data} type class:
+\begin{code}
+coalgebraC
+  :: Data (MSF m a b)
+  => MSF m a b
+  -> Cell m a b
+coalgebraC msf = Cell msf unMSF
+\end{code}
+We are out of luck if we would want to derive an instance of \mintinline{haskell}{Data (MSF m a b)}.
+Monadic stream functions are, well, functions,
+and therefore have no \mintinline{haskell}{Data} instance.
+The price of \mintinline{haskell}{Data} is loss of higher-order state.
+Just how big this loss is will be demonstrated in the following section.
+
+\section{Control flow}
+
+Although we now have the tools to build big signal pathways from single cells,
+we have no way yet to let the incoming data decide which of several offered pathways to take.
+We are lacking \emph{control flow}.
+
+The primeval arrowized FRP framework Yampa caters for this requirement by means of switching from a signal function to another if an event occurs.
+\fxerror{reference}
+\fxwarning{Possibly I've mentioned both earlier}
+Dunai, taking the monadic aspect seriously,
+rediscovers switching as effect handling in the \mintinline{haskell}{Either} monad.
+\fxerror{reference}
+We shall see that,
+although the state of a \mintinline{haskell}{Cell} is strongly restricted by the \mintinline{haskell}{Data} type class,
+we can get very close to this powerful approach to control flow.
+
+\subsection{The choice of arrows}
+
+The arrow operator \mintinline{haskell}{(***)} for parallel composition has a dual,
+supplied by the \mintinline{haskell}{ArrowChoice} type class:
+\begin{spec}
+(+++)
+  :: ArrowChoice arrow
+  => arrow         a            b
+  -> arrow           c            d
+  -> arrow (Either a c) (Either b d)
+\end{spec}
+While \mintinline{haskell}{arr1 *** arr2} is expected to execute both arrows,
+and to consume input and produce output for both of them,
+\mintinline{haskell}{arr1 +++ arr2} executes only one of them,
+depending on which input was provided.
+
+\mintinline{haskell}{Cell}s implement this type class:
+\mintinline{haskell}{cell1 +++ cell2} holds the state of both cells,
+stepping only one of them forward each time.
+This enables basic control flow in arrow expressions,
+such as \mintinline{haskell}{if}- and \mintinline{haskell}{case}-statements.
+We can momentarily switch from one cell to another,
+depending on live input.
+However, \mintinline{haskell}{ArrowChoice} does not enable us to switch to another cell \emph{permanently}.
+This issue will be addressed in the next subsection.
+
+\begin{comment}
 \begin{code}
 instance Monad m => ArrowChoice (Cell m) where
   left (Cell state step) = Cell { cellState = state, .. }
@@ -257,67 +378,17 @@ instance Monad m => ArrowChoice (Cell m) where
         (b, cellState') <- step state a
         return (Left b, cellState')
       cellStep cellState (Right b) = return (Right b, cellState)
+\end{code}
+\end{comment}
 
-data ExceptState e s1 s2
-    = NotYetThrown s1 s2
-    | Thrown e s2
-  deriving (Typeable, Data)
-
-(>>>=)
-  :: (Data e1, Monad m)
-  => Cell (ExceptT e1             m)  a b
-  -> Cell (ReaderT e1 (ExceptT e2 m)) a b
-  -> Cell             (ExceptT e2 m)  a b
-Cell state1 step1 >>>= Cell state2 step2 = Cell { .. }
+\fxerror{Do we need to talk about this?}
+\begin{code}
+keepJust
+  :: (Monad m, Data a)
+  => Cell m (Maybe a) (Maybe a)
+keepJust = feedback Nothing $ arr keep
   where
-    cellState = NotYetThrown state1 state2
-    cellStep (NotYetThrown state1 state2) a = do
-      continueExcept <- lift $ runExceptT $ step1 state1 a
-      case continueExcept of
-        Right (b, state1') -> return (b, NotYetThrown state1' state2)
-        Left e1 -> cellStep (Thrown e1 state2) a
-    cellStep (Thrown e1 state2) a = do
-      (b, state2') <- runReaderT (step2 state2 a) e1
-      return (b, Thrown e1 state2')
-
-andThen
-  :: (Data e1, Monad m)
-  => Cell (ExceptT  e1      m) a b
-  -> Cell (ExceptT      e2  m) a b
-  -> Cell (ExceptT (e1, e2) m) a b
-cell1 `andThen` cell2 = cell1 >>>= hoistCell readException cell2
-  where
-    readException exception = ReaderT $ \e1 -> withExceptT (e1, ) exception
-
-data ForeverE e s = ForeverE
-  { lastException :: e
-  , initState     :: s
-  , currentState  :: s
-  }
-  deriving Data
-
-foreverE
-  :: (Monad m, Data e)
-  => e
-  -> Cell (ReaderT e (ExceptT e m)) a b
-  -> Cell m a b
-foreverE e (Cell state step) = Cell { .. }
-  where
-    cellState = ForeverE
-      { lastException = e
-      , initState     = state
-      , currentState  = state
-      }
-    cellStep f@ForeverE { .. } a = do
-      continueExcept <- runExceptT $ runReaderT (step currentState a) lastException
-      case continueExcept of
-        Left e' -> cellStep f { lastException = e', currentState = initState } a
-        Right (b, state') -> return (b, f { currentState = state' })
-
-foreverC
-  :: (Data e, Monad m)
-  => Cell (ExceptT e m) a b
-  -> Cell            m  a b
-foreverC cell = foreverE () $ liftCell $ hoistCell (withExceptT $ const ()) cell
-
+    keep (Nothing, Nothing) = (Nothing, Nothing)
+    keep (_, Just a) = (Just a, Just a)
+    keep (Just a, Nothing) = (Just a, Just a)
 \end{code}

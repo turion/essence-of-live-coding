@@ -15,9 +15,17 @@ cabal-version:       >=1.10
 library
   exposed-modules:
       LiveCoding
-    , LiveCoding.Cell
+    , LiveCoding.ApplicativeCellExcept
     , LiveCoding.Bind
-  -- other-modules:
+    , LiveCoding.Cell
+    , LiveCoding.CellExcept
+    , LiveCoding.Commutable
+    , LiveCoding.Debugger
+    , LiveCoding.Exceptions
+    , LiveCoding.Forever
+    , LiveCoding.Migrate
+    , LiveCoding.RuntimeIO
+
   other-extensions:    DeriveDataTypeable
   build-depends:
       base >=4.11 && <4.13
@@ -29,6 +37,9 @@ library
 test-suite essenceoflivecoding
   type: exitcode-stdio-1.0
   main-is: Main.hs
+  other-modules:
+      TestData.Foo1
+    , TestData.Foo2
   hs-source-dirs: test
   build-depends:
       base >=4.11 && <4.13
@@ -37,6 +48,8 @@ test-suite essenceoflivecoding
 
 executable Demo
   main-is: Demo.hs
+  other-modules:
+      Examples
   hs-source-dirs: app
   build-depends:
       base >=4.11 && <4.13
