@@ -328,6 +328,7 @@ The price of \mintinline{haskell}{Data} is loss of higher-order state.
 Just how big this loss is will be demonstrated in the following section.
 
 \section{Control flow}
+\label{sec:control flow}
 
 Although we now have the tools to build big signal pathways from single cells,
 we have no way yet to let the incoming data decide which of several offered pathways to take.

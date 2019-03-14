@@ -49,7 +49,7 @@ throwIf_ condition = throwIf condition ()
 \end{code}
 \end{comment}
 
-\input{ApplicativeCellExcept.lhs}
+\input{../src/LiveCoding/ApplicativeCellExcept.lhs}
 
 \paragraph{An existential crisis}
 Invigorated, we want to implement the holy grail of Haskell,

@@ -95,22 +95,38 @@ which allows us to reuse modular, functional components and separate data flow f
 The result is presented in Section \ref{sec:FRP},
 which heavily draws inspiration from Dunai,
 a monadic arrowized FRP framework.
+After having implemented the data flow aspects of our framework,
+we turn to control flow in Section \ref{sec:control flow}.
+A monadic interface to our live programs is presented.
 
 This article is written in literate Haskell and supplies the library presented here.
 The source code will be made openly available upon publication.\fxerror{Do it}
 
-\section{Change the program. Keep the state...}
+\section{Change the program. Keep the state (as far as possible).}
 \label{sec:core}
 
 Our basic model of a live program will consist of a state and a state transition function:
 \begin{code}
-data LiveProgram = forall s . LiveProgram
+data LiveProgram1 = forall s . LiveProgram1
   { state :: s
   , step  :: s -> IO s
   }
 \end{code}
 The program is initialised at a certain state,
 and from there its behaviour is defined by repeatedly applying the function \mintinline{haskell}{step} to advance the state and produce effects.
+The type of the state should be encapsulated and thus invisible to the outside,
+it is through its effects that the live program communicates.
+This is especially convenient if we want to run the program in a separate thread
+(while compiling a new version of the program in the foreground).
+We can store the program in an \mintinline{haskell}{MVar} and repeatedly call the following function from a background thread:
+\begin{code}
+stepProgram :: LiveProgram1 -> IO LiveProgram1
+stepProgram LiveProgram1 { .. } = do
+  state' <- step state
+  return LiveProgram1 { state = state', .. }
+\end{code}
+Its result is the new, encapsulated state of the program,
+which is to be stored in the \mintinline{haskell}{MVar} again.
 
 In a dynamically typed language, this would in principle be enough to implement hot code swap.
 At some point, the execution will be paused,
@@ -130,19 +146,155 @@ It is very hard to reduce the probability of such a failure with tests since cur
 A static typechecker is sorely missing,
 to guarantee the safety of this operation.
 
-\fxfatal{continue}
-statically typed how does tat work even earlier problem
-could annotate type and send migration function
-but that's tedious and not very live
-let's turn the problem into a solution and do type-guided migrations
+But let us return to Haskell,
+where we have such a typechecker.
+Now we encounter a problem at an earlier stage:
+There is no guarantee that the new transition function will typecheck with the old state!
+In fact, in many situations, the state type needs to be extended or modified.
 
-\fxerror{Order ok like this? DB earlier?}
-The basic idea of updating the old state to a new format
-bla database
-type migration
+This kind of problem is not unknown.
+In the world of databases,
+it is commonplace that a table lives much longer than its initial schema.
+The services accessing the data can change,
+and thus also the requirements to the data format.
+The solution to this problem is a \emph{schema migration},
+an update to the database schema that alters the table in such a way that as little data as possible is lost,
+and that the table adheres to the new schema afterwards.
+Data loss is not entirely preventable, though.
+If a column has to be deleted, its data will not be recoverable.
+In turn, if a column is created, one has to supply a sensible default value (often \verb|NULL| will suffice).
 
-\fxerror{Have an example that threads through the article}
-\subsection{...as far as possible}
+We can straightforwardly adopt this solution by thinking of the program state as a small database table with a single row.
+Its schema is the type \mintinline{haskell}{s}.
+To inspect it, we will -- for the moment -- expose it as a parameter:
+\begin{code}
+data LiveProgram2 s = LiveProgram2
+  { state :: s
+  , step  :: s -> IO s
+  }
+\end{code}
+Given a \emph{type migration} function,
+we can perform hot code swap:
+\begin{code}
+hotCodeSwap
+  :: (s -> s')
+  -> LiveProgram2 s'
+  -> LiveProgram2 s
+  -> LiveProgram2 s'
+hotCodeSwap migrate newProgram oldProgram
+  = LiveProgram2
+    { state = migrate $ state oldProgram
+    , step  = step newProgram
+    }
+\end{code}
+\fxwarning{The thing with the MVar doesn't work on the spot anymore. But it can still work with a "typed" handle. Every time you swap, you get a new handle that carries the currently saved type. Worth commenting upon?}
+This may be an acceptable solution to perform a planned, well-prepared intervention,
+but it does spoil the fun in a musical live coding performance if the programmer has to write a migration function after every single edit.
+What a live performer actually needs,
+is a function with this mysterious type signature:
+\begin{spec}
+hotCodeSwap
+  :: LiveProgram2 s'
+  -> LiveProgram2 s
+  -> LiveProgram2 s'
+\end{spec}
+(This is the same type signature as before, but with the first argument, the manual migration function, removed.)
+The new program (including its initial state!)
+has just been compiled,
+and the old program is still stored in a concurrent variable.
+Can we possibly derive the new state by simply looking at the initial state of the new program and the old state,
+i.e. is there a magical migration function?
+If there were, it would have this type:
+\begin{spec}
+migrate :: s' -> s -> s'
+\end{spec}
+A theoretician will probably invoke a free theorem here,
+\fxerror{reference}
+and infer that there is in fact a unique such function:
+\mintinline{haskell}{const}!
+But it is hardly what we were hoping for.
+\mintinline{haskell}{const s' s} will simply throw away the old state and run the program with the new initial state
+-- effectively restarting our program from a blank slate.
+
+In this generality, we cannot hope for any other solution.
+But in the following, we are going to see how to tweak the live program definition by only ten characters,
+and arrive at an effective migration function.
+
+\subsection{Type-driven migrations}
+
+In many cases, knowing the old state and the new initial state is sufficient to derive the new, migrated state safely.
+As an example, assume the old state were defined as:
+\fxwarning{Later quote from examples}
+\fxerror{Have an example that threads through the article. Introduce earlier}
+\begin{spec}
+data Foo = Foo { n :: Integer }
+\end{spec}
+We now change the definition to:
+\fxwarning{What if we add another constructor Bar here? 
+Could it still find out that there is a Foo constructor in the type?}
+\begin{spec}
+data Foo = Foo Integer Bool
+\end{spec}
+Obviously, we would want to keep the \mintinline{haskell}{Integer} argument when migrating.
+For the new \mintinline{haskell}{Bool} argument
+we cannot infer any sensible value from the old state,
+but we can take the \mintinline{haskell}{Bool} value from the new initial state,
+and interpret it as a default value.
+
+Our task was less obvious if the definition had been updated to:
+\begin{spec}
+data Foo = Foo Integer Integer
+\end{spec}
+Here it is unclear to which of the \mintinline{haskell}{Integer}s the old value should be migrated.
+It is obvious again if the datatype was defined as a record as well:
+\begin{spec}
+data Foo = Foo { k :: Integer, n :: Integer }
+\end{spec}
+Clearly, the labels help us to identify the correct target field.
+The solution lies in the type,
+or rather, the datatype definition.
+
+If we were to migrate back to the original definition,
+there is no way but to lose the data stored in \mintinline{haskell}{k}.
+This is also apparent just from the definition of the algebraic datatype!
+
+We can meta-program a migration function by reasoning about the structure of the type definition.
+This is possible with the techniques presented in the seminal, now classical article ``Scrap Your Boilerplate''.
+\fxfatal{Reference}
+It supplies a typeclass \mintinline{haskell}{Typeable} which enables us to compare types and safely type-cast at runtime,
+and a typeclass \mintinline{haskell}{Data} which allows us,
+amongst many other features,
+to inspect constructor names and record field labels.
+Using the \verb|syb|-package, which supplies common utilities when working with \mintinline{haskell}{Data},
+our migration function is implemented in under 50 lines of code,
+with the following signature:
+\begin{spec}
+migrate :: (Data a, Data b) => a -> b -> a
+\end{spec}
+It handles the two previously mentioned cases:
+Constructors with the same names,
+but some mismatching arguments,
+and records with the same field labels,
+but possibly a different order.
+Needless to say, if the types do match, then the old state is identically copied.
+\fxerror{Not sure whether I know how to insert user migrations in this}
+
+To use this migration function,
+we only need to update the live program definition to include the \mintinline{haskell}{Data} constraint:
+\fxerror{Maybe it was silly to enumerate the definitions before}
+\begin{code}
+data LiveProgram = forall s . Data s
+  => LiveProgram
+  { state :: s
+  , step  :: s -> IO s
+  }
+\end{code}
+This is a small restriction.
+The \mintinline{haskell}{Data} typeclass can be automatically derived for every algebraic data type,
+except those that incorporate \emph{functions}.
+We have to refactor our live program such that all functions are contained in \mintinline{haskell}{step}
+(and can consequently not be migrated),
+and all data is contained in \mintinline{haskell}{state}.
 
 \section{Livecoding as arrowized FRP}
 \label{sec:FRP}
@@ -180,5 +332,9 @@ but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 \input{../src/LiveCoding/CellExcept.lhs}
 \fxerror{Fix Forever}
 %\input{../src/LiveCoding/Forever.lhs} % Currently not ready
+
+\fxerror{Possibly cut the applicative detour? Need to reorder forever then}
+\fxfatal{reactimate}
+\fxfatal{Conclusion}
 
 \end{document}
