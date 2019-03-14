@@ -2,6 +2,7 @@
 module Examples where
 
 -- base
+import Control.Arrow
 import Control.Concurrent
 
 -- essenceoflivecoding
