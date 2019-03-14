@@ -57,7 +57,7 @@ It is not only type-safe, but also type-driven, in that boiler plate code for st
 It is not restricted to a particular domain, by virtue of being parametrised over an arbitrary monad:
 Any domain- or library-specific effect can be incorporated effortlessly,
 and handled with standard Haskell functions.
-The framework follows the tradition of monadic arrowized FRP as developed in \fxfatal{yampa and dunai}.
+The framework follows the tradition of monadic arrowized Functional Reactive Programming (FRP) as developed in \fxfatal{yampa and dunai}.
 To run live programs created in it,
 a simple runtime environment \fxerror{is this the right term?}
 in the \mintinline{haskell}{IO} monad is supplied,
@@ -66,18 +66,86 @@ but since the framework does not hide \mintinline{haskell}{IO} in its abstractio
 it is an easy exercise to execute the live programs in e.g. the \mintinline{haskell}{STM} monad
 \fxfatal{Reference}
 \fxerror{Then do it}
-or any other concurrency context.
+or any other concurrency context such as an external main loop.
 The state of the live program can be inspected and debugged safely at every step of the execution.
 \fxerror{Consider talking about testing? We don't have anything implemented but it's easily possible}
 \fxerror{Something something plants}
 
+There is no subtly clever trick.
+We simply follow, dutifully and without compromise,
+the mantra of live coding:
+\begin{center}
+\textbf{Change the program. Keep the state.}
+\end{center}
+This is not a new idea in itself.
+Hot code swap in Erlang realises this motto,
+and
+similar views are expressed about live coding in Elm
+(a domain specific web frontend language inspired by Haskell).
+\fxerror{Reference to blog entry}
+What is new about this approach is the consequential application of this motto to create a general purpose, type-safe FRP framework.
+(At this point, it shall be remarked that FRP is long past niche applications in the video and audio domains.
+It is possible to write web servers, simulations and games in it,
+FRP can even be used for file batch processing.)
+
+Arriving at a simple live coding framework by faithfully following the live coding mantra is a manageable task,
+carried out in Section \ref{sec:core}.
+It is much more rewarding to recast this framework in the form of functional reactive programming,
+which allows us to reuse modular, functional components and separate data flow from control flow.
+The result is presented in Section \ref{sec:FRP},
+which heavily draws inspiration from Dunai,
+a monadic arrowized FRP framework.
+
 This article is written in literate Haskell and supplies the library presented here.
 The source code will be made openly available upon publication.\fxerror{Do it}
-\fxerror{Organisation of the article}
 
-\input{../src/LiveCoding.lhs}
+\section{Change the program. Keep the state...}
+\label{sec:core}
+
+Our basic model of a live program will consist of a state and a state transition function:
+\begin{code}
+data LiveProgram = forall s . LiveProgram
+  { state :: s
+  , step  :: s -> IO s
+  }
+\end{code}
+The program is initialised at a certain state,
+and from there its behaviour is defined by repeatedly applying the function \mintinline{haskell}{step} to advance the state and produce effects.
+
+In a dynamically typed language, this would in principle be enough to implement hot code swap.
+At some point, the execution will be paused,
+and the function \mintinline{haskell}{step} is simply exchanged for a new one.
+Then the execution is resumed with the new transition function,
+which operates on the old state.
+Of course, the new step function has to take care of migrating the state to a new format,
+should this be necessary.
+The difficulties arise
+(apart from the practicalities of the implementation),
+in the inherent unsafety of this operation:
+Even if the old transition function behaved correctly,
+and the old state is in a valid format,
+the new transition function may crash or otherwise misbehave on the old state.
+It is very hard to reduce the probability of such a failure with tests since current state constantly changes
+(by design).
+A static typechecker is sorely missing,
+to guarantee the safety of this operation.
+
+\fxfatal{continue}
+statically typed how does tat work even earlier problem
+could annotate type and send migration function
+but that's tedious and not very live
+let's turn the problem into a solution and do type-guided migrations
+
+\fxerror{Order ok like this? DB earlier?}
+The basic idea of updating the old state to a new format
+bla database
+type migration
+
+\fxerror{Have an example that threads through the article}
+\subsection{...as far as possible}
 
 \section{Livecoding as arrowized FRP}
+\label{sec:FRP}
 
 \subsection{Arrowized FRP with effects}
 

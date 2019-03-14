@@ -14,13 +14,11 @@ import qualified TestData.Foo1 as Foo1
 import qualified TestData.Foo2 as Foo2
 
 main = do
-  print $ migrate (10 :: Integer) (13 :: Integer)
-  --print $ migrate (Foo1.Foo 10) (Foo1.Foo 13)
-  print $ setChildren (getChildrenSetters $ Foo1.Foo 1 False) $ Foo2.Bar 3 5 "Bar"
-  print $ dataTypeOf $ Foo2.Foo 1
-  print $ dataTypeOf $ Foo1.Foo 1 True
-  print $ migrate (Foo1.Foo 1 True) $ Foo2.Foo 2
-
+  print $ 13 == migrate (10 :: Integer) (13 :: Integer)
+  print $ Foo1.foo' == migrate Foo1.foo Foo2.foo
+  print $ Foo2.foo' == migrate Foo2.foo Foo1.foo
+  print $ Foo2.bar' == migrate Foo2.bar Foo1.bar
+  print $ Foo2.baz' == migrate Foo2.baz Foo1.baz
 -- TODO
 -- * Make test suite assertions out of this
 -- * Record tests

@@ -6,7 +6,35 @@ import Data.Data
 import Data.Typeable
 
 data Foo = Foo Integer
-  deriving (Show, Typeable, Data)
+  deriving (Show, Eq, Typeable, Data)
 
-data Bar = Bar Integer Integer String
-  deriving (Show, Typeable, Data)
+foo = Foo 2
+foo' = Foo 1
+
+data Bar = Bar
+  { barB :: Integer
+  , barA :: Integer
+  , barC :: String
+  }
+  deriving (Show, Eq, Typeable, Data)
+
+bar = Bar
+  { barB = 42
+  , barA = 100
+  , barC = "Bar"
+  }
+
+bar' = Bar
+  { barB = 42
+  , barA = 23
+  , barC = "Bar"
+  }
+
+data Baz = Baz
+  { bazBar :: Bar
+  , bazFoo :: Foo
+  }
+  deriving (Show, Eq, Typeable, Data)
+
+baz = Baz bar foo
+baz' = Baz bar' foo'
