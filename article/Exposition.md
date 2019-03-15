@@ -376,7 +376,7 @@ that's why `e` needs to be finite.
 With dependent types, we could just say that the existential state in `handler e` simply depends on `e`,
 but unfortunately we can't, so we have to go through type classes that do that for us.
 Luckily, we have GHC Generics, and I've implemented this function for products and sums,
-so you can derive it with a single line of boiler plate for any non-recursive algebraic data type.
+so you can derive it with a single line of boilerplate for any non-recursive algebraic data type.
 
 ## Loop
 

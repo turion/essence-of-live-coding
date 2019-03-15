@@ -30,7 +30,7 @@ import LiveCoding.Exceptions
 \fxerror{Explain that we're using applicative do, and use it in example?}
 While \mintinline{haskell}{Applicative} control flow is certainly appreciated,
 and the live bind combinator \mintinline{haskell}{>>>=} is even more expressive,
-it still encourages boiler plate code like the following:
+it still encourages boilerplate code like the following:
 \fxfatal{Replace by actual example}
 \begin{spec}
 throwBool >>>= proc a -> do
@@ -98,7 +98,7 @@ GHC Generics.
 \fxfatal{Reference}
 We simply need to implement a bind function for generic sum types and product types,
 then this function can be abstracted into a type class,
-and GHC can infer a default instance for every algebraic data type by adding a single line of boiler plate.
+and GHC can infer a default instance for every algebraic data type by adding a single line of boilerplate.
 \fxerror{Example}
 Any user-contributed or standard type can be an instance this type class,
 given that it is finite.

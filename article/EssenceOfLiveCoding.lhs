@@ -53,7 +53,7 @@ and strongly typed user-side libraries such as tidal often exist,
 but ultimately the user is restricted to a domain specific language.
 
 In this article, we implement a lightweight general purpose livecoding framework in Haskell from scratch.
-It is not only type-safe, but also type-driven, in that boiler plate code for state migrations which is hard to get right without a static type checker is automatically derived from the type.
+It is not only type-safe, but also type-driven, in that boilerplate code for state migrations which is hard to get right without a static type checker is automatically derived from the type.
 It is not restricted to a particular domain, by virtue of being parametrised over an arbitrary monad:
 Any domain- or library-specific effect can be incorporated effortlessly,
 and handled with standard Haskell functions.
