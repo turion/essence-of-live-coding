@@ -23,7 +23,7 @@ import Control.Monad.Trans.Except
 import Control.Monad.Trans.Reader
 
 -- essenceoflivecoding
-import LiveCoding.Cell
+import LiveCoding.Cell hiding (runReaderC)
 -- import LiveCoding.CellExcept
 \end{code}
 \end{comment}

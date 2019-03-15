@@ -31,3 +31,5 @@ data Baz = Baz
   deriving (Show, Eq, Typeable, Data)
 
 baz = Baz foo bar
+
+

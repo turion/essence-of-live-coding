@@ -52,7 +52,10 @@ bindBool cell handler = cell >>>= proc a -> do
   if bool
   then liftCell $ handler True  -< a
   else liftCell $ handler False -< a
+\end{code}
 
+\begin{comment}
+\begin{code}
 {-
 bindBool'
   :: (Monad m, Data e, Commutable e)
@@ -65,11 +68,13 @@ bindBool' cellE handler = CellExcept
   }
 -}
 \end{code}
+\end{comment}
 \fxfatal{Finish the wrapped thing}
 \fxerror{We have a Data e here suddenly.
 Can we be cleverer than id?}
 But, behold!
-We have just implemented bind,
+Up to the \mintinline{haskell}{CellExcept} wrapper,
+we have just implemented bind,
 the holy grail which we assumed to be denied!
 The bound type is restricted to \mintinline{haskell}{Bool},
 admitted,
@@ -94,23 +99,44 @@ as has been done for \mintinline{haskell}{Bool}.
 
 But certainly, we don't want to write out all possible values of a type before we can bind it!
 Again, the Haskellers' aversion to boilerplate has created a solution that can be tailored to our needs:
-GHC Generics.
-\fxfatal{Reference}
+Generic deriving \cite{magalhaes2010generic}.
 We simply need to implement a bind function for generic sum types and product types,
-then this function can be abstracted into a type class,
+then this function can be abstracted into a type class \mintinline{haskell}{Finite},
 and GHC can infer a default instance for every algebraic data type by adding a single line of boilerplate.
 \fxerror{Example}
 Any user-contributed or standard type can be an instance this type class,
 given that it is finite.
+
+Again by the power of the Coyoneda embedding,
+we can restrict the \mintinline{haskell}{CellExcept} definition by the typeclass:
+\begin{spec}
+data CellExcept m a b e = forall e' .
+  (Data e', Finite e') => CellExcept
+  { fmapExcept :: e' -> e
+  , cellExcept :: Cell (ExceptT e' m) a b
+  }
+\end{spec}
+\fxwarning{At the end rename ECommutable etc}
+Implementing the individual bind functions for sums and products,
+and finally writing down the complete \mintinline{haskell}{Monad} instance is a tedious exercise in Generic deriving.
+As a slight restriction of the framework,
+throwing exceptions is now only allowed for finite types:
+\begin{spec}
+try
+  :: (Data e, Finite e)
+  => Cell (ExceptT e m) a b
+  -> CellExcept m a b e
+\end{spec}
+In practice however, this is rarely a severe limitation since in the monad context,
+calculations with all types are allowed again.
 
 \fxerror{Wow! This means that the control state of such live programs is always finite! This means e.g. that we can completely analyse CTL on it!}
 
 \fxfatal{Not sure whether I want to say it like that. Maybe first talk about commuting Reader, and then go on.}
 \fxfatal{Wouldhave to call it Finite here now because there is no justification yet to call it Commutable, because we didn't explain the commuting thing.
 One way to explain the commuting stuff would be to completely forget about Applicative and straight go from live bind to finite bind.}
-\fxfatal{Does it even make sense to have the Commutable type class in here if we demand it later in bind anyways?}
 
-\fxfatal{Talk about rebindable syntax!}
+\begin{comment}
 \begin{code}
 
 instance Monad m => Functor (CellExcept m a b) where
@@ -189,3 +215,4 @@ safe cell = CellExcept
   , cellExcept = liftCell cell
   }
 \end{code}
+\end{comment}

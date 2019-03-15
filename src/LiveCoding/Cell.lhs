@@ -21,6 +21,7 @@ import Prelude hiding ((.), id)
 
 -- transformers
 import Control.Monad.Trans.Class
+import Control.Monad.Trans.Reader
 
 \end{code}
 \end{comment}
@@ -31,7 +32,7 @@ we can generalise the step functions to an additional input and output type:
 \begin{spec}
 ioStep :: a -> s -> IO (b, s)
 \end{spec}
-The reader may have rightfully become weary of the ubiquitous \mintinline{haskell}{IO} monad;
+By now, the reader may have rightfully become weary of the ubiquitous \mintinline{haskell}{IO} monad;
 and promoting it to an arbitrary monad will turn out shortly to be a very useful generalisation.
 
 \subsection{Cells}
@@ -60,7 +61,10 @@ not only the updated cell,
 but also an output datum \mintinline{haskell}{b}:
 
 \begin{code}
-step :: Monad m => Cell m a b -> a -> m (b, Cell m a b)
+step
+  :: Monad m
+  => Cell m a b
+  -> a -> m (b, Cell m a b)
 step Cell { .. } a = do
   (b, cellState') <- cellStep cellState a
   return (b, Cell { cellState = cellState', .. })
@@ -87,10 +91,22 @@ type LiveProgram = Cell IO () ()
 
 In case our \mintinline{haskell}{Cell} is in another monad than \mintinline{haskell}{IO},
 it is easy to define a function that transports a cell along a monad morphism:
-
 \begin{code}
-hoistCell :: (forall x . m1 x -> m2 x) -> Cell m1 a b -> Cell m2 a b
+hoistCell
+  :: (forall x . m1 x   ->      m2 x)
+  ->        Cell m1 a b -> Cell m2 a b
 \end{code}
+For example, we may eliminate a \mintinline{haskell}{ReaderT r} context by supplying the environment:
+\begin{code}
+runReaderC
+  ::               r
+  -> Cell (ReaderT r m) a b
+  -> Cell            m  a b
+runReaderC r = hoistCell $ flip runReaderT r
+\end{code}
+This way, we can successively handle effects until we arrive at \mintinline{haskell}{IO},
+at which point we can execute the live program in the same fashion as in the last section.
+\fxerror{Expand on this, possibly elsewhere}
 
 \begin{comment}
 \begin{code}
@@ -148,6 +164,21 @@ For two cells \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2},
 the composite \mintinline{haskell}{cell1 >>> cell2} holds the state of both \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2},
 but the step function only touches each state variable individually,
 the state stays encapsulated.
+
+Composing \mintinline{haskell}{Cell}s sequentially allows us to form live programs out of \emph{sensors}, pure signal functions and \emph{actuators}:
+
+\begin{code}
+type Sensor   a   = Cell   IO         () a
+type SF       a b = forall m . Cell m    a b
+type Actuator   b = Cell   IO              b ()
+buildLiveProg
+  :: Sensor   a
+  -> SF       a b
+  -> Actuator   b
+  -> LiveProgram
+buildLiveProg sensor sf actuator
+  = sensor >>> sf >>> actuator
+\end{code}
 
 \mintinline{haskell}{Cell}s can also be made an instance of the \mintinline{haskell}{Arrow} type class,
 which allows for parallel composition:
@@ -264,10 +295,12 @@ let us reexamine both types.
 With the help of a simple type synonym,
 the \mintinline{haskell}{MSF} definition can be recast in explicit fixpoint form:
 
+\fxwarning{Maybe a record for MSF}
 \begin{code}
 type StateTransition m a b s = a -> m (b, s)
 
-data MSF m a b = MSF (StateTransition m a b (MSF m a b))
+data MSF m a b = MSF
+  (StateTransition m a b (MSF m a b))
 \end{code}
 This definition tells us that monadic stream functions are so-called \emph{final coalgebras} of the \mintinline{haskell}{StateTransition} functor
 (for fixed \mintinline{haskell}{m}, \mintinline{haskell}{a}, and \mintinline{haskell}{b}).
@@ -334,12 +367,10 @@ Although we now have the tools to build big signal pathways from single cells,
 we have no way yet to let the incoming data decide which of several offered pathways to take.
 We are lacking \emph{control flow}.
 
-The primeval arrowized FRP framework Yampa caters for this requirement by means of switching from a signal function to another if an event occurs.
-\fxerror{reference}
+The primeval arrowized FRP framework Yampa \cite{Yampa} caters for this requirement by means of switching from a signal function to another if an event occurs.
 \fxwarning{Possibly I've mentioned both earlier}
-Dunai, taking the monadic aspect seriously,
+Dunai \cite{Dunai}, taking the monadic aspect seriously,
 rediscovers switching as effect handling in the \mintinline{haskell}{Either} monad.
-\fxerror{reference}
 We shall see that,
 although the state of a \mintinline{haskell}{Cell} is strongly restricted by the \mintinline{haskell}{Data} type class,
 we can get very close to this powerful approach to control flow.
@@ -380,7 +411,6 @@ instance Monad m => ArrowChoice (Cell m) where
         return (Left b, cellState')
       cellStep cellState (Right b) = return (Right b, cellState)
 \end{code}
-\end{comment}
 
 \fxerror{Do we need to talk about this?}
 \begin{code}
@@ -393,3 +423,4 @@ keepJust = feedback Nothing $ arr keep
     keep (_, Just a) = (Just a, Just a)
     keep (Just a, Nothing) = (Just a, Just a)
 \end{code}
+\end{comment}

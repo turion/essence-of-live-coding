@@ -14,7 +14,8 @@ To create our own control flow context,
 we might be tempted to create a simple newtype:
 
 \begin{code}
-newtype CellExcept m a b e = CellExcept (Cell (ExceptT e m) a b)
+newtype CellExcept m a b e
+      = CellExcept (Cell (ExceptT e m) a b)
 \end{code}
 
 Our hope is to give \mintinline{haskell}{Functor}, \mintinline{haskell}{Applicative} and \mintinline{haskell}{Monad} instances to it.

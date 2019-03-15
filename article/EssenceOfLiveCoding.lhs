@@ -3,6 +3,9 @@
 \usepackage[utf8]{inputenc}
 \usepackage{minted}
 \usepackage[draft]{fixme}
+\usepackage{hyperref}
+
+\bibliographystyle{ACM-Reference-Format}
 
 \newenvironment{code}{\VerbatimEnvironment\begin{minted}{haskell}}{\end{minted}}
 \newenvironment{spec}{\VerbatimEnvironment\begin{minted}{haskell}}{\end{minted}}
@@ -20,7 +23,15 @@
 \email{programming@manuelbaerenz.de}
 
 \begin{abstract}
-...
+  One rarely encounters programming languages and frameworks that provide general-purpose and type-safe hot code swap.
+  It is demonstrated here that this is entirely possible in Haskell,
+  by faithfully following the motto of livecoding:
+  ``Change the program, keep the state.''
+  With generic programming,
+  one easily arrives at an automatic state migration function.
+  The approach can be generalised to an arrowized Functional Reactiv Programming framework that is parametrized by its side effects.
+  It allows for building up complete live programs from reusable, modular components,
+  and to separate data flow cleanly from control flow.
 \end{abstract}
 
 \maketitle
@@ -32,39 +43,37 @@ from hot code swap on a production server to artistic performances with code tha
 From the implementor's perspective,
 the common denominator is a framework to update the definition of a program while not interrupting its execution.
 
-In a dynamically typed language with a virtual machine, such as Erlang,
-\fxfatal{reference to hot code swap}
+In a dynamically typed language with a virtual machine, such as Erlang \cite{armstrong2013programming},
 hot code swap is conceptually simple:
 A new server is started, the state of the old server is transferred to the new one, and the old server is shut down.
 The challenge lies in ensuring that the state is correctly migrated,
 as corrupt state might crash the server.
 This is a nontrivial task if no type checker is available to verify if the migrated state conforms to the schema required by the new server.
 
-Domain specific live coding frameworks
-\fxfatal{reference to supercollider}
+Domain specific live coding frameworks \cite{wilson2011supercollider}
 usually have a central server that generates the desired effect
 -- be it audio, video or device communication --
 and offers an API through which users can create ``cells'',
 such as oscillators or signal processors in the case of audio,
 and connect, reorder, update or destroy them during execution.
 The central server guarantees safe updates,
-and strongly typed user-side libraries such as tidal often exist,
-\fxfatal{tidal reference}
+and strongly typed user-side libraries such as Tidal \cite{mclean2014tidal} exist,
 but ultimately the user is restricted to a domain specific language.
 
 In this article, we implement a lightweight general purpose livecoding framework in Haskell from scratch.
-It is not only type-safe, but also type-driven, in that boilerplate code for state migrations which is hard to get right without a static type checker is automatically derived from the type.
+It is not only type-safe, but also type-driven, in that boilerplate code for state migrations
+(which is hard to get right without a static type checker)
+is automatically derived from the type.
 It is not restricted to a particular domain, by virtue of being parametrised over an arbitrary monad:
 Any domain- or library-specific effect can be incorporated effortlessly,
 and handled with standard Haskell functions.
-The framework follows the tradition of monadic arrowized Functional Reactive Programming (FRP) as developed in \fxfatal{yampa and dunai}.
+The framework follows the tradition of monadic arrowized Functional Reactive Programming (FRP) as developed in \cite{Dunai} and \cite{Yampa}.
 To run live programs created in it,
 a simple runtime environment \fxerror{is this the right term?}
 in the \mintinline{haskell}{IO} monad is supplied,
 but since the framework does not hide \mintinline{haskell}{IO} in its abstraction
 (such as many other FRP frameworks do),
-it is an easy exercise to execute the live programs in e.g. the \mintinline{haskell}{STM} monad
-\fxfatal{Reference}
+it is an easy exercise to execute the live programs in e.g. the \mintinline{haskell}{STM} monad \cite{composable-memory-transactions}
 \fxerror{Then do it}
 or any other concurrency context such as an external main loop.
 The state of the live program can be inspected and debugged safely at every step of the execution.
@@ -80,13 +89,15 @@ the mantra of live coding:
 This is not a new idea in itself.
 Hot code swap in Erlang realises this motto,
 and
-similar views are expressed about live coding in Elm
+similar views are expressed about live coding in Elm\footnote{%
+Compare \href{https://elm-lang.org/blog/interactive-programming}{https://elm-lang.org/blog/interactive-programming}.}
 (a domain specific web frontend language inspired by Haskell).
 \fxerror{Reference to blog entry}
-What is new about this approach is the consequential application of this motto to create a general purpose, type-safe FRP framework.
-(At this point, it shall be remarked that FRP is long past niche applications in the video and audio domains.
-It is possible to write web servers, simulations and games in it,
-FRP can even be used for file batch processing.)
+What is new about this approach is the consequential application of this motto to create a general purpose, type-safe FRP framework\footnote{%
+It shall be remarked that FRP is long past niche applications in the video and audio domains.
+It is possible to write web servers and frontends, simulations and games in it,
+FRP can even be used for file batch processing.}
+with \emph{automatic state migration}.
 
 Arriving at a simple live coding framework by faithfully following the live coding mantra is a manageable task,
 carried out in Section \ref{sec:core}.
@@ -108,12 +119,12 @@ The source code will be made openly available upon publication.\fxerror{Do it}
 Our basic model of a live program will consist of a state and a state transition function:
 \begin{code}
 data LiveProgram1 = forall s . LiveProgram1
-  { state :: s
-  , step  :: s -> IO s
+  { liveState :: s
+  , liveStep  :: s -> IO s
   }
 \end{code}
 The program is initialised at a certain state,
-and from there its behaviour is defined by repeatedly applying the function \mintinline{haskell}{step} to advance the state and produce effects.
+and from there its behaviour is defined by repeatedly applying the function \mintinline{haskell}{liveStep} to advance the state and produce effects.
 The type of the state should be encapsulated and thus invisible to the outside,
 it is through its effects that the live program communicates.
 This is especially convenient if we want to run the program in a separate thread
@@ -122,15 +133,15 @@ We can store the program in an \mintinline{haskell}{MVar} and repeatedly call th
 \begin{code}
 stepProgram :: LiveProgram1 -> IO LiveProgram1
 stepProgram LiveProgram1 { .. } = do
-  state' <- step state
-  return LiveProgram1 { state = state', .. }
+  liveState' <- liveStep liveState
+  return LiveProgram1 { liveState = liveState', .. }
 \end{code}
 Its result is the new, encapsulated state of the program,
 which is to be stored in the \mintinline{haskell}{MVar} again.
 
 In a dynamically typed language, this would in principle be enough to implement hot code swap.
 At some point, the execution will be paused,
-and the function \mintinline{haskell}{step} is simply exchanged for a new one.
+and the function \mintinline{haskell}{liveStep} is simply exchanged for a new one.
 Then the execution is resumed with the new transition function,
 which operates on the old state.
 Of course, the new step function has to take care of migrating the state to a new format,
@@ -164,13 +175,15 @@ Data loss is not entirely preventable, though.
 If a column has to be deleted, its data will not be recoverable.
 In turn, if a column is created, one has to supply a sensible default value (often \verb|NULL| will suffice).
 
+\subsection{Migrating the state}
+
 We can straightforwardly adopt this solution by thinking of the program state as a small database table with a single row.
 Its schema is the type \mintinline{haskell}{s}.
 To inspect it, we will -- for the moment -- expose it as a parameter:
 \begin{code}
 data LiveProgram2 s = LiveProgram2
-  { state :: s
-  , step  :: s -> IO s
+  { liveState :: s
+  , liveStep  :: s -> IO s
   }
 \end{code}
 Given a \emph{type migration} function,
@@ -183,8 +196,8 @@ hotCodeSwap
   -> LiveProgram2 s'
 hotCodeSwap migrate newProgram oldProgram
   = LiveProgram2
-    { state = migrate $ state oldProgram
-    , step  = step newProgram
+    { liveState = migrate $ liveState oldProgram
+    , liveStep  = liveStep newProgram
     }
 \end{code}
 \fxwarning{The thing with the MVar doesn't work on the spot anymore. But it can still work with a "typed" handle. Every time you swap, you get a new handle that carries the currently saved type. Worth commenting upon?}
@@ -208,8 +221,7 @@ If there were, it would have this type:
 \begin{spec}
 migrate :: s' -> s -> s'
 \end{spec}
-A theoretician will probably invoke a free theorem here,
-\fxerror{reference}
+A theoretician will probably invoke a free theorem \cite{wadler1989theorems} here,
 and infer that there is in fact a unique such function:
 \mintinline{haskell}{const}!
 But it is hardly what we were hoping for.
@@ -259,8 +271,7 @@ there is no way but to lose the data stored in \mintinline{haskell}{k}.
 This is also apparent just from the definition of the algebraic datatype!
 
 We can meta-program a migration function by reasoning about the structure of the type definition.
-This is possible with the techniques presented in the seminal, now classical article ``Scrap Your Boilerplate''.
-\fxfatal{Reference}
+This is possible with the techniques presented in the seminal, now classical article ``Scrap Your Boilerplate'' \cite{syb}.
 It supplies a typeclass \mintinline{haskell}{Typeable} which enables us to compare types and safely type-cast at runtime,
 and a typeclass \mintinline{haskell}{Data} which allows us,
 amongst many other features,
@@ -330,11 +341,50 @@ but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 
 \input{../src/LiveCoding/Exceptions.lhs}
 \input{../src/LiveCoding/CellExcept.lhs}
-\fxerror{Fix Forever}
-%\input{../src/LiveCoding/Forever.lhs} % Currently not ready
 
 \fxerror{Possibly cut the applicative detour? Need to reorder forever then}
-\fxfatal{reactimate}
-\fxfatal{Conclusion}
+\input{../src/LiveCoding/Bind.lhs}
+\input{../src/LiveCoding/Forever.lhs}
+\fxerror{reactimate}
 
+\section{Conclusion}
+
+General purpose live coding can be simple and free from boilerplate.
+It is most naturally cast in the form of a Functional Reactive Programming (FRP) framework,
+and conforms well with the synchronous, arrowized paradigm in the tradition of Yampa and Dunai.
+The state migration is type-safe,
+and type-driven, in that it is derived generically from the datatype definition.
+By parametrizing the cells over arbitrary monads,
+and leveraging the exception monad,
+we can reason about effects and separate data flow aspects from control flow.
+
+\paragraph{Further directions}
+Given that the state of the live programs always satisfies the \mintinline{haskell}{Data} typeclass,
+and the control state is even finite,
+this opens up the possibility to implement a rich debugger that inspects and displays the state live,
+and even allows to modify it.
+
+To use the framework in any setting beyond a toy application,
+wrappers have to be written that explicitly integrate it in the external loops of existing frameworks,
+such as OpenGL, Gloss, or audio libraries.
+
+The \mintinline{haskell}{Typeable} class allows to extend a generic function such as \mintinline{haskell}{migrate}
+by type-specific cases.
+Usability could be increased by offering to extend the automatic migration by manual migration functions supplied by the user.
+
+The automatic migration only guarantees that the new state will typecheck.
+However, if further invariants beyond the reach of Haskell's type system are expected to hold for the old state,
+those are not guaranteed for the new state.
+An extension such as refinement types
+(see e.g. \cite{LiquidHaskell} about LiquidHaskell)
+would allow to specify, for example,
+certain algebraic constraints.
+It would be very interesting to see whether automatic migration can be generalised to such a context.
+
+The author thanks Iván Pérez for his work on Yampa, Dunai, and numerous other projects in the FRP world,
+Paolo Capriotti for the initial idea that led to monadic exception control flow,
+and the sonnen VPP team, especially Fabian Linges,
+for helpful discussions about hot code swap in Erlang.
+
+\bibliography{EssenceOfLiveCoding.bib}
 \end{document}
