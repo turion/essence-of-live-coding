@@ -29,7 +29,9 @@ import LiveCoding.Cell
 \paragraph{The return of the monad?}
 For simply throwing exceptions, no new concepts are needed:
 \begin{code}
-throwC :: Monad m => Cell (ExceptT e m) e arbitrary
+throwC
+  :: Monad m
+  => Cell (ExceptT e m) e arbitrary
 throwC = arrM throwE
 \end{code}
 The above function simply throws the incoming exception.
@@ -81,7 +83,8 @@ Why not simply store \mintinline{haskell}{handler e1} as state once the exceptio
 and use the aptly named \mintinline{haskell}{step} from Section \ref{sec:cells} as step function?
 (This is basically the final encoding from Section \ref{sec:msfs and final coalgebras},
 and exactly how Dunai implements this feature.)
-Because \mintinline{haskell}{Cell}s are not \mintinline{haskell}{Data}.
+But it is not possible,
+because \mintinline{haskell}{Cell}s are not \mintinline{haskell}{Data}.
 
 \paragraph{Live bind}
 Accepting a setback, but not final defeat,
