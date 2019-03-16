@@ -11,10 +11,7 @@ import Prelude hiding (GT)
 -- syb
 import Data.Generics.Aliases
 import Data.Generics.Twins
-\end{code}
-\end{comment}
 
-\begin{code}
 -- TODO Add special cases for:
 -- * data Foo = Foo -> data Foo = Foo | Bar!
 -- * Adding custom user cases first (example Int -> Integer)
@@ -23,6 +20,10 @@ import Data.Generics.Twins
 -- * a -> (a, b) and back (for feedback)
 -- * a -> Maybe a and back
 -- * a >>> b to a or b and back
+\end{code}
+\end{comment}
+
+\begin{code}
 migrate :: (Data a, Data b) => a -> b -> a
 migrate a b
   |  isAlgType typeA  && isAlgType typeB
@@ -39,7 +40,7 @@ migrate a b
     migrateSameConstr
       -- We have records, we can match on the field labels
       |  (not $ null constrFieldsA)
-      && (not $ null $ constrFieldsB)
+      && (not $ null constrFieldsB)
       = setChildren getFieldSetters a
       -- One of the two is not a record, just try to match 1-1 as far as possible
       | otherwise = setChildren (getChildrenSetters b) a

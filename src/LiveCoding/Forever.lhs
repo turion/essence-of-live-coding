@@ -21,7 +21,7 @@ import LiveCoding.Cell
 \subsection{Exceptions forever}
 
 The one temptation we have to resist is to recurse in the \mintinline{haskell}{CellExcept} context to prove the absence of exceptions:
-\fxfatal{Example}
+\fxerror{Example}
 \begin{spec}
 foo = bar *> foo
 \end{spec}

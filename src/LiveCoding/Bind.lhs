@@ -31,7 +31,7 @@ import LiveCoding.Exceptions
 While \mintinline{haskell}{Applicative} control flow is certainly appreciated,
 and the live bind combinator \mintinline{haskell}{>>>=} is even more expressive,
 it still encourages boilerplate code like the following:
-\fxfatal{Replace by actual example}
+\fxerror{Replace by actual example}
 \begin{spec}
 throwBool >>>= proc a -> do
   bool <- constM ask -< ()
@@ -68,8 +68,8 @@ bindBool' cellE handler = CellExcept
   }
 -}
 \end{code}
-\end{comment}
 \fxfatal{Finish the wrapped thing}
+\end{comment}
 \fxerror{We have a Data e here suddenly.
 Can we be cleverer than id?}
 But, behold!
@@ -132,8 +132,8 @@ calculations with all types are allowed again.
 
 \fxerror{Wow! This means that the control state of such live programs is always finite! This means e.g. that we can completely analyse CTL on it!}
 
-\fxfatal{Not sure whether I want to say it like that. Maybe first talk about commuting Reader, and then go on.}
-\fxfatal{Wouldhave to call it Finite here now because there is no justification yet to call it Commutable, because we didn't explain the commuting thing.
+\fxerror{Not sure whether I want to say it like that. Maybe first talk about commuting Reader, and then go on.}
+\fxerror{Wouldhave to call it Finite here now because there is no justification yet to call it Commutable, because we didn't explain the commuting thing.
 One way to explain the commuting stuff would be to completely forget about Applicative and straight go from live bind to finite bind.}
 
 \begin{comment}

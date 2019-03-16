@@ -124,7 +124,7 @@ liftCell = hoistCell lift
 Sequentially and parallely in the data flow sense,
 and sequentially in the control flow sense.
 We will address the data flow aspects in this section,
-investigating control flow later in section \fxfatal{where?}.
+investigating control flow later in Section \ref{sec:control flow}.
 
 By virtue of being an instance of the type class \mintinline{haskell}{Category}
 for any fixed monad \mintinline{haskell}{m},

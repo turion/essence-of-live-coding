@@ -2,7 +2,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage{minted}
-\usepackage[draft]{fixme}
+\usepackage[final]{fixme}
 \usepackage{hyperref}
 
 \bibliographystyle{ACM-Reference-Format}
@@ -14,22 +14,23 @@
 \title{The essence of live coding: Change the program, keep the state!}
 \subtitle{Functional pearl}
 
-\author{Manuel Bärenz}
-\orcid{0000-0003-1843-0773}             %% \orcid is optional
-\affiliation{
-  \institution{sonnen eServices GmbH}            %% \institution is required
-  \country{Deutschland}
-}
-\email{programming@manuelbaerenz.de}
+%\author{Manuel Bärenz}
+%\orcid{0000-0003-1843-0773}             %% \orcid is optional
+%\affiliation{
+%  \institution{sonnen eServices GmbH}            %% \institution is required
+%  \country{Deutschland}
+%}
+%\email{programming@manuelbaerenz.de}
 
 \begin{abstract}
   One rarely encounters programming languages and frameworks that provide general-purpose and type-safe hot code swap.
   It is demonstrated here that this is entirely possible in Haskell,
   by faithfully following the motto of livecoding:
   ``Change the program, keep the state.''
+
   With generic programming,
   one easily arrives at an automatic state migration function.
-  The approach can be generalised to an arrowized Functional Reactiv Programming framework that is parametrized by its side effects.
+  The approach can be generalised to an arrowized Functional Reactive Programming framework that is parametrized by its side effects.
   It allows for building up complete live programs from reusable, modular components,
   and to separate data flow cleanly from control flow.
 \end{abstract}
