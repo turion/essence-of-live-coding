@@ -42,14 +42,17 @@ It stands to reason that in live coding, they should also be some flavour of fun
 in fact, \mintinline{haskell}{Arrow}s \fxfatal{Cite}.
 We will see that it is possible to define bigger live programs from reusable components.
 
+\fxerror{Combine this sentence with first sentence from nextsection}
 In our definition of live programs as pairs of state and state steppers,
 we can generalise the step functions to an additional input and output type:
 \begin{spec}
-ioStep :: a -> s -> IO (b, s)
+mStep :: a -> s -> m (b, s)
 \end{spec}
+\begin{comment}
 By now, the reader may have rightfully become weary of the ubiquitous \mintinline{haskell}{IO} monad;
 and promoting it to an arbitrary monad will turn out shortly to be a very useful generalisation.
 \fxerror{This has now been introduced earlier, in the WAI example, as Reader.}
+\end{comment}
 
 \subsection{Cells}
 \label{sec:cells}

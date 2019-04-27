@@ -18,7 +18,7 @@ import Data.Data
 \label{sec:core}
 \fxerror{Split up even more into the individual modules and integrate more with the code}
 
-Our model of a live program will consist of a state and a state transition function.
+Our model of a live program will consist of a state and an effectful state transition function.
 A preliminary version is shown in Figure \ref{fig:LiveProgram1}.
 \input{LiveProgram/LiveProgram1.lhs}
 The program is initialised at a certain state,
@@ -87,9 +87,9 @@ What a live performer actually needs,
 is a function with this mysterious type signature:
 \begin{spec}
 hotCodeSwap
-  :: LiveProgram s'
-  -> LiveProgram s
-  -> LiveProgram s'
+  :: LiveProgram m s'
+  -> LiveProgram m s
+  -> LiveProgram m s'
 \end{spec}
 It is the same type signature as in Figure \ref{fig:hot code swap},
 but with the first argument, the manual migration function, removed.
@@ -176,9 +176,18 @@ Needless to say, if the types do match, then the old state is identically copied
 \fxerror{This works also across recompilations! Demonstrate in the following!}
 To use this migration function,
 we only need to update the live program definition to include the \mintinline{haskell}{Data} constraint,
-as shown in Figure \ref{fig:LiveProgram2}.
-\input{LiveProgram/LiveProgram2.lhs}
-\fxerror{I've only made the state existential here now. Explain here and remove previous mention. (If this is too heavy a burden, move to the place where the monad is in the type signature.)}
+as shown in Figure \ref{fig:LiveProgram}.
+\begin{figure}
+\begin{code}
+data LiveProgram m = forall s . Data s
+  => LiveProgram
+  { liveState :: s
+  , liveStep  :: s -> m s
+  }
+\end{code}
+\caption{\texttt{LiveProgram.lhs}}
+\label{fig:LiveProgram}
+\end{figure}
 This is a small restriction.
 The \mintinline{haskell}{Data} typeclass can be automatically derived for every algebraic data type,
 except those that incorporate \emph{functions}.
@@ -186,6 +195,8 @@ We have to refactor our live program such that all functions are contained in \m
 (and can consequently not be migrated),
 and all data is contained in \mintinline{haskell}{liveState}.
 
+\fxerror{I've only made the state existential here now. Explain here and remove previous mention.
+"We have also taken the liberty to hide the state parameter"...}
 \subsection{Livecoding a webserver}
 
 To show that live coding can be applied to domains outside audio and video applications,
@@ -201,25 +212,31 @@ and waits for user input to update it.
 To save ourselves an introduction to Warp,
 we will communicate to it via two \mintinline{haskell}{MVar}s,
 which we will need to share with the live program.
-The textbook solution is to supply the variables through a \mintinline{haskell}{Reader} environment.
+The textbook solution is to supply the variables through a \mintinline{haskell}{Reader} environment,
+\begin{comment}
 We have to generalise the definition of live programs once more,
 to arbitrary monads.
 The final version is given in Figure \ref{fig:LiveProgram}.
-Additionally, the environment needs to supplied to the live program before execution.
-This can be done by transporting the state along the \mintinline{haskell}{runReaderT} monad morphism.
+\end{comment}
+which needs to supplied to the live program before execution.
+This can be done by transporting the program it along the \mintinline{haskell}{runReaderT} monad morphism.
+For this, the library supplies the utility \mintinline{haskell}{hoistLiveProgram}
+(borrowing nomenclature from the \texttt{mmorph} package).
+\fxrerror{Citation or link}
+\begin{comment}
 Abstracting this operation, we need a utility that applies a monad morphism to a live program.
 (Borrowing nomenclature from the \texttt{mmorph} package,
-\fxrerror{Citation or link}
 we call it \mintinline{haskell}{hoistLiveProgram}.)
 \fxwarning{Try to merge with the previous figure. Why not parametrise by monads straight away? (My hoist explanation is also very clunky)}
 \begin{figure}
-\begin{code}
+\begin{spec}
 data LiveProgram m = forall s . Data s
   => LiveProgram
   { liveState :: s
   , liveStep  :: s -> m s
   }
-
+\end{spec}
+\begin{code}
 hoistLiveProgram
   :: (forall a . m1 a -> m2 a)
   -> LiveProgram m1
@@ -232,3 +249,4 @@ hoistLiveProgram morph LiveProgram { .. } = LiveProgram
 \caption{LiveProgram.lhs}
 \label{fig:LiveProgram}
 \end{figure}
+\end{comment}
