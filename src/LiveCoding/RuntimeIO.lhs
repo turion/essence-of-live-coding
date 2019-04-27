@@ -1,6 +1,7 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module LiveCoding.RuntimeIO where
 
@@ -11,46 +12,53 @@ import Control.Concurrent
 import Data.Data
 
 -- essenceoflivecoding
-import LiveCoding.Cell
+import LiveCoding.LiveProgram
 import LiveCoding.Debugger
 import LiveCoding.Migrate
 
 \end{code}
 \end{comment}
-
 \begin{code}
 -- type LiveProg = Cell IO () ()
 type Debugger = forall s . Data s => s -> IO ()
 
-launch :: LiveProgram -> IO (MVar LiveProgram)
-launch cell = do
-  var <- newMVar cell
+noDebugger = const $ return ()
+
+launch :: LiveProgram IO -> IO (MVar (LiveProgram IO))
+launch liveProg = do
+  var <- newMVar liveProg
   forkIO $ background var
   return var
 
-debug :: Debugger -> LiveProgram -> IO ()
-debug debugger (Cell state _) = debugger state
+debug :: Debugger -> LiveProgram IO -> IO ()
+debug debugger (LiveProgram state _) = debugger state
 
-backgroundWithDebugger :: MVar LiveProgram -> Debugger -> IO ()
+stepProgram :: LiveProgram IO -> IO (LiveProgram IO)
+stepProgram LiveProgram {..} = do
+  liveState' <- liveStep liveState
+  return LiveProgram { liveState = liveState', .. }
+
+backgroundWithDebugger :: MVar (LiveProgram IO) -> Debugger -> IO ()
 backgroundWithDebugger var debugger = forever $ do
-  cell <- takeMVar var
-  ((), cell') <- step cell ()
-  debug debugger cell'
-  combine var cell'
+  liveProg <- takeMVar var
+  liveProg' <- stepProgram liveProg
+  debug debugger liveProg'
+  combine var liveProg'
 
-background :: MVar LiveProgram -> IO ()
-background var = backgroundWithDebugger var $ stateShow >>> putStrLn
+background :: MVar (LiveProgram IO) -> IO ()
+-- background var = backgroundWithDebugger var $ stateShow >>> putStrLn
+background var = backgroundWithDebugger var noDebugger
 
-combine :: MVar LiveProgram -> LiveProgram -> IO ()
+combine :: MVar (LiveProgram IO) -> LiveProgram IO -> IO ()
 combine var prog = do
   success <- tryPutMVar var prog
   unless success $ do
     newProg <- takeMVar var
     combine var $ combineLiveProgram prog newProg
 
-combineLiveProgram :: LiveProgram -> LiveProgram -> LiveProgram
-combineLiveProgram (Cell oldState oldStep) (Cell newState newStep) = Cell (newState `migrate` oldState) newStep
+combineLiveProgram :: LiveProgram m -> LiveProgram m -> LiveProgram m
+combineLiveProgram (LiveProgram oldState oldStep) (LiveProgram newState newStep) = LiveProgram (newState `migrate` oldState) newStep
 
-update :: MVar LiveProgram -> LiveProgram -> IO ()
-update var cell = void $ forkIO $ putMVar var cell
+update :: MVar (LiveProgram IO) -> LiveProgram IO -> IO ()
+update var liveProg = void $ forkIO $ putMVar var liveProg
 \end{code}

@@ -10,13 +10,18 @@ import Control.Monad (forever)
 import Examples
 import LiveCoding
 import LiveCoding.Cell
+import LiveCoding.Bind (printSineChange)
 import LiveCoding.RuntimeIO
+import LiveCoding.Forever
 
 main = do
   putStrLn "Let's go!"
-  var <- launch $ example1 10
+  --var <- launch $ printSinesForever
+  -- var <- launch $ printSine 1
+  var <- launch $ printSine 3
   forever $ do
-    n <- readLn
-    update var $ example2 n
-    n <- readLn
-    update var $ example1 n
+    _ <- getLine
+    update var $ printSine 10
+    -- threadDelay $ 17 * 100000
+    _ <- getLine
+    update var $ printSine 3

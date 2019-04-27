@@ -6,29 +6,42 @@
 module LiveCoding.Forever where
 -- base
 import Control.Arrow
+import Control.Concurrent (threadDelay)
+import Control.Monad.Fix
 import Data.Data
+import Data.Void
 
 -- transformers
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Reader
 
 -- essenceoflivecoding
+import LiveCoding.Bind
 import LiveCoding.Cell
+import LiveCoding.Commutable (CellExcept)
+import LiveCoding.LiveProgram
 
 \end{code}
 \end{comment}
 
 \subsection{Exceptions forever}
 
+But what if we want to change between the two oscillators indefinitely?
 The one temptation we have to resist is to recurse in the \mintinline{haskell}{CellExcept} context to prove the absence of exceptions:
 \fxerror{Example}
-\begin{spec}
-foo = bar *> foo
-\end{spec}
+\begin{code}
+sinesForever' :: CellExcept IO () Double Void
+sinesForever' = do
+  try $ sine 3  >>> throwWhen0
+  try $ sine 10 >>> throwWhen0
+  sinesForever'
+\end{code}
+It typechecks, but it does \emph{not} execute correctly.
 \fxerror{Why does it hang? Does it really hang?}
 As the initial state is built up,
 the definition of \mintinline{haskell}{foo} inquires about the initial state of the right hand side of \mintinline{haskell}{*>},
 but this is again \mintinline{haskell}{foo},
+\fxerror{foo*>!}
 and thus already initialising such a cell hangs in an infinite loop.
 The resolution is an explicit loop operator,
 and faith in the library user to remember to employ it.
@@ -81,12 +94,47 @@ The exception is thus the only method of passing on data to the next loop iterat
 It is the user's responsibility to ensure that it does not introduce a space leak,
 for example through a lazy calculation that builds up bigger and bigger thunks.
 
-\begin{comment}
+In our example, we need not pass on any data,
+so a simpler version of the loop operator is defined:
 \begin{code}
 foreverC
   :: (Data e, Monad m)
   => Cell (ExceptT e m) a b
   -> Cell            m  a b
+\end{code}
+\begin{comment}
+\begin{code}
 foreverC cell = foreverE () $ liftCell $ hoistCell (withExceptT $ const ()) cell
 \end{code}
 \end{comment}
+Now we can finally implement our cell:
+\begin{code}
+sinesForever :: MonadFix m => Cell m () Double
+sinesForever = foreverC $ runCellExcept $ do
+  try $ sine 3  >>> throwWhen0
+  try $ sine 10 >>> throwWhen0
+
+printSinesForever :: LiveProgram IO
+printSinesForever = liveCell
+  $   sinesForever
+  >>> arrM print
+  >>> constM (threadDelay 100000)
+\end{code}
+
+\begin{verbatim}
+0.1
+0.18115044407846126
+0.22815483389823715
+0.23215305071467096
+0.19239144841308464
+0.11636491245461553
+1.8404107249964052e-2
+0.1
+0.13716814692820414
+8.815100531717399e-2
+0.1
+[...]
+\end{verbatim}
+
+\fxerror{``Forever and ever?'' Show graceful shutdown with ExceptT. Have to change the runtime slightly for this.}
+\fxnote{Awesome idea: Electrical circuits simulation where we can change the circuits live!}

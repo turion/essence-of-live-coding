@@ -10,12 +10,15 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE TupleSections #-}
 module LiveCoding.Cell where
 
 -- base
 import Control.Arrow
 import Control.Category
+import Control.Concurrent (threadDelay)
+import Control.Monad.Fix
 import Data.Data
 import Prelude hiding ((.), id)
 
@@ -23,10 +26,22 @@ import Prelude hiding ((.), id)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
 
+-- essenceoflivecoding
+import LiveCoding.LiveProgram
+
 \end{code}
 \end{comment}
+\fxerror{The whole section, indeed FRP and Cells as a whole are overrepresented and too less motivated.
+Make clear that we do this FRP approach because of modularity.
+Maybe don't show the definitions of the primitives, but show the state types,
+and the custom migrations implemented so that FRP reloads correctly.
+Ideally, show the custom migrations as examples how users can add their own migrations.
+}
+In ordinary functional programming, the smallest building blocks are functions.
+It stands to reason that in live coding, they should also be some flavour of functions,
+in fact, \mintinline{haskell}{Arrow}s \fxfatal{Cite}.
+We will see that it is possible to define bigger live programs from reusable components.
 
-Indeed, we would want these building blocks to be some flavour of functions!
 In our definition of live programs as pairs of state and state steppers,
 we can generalise the step functions to an additional input and output type:
 \begin{spec}
@@ -34,6 +49,7 @@ ioStep :: a -> s -> IO (b, s)
 \end{spec}
 By now, the reader may have rightfully become weary of the ubiquitous \mintinline{haskell}{IO} monad;
 and promoting it to an arbitrary monad will turn out shortly to be a very useful generalisation.
+\fxerror{This has now been introduced earlier, in the WAI example, as Reader.}
 
 \subsection{Cells}
 \label{sec:cells}
@@ -42,6 +58,7 @@ We collect these insights in a definition,
 calling them cells,
 the building blocks of everything live:
 
+\fxerror{I haven't cited any state automaton literature.}
 \begin{comment}
 \begin{code}
 -- | The basic building block of a live program.
@@ -71,23 +88,29 @@ step Cell { .. } a = do
 \end{code}
 
 As a simple example, consider the following \mintinline{haskell}{Cell} which adds all input and returns the accumulated sum each step:
-
+\fxwarning{Possibly mention that it's a delayed sum?}
 \begin{code}
 sumC :: (Monad m, Num a, Data a) => Cell m a a
 sumC = Cell { .. }
   where
     cellState = 0
-    cellStep accum a = let accum' = accum + a
-      in return (accum', accum')
+    cellStep accum a = return (accum + a, accum + a)
 \end{code}
 
 \fxerror{Possibly put IO later because here we can't explain yet how we'll end up with () input/output}
 We recover live programs as the special case of trivial input and output,
 with effects in \mintinline{haskell}{IO}:
 
+\fxerror{Also say "we just need to elide the units".}
 \begin{code}
-type LiveProgram = Cell IO () ()
+liveCell :: Functor m => Cell m () () -> LiveProgram m
+liveCell Cell {..} = LiveProgram
+  { liveState = cellState
+  , liveStep  = fmap snd . flip cellStep ()
+  }
 \end{code}
+\fxwarning{Consider making LiveProgram not a type alias but leave it at its original type and just implement the isomorphism.
+That way we can honestly reuse the machinery from section 2.}
 
 In case our \mintinline{haskell}{Cell} is in another monad than \mintinline{haskell}{IO},
 it is easy to define a function that transports a cell along a monad morphism:
@@ -96,17 +119,24 @@ hoistCell
   :: (forall x . m1 x   ->      m2 x)
   ->        Cell m1 a b -> Cell m2 a b
 \end{code}
-For example, we may eliminate a \mintinline{haskell}{ReaderT r} context by supplying the environment:
+For example, we may eliminate a \mintinline{haskell}{ReaderT r} context by supplying the environment,
+or lift into a monad transformer:
 \begin{code}
 runReaderC
   ::               r
   -> Cell (ReaderT r m) a b
   -> Cell            m  a b
 runReaderC r = hoistCell $ flip runReaderT r
+
+liftCell
+  :: (Monad m, MonadTrans t)
+  => Cell         m  a b
+  -> Cell      (t m) a b
+liftCell = hoistCell lift
 \end{code}
 This way, we can successively handle effects until we arrive at \mintinline{haskell}{IO},
 at which point we can execute the live program in the same fashion as in the last section.
-\fxerror{Expand on this, possibly elsewhere}
+\fxerror{Expand on this, possibly elsewhere. At least cite the relevant sections in the Dunai paper.}
 
 \begin{comment}
 \begin{code}
@@ -114,9 +144,6 @@ hoistCell morph Cell { .. } = Cell
   { cellStep = \s a -> morph $ cellStep s a
   , ..
   }
-
-liftCell :: (Monad m, MonadTrans t) => Cell m a b -> Cell (t m) a b
-liftCell = hoistCell lift
 \end{code}
 \end{comment}
 
@@ -133,9 +160,9 @@ they implement sequential composition:
 \begin{spec}
 (>>>)
   :: Monad m
-  => Cell m a b
-  -> Cell m   b c
-  -> Cell m a   c
+  => Cell  m a b
+  -> Cell  m   b c
+  -> Cell  m a   c
 \end{spec}
 
 \begin{comment}
@@ -162,26 +189,52 @@ instance Monad m => Category (Cell m) where
 \end{comment}
 For two cells \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2},
 the composite \mintinline{haskell}{cell1 >>> cell2} holds the state of both \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2},
+\fxwarning{Syntax highlighting is off}
 but the step function only touches each state variable individually,
 the state stays encapsulated.
 
 Composing \mintinline{haskell}{Cell}s sequentially allows us to form live programs out of \emph{sensors}, pure signal functions and \emph{actuators}:
-
 \begin{code}
 type Sensor   a   = Cell   IO         () a
 type SF       a b = forall m . Cell m    a b
 type Actuator   b = Cell   IO              b ()
+
 buildLiveProg
   :: Sensor   a
   -> SF       a b
   -> Actuator   b
-  -> LiveProgram
-buildLiveProg sensor sf actuator
-  = sensor >>> sf >>> actuator
+  -> LiveProgram IO
+buildLiveProg sensor sf actuator = liveCell
+  $ sensor >>> sf >>> actuator
 \end{code}
+\fxwarning{If this breaks, the alignment is pointless}
+This will conveniently allow us to build a whole live program from smaller components.
 
 \mintinline{haskell}{Cell}s can also be made an instance of the \mintinline{haskell}{Arrow} type class,
-which allows for parallel composition:
+which allows us to lift arbitrary functions to \mintinline{haskell}{Cell}s:
+\begin{spec}
+arr
+  :: Monad m
+  ->         (a -> b)
+  -> Cell  m  a    b
+\end{spec}
+Let us, just for the sake of the example,
+assume that we will execute all \mintinline{haskell}{Cell}s at a certain fixed step rate,
+say ten steps per second.
+Then an Euler integration cell can be defined:
+\begin{code}
+type PerSecond a = a
+
+stepRate :: Num a => a
+stepRate = 10
+
+integrate
+  :: (Data a, Fractional a, Monad m)
+  => Cell m a (PerSecond a)
+integrate = arr (/ stepRate) >>> sumC
+\end{code}
+
+The \mintinline{haskell}{Arrow} type class also allows for data-parallel composition:
 \begin{spec}
 (***)
   :: Monad m
@@ -191,23 +244,20 @@ which allows for parallel composition:
 \end{spec}
 Again, the state type of the composed cell is the product type of the constituent states.
 
-The \mintinline{haskell}{Arrow} type class also allows to lift arbitrary functions to \mintinline{haskell}{Cell}s:
-
-\begin{spec}
-arr
-  :: Monad m
-  ->         (a -> b)
-  -> Cell  m  a    b
-\end{spec}
-
 Beyond standard arrows, a \mintinline{haskell}{Cell} can encode effects in a monad,
 so it is not surprising that Kleisli arrows can be lifted:
-
 \begin{spec}
 arrM
   :: Monad m
   ->         (a -> m b)
   -> Cell  m  a      b
+\end{spec}
+Mere monadic actions become a special case thereof:
+\begin{spec}
+constM
+  :: Monad m
+  ->       m   b
+  -> Cell  m a b
 \end{spec}
 
 \begin{comment}
@@ -244,6 +294,7 @@ We would like to have all basic primitives needed to develop standard synchronou
 without touching the \mintinline{haskell}{Cell} constructor anymore.
 One crucial bit is missing:
 Encapsulating state.
+\fxerror{This is unclear. Either have to stress that it's maybe not so nice to encapsulate state by explicitly building the Cell, like we have done with the sum, or move feedback at the beginning of the section.}
 The most general such construction is the feedback loop:
 \begin{code}
 data Feedback s s' = Feedback s s'
@@ -263,13 +314,23 @@ feedback s (Cell state step) = Cell { .. }
     cellStep (Feedback state s) a = do
       ((b, s'), state') <- step state (a, s)
       return (b, Feedback state' s')
+
+instance MonadFix m => ArrowLoop (Cell m) where
+  loop (Cell state step) = Cell { .. }
+    where
+      cellState = state
+      cellStep state a = do
+        rec ((b, c), state') <- step state (a, c)
+        return (b, state')
 \end{code}
 \end{comment}
+\fxwarning{Say that ArrowLoop exists and isn't the same as feedback}
 It enables us to write delays:
 \begin{code}
 delay :: (Data s, Monad m) => s -> Cell m s s
-delay s = feedback s $ arr
-  $ \(sNew, sOld) -> (sOld, sNew)
+delay s = feedback s $ arr swap
+  where
+    swap (sNew, sOld) = (sOld, sNew)
 \end{code}
 \mintinline{haskell}{feedback} can be used for accumulation of data.
 For example, \mintinline{haskell}{sumC} now becomes:
@@ -277,10 +338,117 @@ For example, \mintinline{haskell}{sumC} now becomes:
 sumFeedback
   :: (Monad m, Num a, Data a)
   => Cell m a a
-sumFeedback = feedback 0 $ arr $ \(a, accum) ->
-  let accum' = a + accum in (accum', accum')
+sumFeedback = feedback 0 $ arr
+  $ \(a, accum) -> (a + accum, a + accum)
 \end{code}
+\fxwarning{Depending on implementation use let again (and above)}
+\fxwarning{It's more concise maybe if we return accum and not accum'? Then we can elide the let?}
 \fxwarning{Possibly remark on Data instance of s?}
+
+Making use of the \mintinline{haskell}{Arrows} syntax extension,
+\mintinline{haskell}{feedback} is enough to implement a harmonic oscillator that will produce a sine wave:
+\begin{code}
+sine
+  :: MonadFix m
+  => Double -> Cell m () Double
+sine k = feedback 5.5 $ proc ((), pos) -> do
+  let acc = - k * pos
+  vel <- integrate -< acc
+  pos <- integrate -< vel
+  returnA -< (pos, pos)
+\end{code}
+\fxerror{I might have changed the implementation here.
+So update readouts. Or just include them as files and have a makefile to update them
+Also, just calculate the correct value such that the amplitude is 1.}
+By the laws of physics, velocity is the integral of accelleration,
+and position is the integral of velocity.
+In a harmonic oscillator, the acceleration is in the negative direction of the position,
+multiplied by a spring factor which can be given as an argument.
+The integration arrow encapsulates the current position and velocity of the oscillator as internal state, and return the position.
+By using \mintinline{haskell}{feedback},
+we also store the current acceleration,
+which is used to give the oscillator initial energy.
+\fxwarning{Two aspects mixed up here.}
+
+The sine generator could in principle be used in an audio or video application.
+For simplicity, we choose to visualise the signal on the console instead,
+with our favourite Haskell operator varying its horizontal position:
+\begin{code}
+simpleASCIIArt :: Double -> String
+simpleASCIIArt n = replicate (round $ 10 * (n + 1)) ' ' ++ ">>="
+\end{code}
+\fxwarning{The 0.5 and the 10 up in the sine definitions are magical numbers}
+Our first complete live program,
+written in FRP, is ready:
+\begin{code}
+printSine :: Double -> LiveProgram IO
+printSine k = liveCell
+  $   sine k
+  -- >>> arr simpleASCIIArt
+  -- >>> arrM putStrLn
+  >>> arrM print
+  >>> constM (threadDelay 100000)
+\end{code}
+Executing \mintinline{haskell}{printSine 1} gives:
+\fxwarning{At least ASCII art. Maybe mention that we could use this in gloss, audio or whatever?}
+\begin{verbatim}
+0.1
+0.19371681469282043
+0.27526204294732526
+0.33951204696312137
+0.38242987992802596
+0.4013189348670283
+0.39499237745553595
+0.363847717019278
+0.3098418302867564
+0.236368007198161
+0.14804274421041758
+5.041568127009974e-2
+-5.0379092348295504e-2
+-0.14800845423837222
+-0.2363381706783599
+-0.3098183219030279
+[...]
+\end{verbatim}
+
+What if we want to change the spring factor, and thus the frequency, in mid-execution?
+This is exactly what the framework was designed for.
+We adjust the setup slightly such that every time,
+a line is entered on the console,
+\fxerror{Show how this is done}
+the live environment inserts alternatingly \mintinline{haskell}{printSine 10} and \mintinline{haskell}{printSine 3}.
+Let us execute it:
+\begin{verbatim}
+0.1
+0.13716814692820414
+8.815100531717399e-2
+-1.625304643605388e-2
+-0.11044500793288962
+-0.1352423243201989
+-7.506438219975914e-2
+3.227790225368456e-2
+0.11933938258843528
+0.13141771739843203
+6.092386510233805e-2
+-4.78495806005161e-2
+-0.12655824812498345
+
+-0.12574802313732233
+-0.10123485420816215
+-5.763936482294621e-2
+-3.179111132609283e-3
+5.1880390888476687e-2
+9.716066961672634e-2
+0.12412659359182965
+0.12769520589433989
+0.10719383895267245
+6.648690939317684e-2
+\end{verbatim}
+It is clearly visible how the period of the oscillator changed,
+while its position (or, in terms of signal processing, its phase)
+does not jump!
+If we were to use the oscillator in an audio application,
+we can retune it without hearing a glitch.
 
 \subsection{Monadic stream functions and final coalgebras}
 
@@ -359,6 +527,33 @@ Monadic stream functions are, well, functions,
 and therefore have no \mintinline{haskell}{Data} instance.
 The price of \mintinline{haskell}{Data} is loss of higher-order state.
 Just how big this loss is will be demonstrated in the following section.
+
+\begin{comment}
+\subsection{Initial algebras}
+
+\begin{code}
+type AlgStructure m a b s = StateTransition m a b s -> s
+data Alg m a b where
+  Alg
+    :: s
+    -> AlgStructure m a b s
+    -> Alg m a b
+
+algMSF :: MSF m a b -> Alg m a b
+algMSF msf = Alg msf MSF
+
+-- TODO Could explain better why this is simpler in the coalgebra case
+initiality
+  :: Functor m
+  => AlgStructure m a b s
+  -> MSF m a b
+  -> s
+initiality algStructure = go
+  where
+    go msf = algStructure $ \a -> second go <$> unMSF msf a
+
+\end{code}
+\end{comment}
 
 \section{Control flow}
 \label{sec:control flow}
