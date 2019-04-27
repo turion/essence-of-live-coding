@@ -11,6 +11,7 @@ import LiveCoding.Bind
 import LiveCoding.Cell
 import LiveCoding.Exceptions
 import LiveCoding.Forever
+import LiveCoding.LiveProgram
 
 sumFrom :: Monad m => Integer -> Cell m Integer Integer
 sumFrom n0 = feedback n0 $ proc (n, acc) -> returnA -< (acc, acc + n)
@@ -35,11 +36,11 @@ saw2 amplitude = foreverC $ runCellExcept $ do
   try $ countUpTo amplitude
   try $ countUpTo amplitude
 
-example1 :: Integer -> LiveProgram
-example1 n = saw1 n >>> arrM print >>> constM (threadDelay 500000)
+example1 :: Integer -> LiveProgram IO
+example1 n = liveCell $ sine 1 >>> arrM print >>> constM (threadDelay 10000)
 
-example2 :: Integer -> LiveProgram
-example2 n = saw2 n >>> arrM print >>> constM (threadDelay 500000)
+example2 :: Integer -> LiveProgram IO
+example2 n = liveCell $ saw2 n >>> arrM print >>> constM (threadDelay 500000)
 
 
 myMapM_ f (a : as) = f a *> myMapM_ f as
@@ -48,5 +49,5 @@ myMapM_ _ [] = return ()
 listThing :: Monad m => Cell m a Integer
 listThing = safely $ myMapM_ (try . countUpTo) [3,5,6] *> safe count
 
-example :: LiveProgram
-example = listThing >>> arrM print >>> constM (threadDelay 500000)
+example :: LiveProgram IO
+example = liveCell $ listThing >>> arrM print >>> constM (threadDelay 500000)

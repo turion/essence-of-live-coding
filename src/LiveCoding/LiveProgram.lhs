@@ -1,6 +1,7 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 module LiveCoding.LiveProgram where
 
@@ -204,13 +205,28 @@ The textbook solution is to supply the variables through a \mintinline{haskell}{
 We have to generalise the definition of live programs once more,
 to arbitrary monads.
 The final version is given in Figure \ref{fig:LiveProgram}.
-\fxwarning{Try to merge with the previous figure. Why not parametrise by monads straight away?}
+Additionally, the environment needs to supplied to the live program before execution.
+This can be done by transporting the state along the \mintinline{haskell}{runReaderT} monad morphism.
+Abstracting this operation, we need a utility that applies a monad morphism to a live program.
+(Borrowing nomenclature from the \texttt{mmorph} package,
+\fxrerror{Citation or link}
+we call it \mintinline{haskell}{hoistLiveProgram}.)
+\fxwarning{Try to merge with the previous figure. Why not parametrise by monads straight away? (My hoist explanation is also very clunky)}
 \begin{figure}
 \begin{code}
 data LiveProgram m = forall s . Data s
   => LiveProgram
   { liveState :: s
   , liveStep  :: s -> m s
+  }
+
+hoistLiveProgram
+  :: (forall a . m1 a -> m2 a)
+  -> LiveProgram m1
+  -> LiveProgram         m2
+hoistLiveProgram morph LiveProgram { .. } = LiveProgram
+  { liveStep = morph . liveStep
+  , ..
   }
 \end{code}
 \caption{LiveProgram.lhs}

@@ -8,6 +8,7 @@ module LiveCoding.Bind where
 
 -- base
 import Control.Arrow
+import Control.Concurrent (threadDelay)
 import Data.Data
 import Data.Either (fromRight)
 import Data.Void
@@ -23,9 +24,13 @@ import LiveCoding.Commutable
 import LiveCoding.Cell
 -- import LiveCoding.CellExcept
 import LiveCoding.Exceptions
+import LiveCoding.LiveProgram
 \end{code}
 \end{comment}
 
+\fxerror{The only reason why monads and bind have much to do with live coding is because the control state is also encoded via LiveBindState and the migration works on it (or at least ought to).
+This point is completely underrepresented and needs to be illustrated at least with an example where we handle exceptions and stay in the control state.
+}
 \subsection{Finite patience with monads}
 \fxerror{Explain that we're using applicative do, and use it in example?}
 While \mintinline{haskell}{Applicative} control flow is certainly appreciated,
@@ -53,7 +58,7 @@ bindBool cell handler = cell >>>= proc a -> do
   then liftCell $ handler True  -< a
   else liftCell $ handler False -< a
 \end{code}
-
+\fxwarning{And now use bindBool to rewrite the upper example}
 \begin{comment}
 \begin{code}
 {-
@@ -81,8 +86,8 @@ admitted,
 but if it is possible to bind \mintinline{haskell}{Bool},
 then it is certainly possible to bind \mintinline{haskell}{(Bool, Bool)},
 by nesting two \mintinline{haskell}{if}-statements.
-By the same logic, we can bind \mintinline{haskell}{(Bool, Bool, Bool)}, 
-\mintinline{haskell}{(Bool, Bool, Bool, Bool)},
+By the same logic, we can bind \mintinline{haskell}{(Bool, Bool, Bool)} %, 
+%\mintinline{haskell}{(Bool, Bool, Bool, Bool)},
 and so on
 (and of course any isomorphic type as well).
 In fact, \emph{any finite type} can be bound,
@@ -135,6 +140,53 @@ calculations with all types are allowed again.
 \fxerror{Not sure whether I want to say it like that. Maybe first talk about commuting Reader, and then go on.}
 \fxerror{Wouldhave to call it Finite here now because there is no justification yet to call it Commutable, because we didn't explain the commuting thing.
 One way to explain the commuting stuff would be to completely forget about Applicative and straight go from live bind to finite bind.}
+
+\medskip
+
+After this long excursion,
+we can finally return to the example.
+Let us again change the period of the oscillator,
+only this time not manually,
+but at the moment the position reaches 0:
+
+\begin{code}
+throwWhen0
+  :: Monad m
+  => Cell (ExceptT () m) Double Double
+throwWhen0 = proc pos ->
+  if pos <= 0
+  then throwC  -< ()
+  else returnA -< pos
+
+sineChangeE :: CellExcept IO () Double Void
+sineChangeE = do
+  try $ sine 3 >>> throwWhen0
+  try $ (constM $ lift $ putStrLn "I changed!")
+      >>> throwC
+  safe $ sine 10
+
+printSineChange :: LiveProgram IO
+printSineChange = liveCell
+  $   safely sineChangeE
+  >>> arrM print
+  >>> constM (threadDelay 100000)
+\end{code}
+\begin{verbatim}
+0.1
+0.18115044407846126
+0.22815483389823715
+0.23215305071467096
+0.19239144841308464
+0.11636491245461553
+1.8404107249964052e-2
+I changed!
+0.1
+0.13716814692820414
+8.815100531717399e-2
+-1.625304643605388e-2
+-0.11044500793288962
+-0.1352423243201989
+\end{verbatim}
 
 \begin{comment}
 \begin{code}

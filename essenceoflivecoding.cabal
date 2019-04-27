@@ -23,6 +23,7 @@ library
     , LiveCoding.Debugger
     , LiveCoding.Exceptions
     , LiveCoding.Forever
+    , LiveCoding.LiveProgram
     , LiveCoding.Migrate
     , LiveCoding.RuntimeIO
 
@@ -55,3 +56,18 @@ executable Demo
       base >=4.11 && <4.13
     , essenceoflivecoding
 
+executable DemoWai
+  main-is: DemoWai.hs
+  other-modules:
+      DemoWai.Env
+      DemoWai.DemoWai1
+      DemoWai.DemoWai2
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+    , transformers == 0.5.*
+    , wai  == 3.2.*
+    , warp == 3.2.*
+    , http-types == 0.12.*
+    , bytestring == 0.10.*
