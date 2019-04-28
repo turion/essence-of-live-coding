@@ -3,6 +3,7 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE TupleSections #-}
 
 module LiveCoding.Exceptions

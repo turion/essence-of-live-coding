@@ -1,4 +1,5 @@
 *.tex
+*.txt
 *.pdf
 dist/*
 dist-newstyle/*

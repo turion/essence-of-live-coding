@@ -4,6 +4,7 @@
 \begin{code}
 -- | TODO: Proper haddock docs
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -11,6 +12,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE TupleSections #-}
 module LiveCoding.Cell where
 
@@ -18,6 +20,7 @@ module LiveCoding.Cell where
 import Control.Arrow
 import Control.Category
 import Control.Concurrent (threadDelay)
+import Control.Monad ((>=>)) -- Only for rewrite rule
 import Control.Monad.Fix
 import Data.Data
 import Prelude hiding ((.), id)
@@ -69,10 +72,11 @@ the building blocks of everything live:
 \end{comment}
 \begin{code}
 data Cell m a b = forall s . Data s => Cell
-  { cellState :: s
+  { cellState :: !s
   , cellStep  :: s -> a -> m (b, s)
   }
 \end{code}
+\fxwarning{Comment on bang patterns if we keep them}
 
 Such a cell may progress by one step,
 consuming an \mintinline{haskell}{a} as input,
@@ -86,7 +90,7 @@ step
   => Cell m a b
   -> a -> m (b, Cell m a b)
 step Cell { .. } a = do
-  (b, cellState') <- cellStep cellState a
+  (!b, !cellState') <- cellStep cellState a
   return (b, Cell { cellState = cellState', .. })
 \end{code}
 
@@ -97,7 +101,7 @@ sumC :: (Monad m, Num a, Data a) => Cell m a a
 sumC = Cell { .. }
   where
     cellState = 0
-    cellStep accum a = return (accum + a, accum + a)
+    cellStep accum a = return (accum, accum + a)
 \end{code}
 
 \fxerror{Possibly put IO later because here we can't explain yet how we'll end up with () input/output}
@@ -172,10 +176,14 @@ they implement sequential composition:
 
 \begin{comment}
 \begin{code}
-data Composition state1 state2 = Composition
+{-data Composition state1 state2 = Composition
   { state1 :: state1
   , state2 :: state2
-  } deriving (Typeable, Data)
+  } deriving Data
+-}
+
+newtype Composition state1 state2 = Composition (state1, state2)
+  deriving Data
 
 instance Monad m => Category (Cell m) where
   id = Cell
@@ -185,11 +193,14 @@ instance Monad m => Category (Cell m) where
 
   Cell state2 step2 . Cell state1 step1 = Cell { .. }
     where
-      cellState = Composition state1 state2
-      cellStep (Composition state1 state2) a = do
+      cellState = Composition (state1, state2)
+      cellStep (Composition (state1, state2)) a = do
         (b, state1') <- step1 state1 a
         (c, state2') <- step2 state2 b
-        return (c, (Composition state1' state2'))
+        return (c, Composition (state1', state2'))
+{-# RULES
+"arrM/>>>" forall (f :: forall a b m . Monad m => a -> m b) g . arrM f >>> arrM g = arrM (f >=> g)
+#-} -- Don't really need rules here because GHC will inline all that anyways
 \end{code}
 \end{comment}
 For two cells \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2},
@@ -231,7 +242,7 @@ Then an Euler integration cell can be defined:
 type PerSecond a = a
 
 stepRate :: Num a => a
-stepRate = 10
+stepRate = 1000
 
 integrate
   :: (Data a, Fractional a, Monad m)
@@ -267,8 +278,9 @@ constM
 
 \begin{comment}
 \begin{code}
-data Parallel s1 s2 = Parallel s1 s2
-  deriving (Typeable, Data)
+--data Parallel s1 s2 = Parallel s1 s2
+newtype Parallel s1 s2 = Parallel (s1, s2)
+  deriving Data
 
 instance Monad m => Arrow (Cell m) where
   arr f = Cell
@@ -278,11 +290,11 @@ instance Monad m => Arrow (Cell m) where
 
   Cell state1 step1 *** Cell state2 step2 = Cell { .. }
     where
-      cellState = Parallel state1 state2
-      cellStep (Parallel state1 state2) (a, c) = do
+      cellState = Parallel (state1, state2)
+      cellStep (Parallel (state1, state2)) (a, c) = do
         (b, state1') <- step1 state1 a
         (d, state2') <- step2 state2 c
-        return ((b, d), Parallel state1' state2')
+        return ((b, d), Parallel (state1', state2'))
 
 arrM :: Functor m => (a -> m b) -> Cell m a b
 arrM f = Cell
@@ -301,8 +313,10 @@ One crucial bit is missing:
 Encapsulating state.
 \fxerror{This is unclear. Either have to stress that it's maybe not so nice to encapsulate state by explicitly building the Cell, like we have done with the sum, or move feedback at the beginning of the section.}
 The most general such construction is the feedback loop:
+\fxerror{I say the type here without comment}
 \begin{code}
-data Feedback s s' = Feedback s s'
+-- data Feedback s s' = Feedback s s'
+newtype Feedback s s' = Feedback (s, s')
   deriving Data
 
 feedback
@@ -315,10 +329,10 @@ feedback
 \begin{code}
 feedback s (Cell state step) = Cell { .. }
   where
-    cellState = Feedback state s
-    cellStep (Feedback state s) a = do
+    cellState = Feedback (state, s)
+    cellStep (Feedback (state, s)) a = do
       ((b, s'), state') <- step state (a, s)
-      return (b, Feedback state' s')
+      return (b, Feedback (state', s'))
 
 instance MonadFix m => ArrowLoop (Cell m) where
   loop (Cell state step) = Cell { .. }
@@ -344,23 +358,25 @@ sumFeedback
   :: (Monad m, Num a, Data a)
   => Cell m a a
 sumFeedback = feedback 0 $ arr
-  $ \(a, accum) -> (a + accum, a + accum)
+  $ \(a, accum) -> (accum, a + accum)
 \end{code}
 \fxwarning{Depending on implementation use let again (and above)}
 \fxwarning{It's more concise maybe if we return accum and not accum'? Then we can elide the let?}
 \fxwarning{Possibly remark on Data instance of s?}
 
 Making use of the \mintinline{haskell}{Arrows} syntax extension,
-\mintinline{haskell}{feedback} is enough to implement a harmonic oscillator that will produce a sine wave:
+we can implement a harmonic oscillator that will produce a sine wave with amplitude 10 and given period length:
+\fxwarning{Probably comment on rec and ArrowFix}
 \begin{code}
 sine
-  :: Monad m
+  :: MonadFix m
   => Double -> Cell m () Double
-sine k = feedback 5.5 $ proc ((), pos) -> do
-  let acc = - k * pos
-  vel <- integrate -< acc
-  pos <- integrate -< vel
-  returnA -< (pos, pos)
+sine t = proc () -> do
+  rec
+    let acc = - (2 * pi / t) ^ 2 * (pos - 10)
+    vel <- integrate -< acc
+    pos <- integrate -< vel
+  returnA -< pos
 \end{code}
 \fxerror{I might have changed the implementation here.
 So update readouts. Or just include them as files and have a makefile to update them
@@ -380,78 +396,38 @@ For simplicity, we choose to visualise the signal on the console instead,
 with our favourite Haskell operator varying its horizontal position:
 \begin{code}
 simpleASCIIArt :: Double -> String
-simpleASCIIArt n = replicate (round $ 10 * (n + 1)) ' ' ++ ">>="
+simpleASCIIArt n = replicate (round n) ' ' ++ ">>="
+
+printEverySecond :: Cell IO Double ()
+printEverySecond = proc pos -> do
+  count <- sumC -< 1 :: Integer
+  if count `mod` stepRate == 0
+    then arrM putStrLn -< simpleASCIIArt pos
+    else returnA       -< ()
 \end{code}
-\fxwarning{The 0.5 and the 10 up in the sine definitions are magical numbers}
+\fxerror{Bring ArrowChoice earlier and give it "print every 100th" as example}
 Our first complete live program,
 written in FRP, is ready:
 \begin{code}
 printSine :: Double -> LiveProgram IO
-printSine k = liveCell
-  $   sine k
-  -- >>> arr simpleASCIIArt
-  -- >>> arrM putStrLn
-  >>> arrM print
-  >>> constM (threadDelay 100000)
+printSine t = liveCell
+  $   sine t
+  >>> printEverySecond
 \end{code}
-Executing \mintinline{haskell}{printSine 1} gives:
 \fxwarning{At least ASCII art. Maybe mention that we could use this in gloss, audio or whatever?}
-\begin{verbatim}
-0.1
-0.19371681469282043
-0.27526204294732526
-0.33951204696312137
-0.38242987992802596
-0.4013189348670283
-0.39499237745553595
-0.363847717019278
-0.3098418302867564
-0.236368007198161
-0.14804274421041758
-5.041568127009974e-2
--5.0379092348295504e-2
--0.14800845423837222
--0.2363381706783599
--0.3098183219030279
-[...]
-\end{verbatim}
 
-What if we want to change the spring factor, and thus the frequency, in mid-execution?
+What if we would run it,
+and change the period in mid-execution?
 This is exactly what the framework was designed for.
-We adjust the setup slightly such that every time,
-a line is entered on the console,
-\fxerror{Show how this is done}
-the live environment inserts alternatingly \mintinline{haskell}{printSine 10} and \mintinline{haskell}{printSine 3}.
+\fxerror{Show Demo.hs as soon as I've explained the runtime in the previous section}
+We execute the program such that after a certain time,
+the live environment inserts \mintinline{haskell}{printSine} with a different period.
+\fxerror{Those constants might change. Better to just display the runtime thing}
 Let us execute it:
-\begin{verbatim}
-0.1
-0.13716814692820414
-8.815100531717399e-2
--1.625304643605388e-2
--0.11044500793288962
--0.1352423243201989
--7.506438219975914e-2
-3.227790225368456e-2
-0.11933938258843528
-0.13141771739843203
-6.092386510233805e-2
--4.78495806005161e-2
--0.12655824812498345
-
--0.12574802313732233
--0.10123485420816215
--5.763936482294621e-2
--3.179111132609283e-3
-5.1880390888476687e-2
-9.716066961672634e-2
-0.12412659359182965
-0.12769520589433989
-0.10719383895267245
-6.648690939317684e-2
-\end{verbatim}
+\verbatiminput{../DemoSine.txt}
 It is clearly visible how the period of the oscillator changed,
 while its position (or, in terms of signal processing, its phase)
-does not jump!
+did not jump!
 If we use the oscillator in an audio application,
 we can retune it without hearing a glitch.
 

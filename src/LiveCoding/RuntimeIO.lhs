@@ -1,5 +1,6 @@
 \begin{comment}
 \begin{code}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -10,19 +11,20 @@ import Control.Arrow
 import Control.Monad
 import Control.Concurrent
 import Data.Data
+import Data.IORef
 
 -- essenceoflivecoding
 import LiveCoding.LiveProgram
-import LiveCoding.Debugger
+import LiveCoding.Debugger -- TODO This is where Debuggers should live
 import LiveCoding.Migrate
 
 \end{code}
 \end{comment}
 \begin{code}
--- type LiveProg = Cell IO () ()
-type Debugger = forall s . Data s => s -> IO ()
+-- Could also consider debuggers that modify the state
+newtype Debugger = Debugger { debugState :: forall s . Data s => s -> IO () }
 
-noDebugger = const $ return ()
+noDebugger = Debugger $ const $ return ()
 
 launch :: LiveProgram IO -> IO (MVar (LiveProgram IO))
 launch liveProg = do
@@ -30,10 +32,37 @@ launch liveProg = do
   forkIO $ background var
   return var
 
-debug :: Debugger -> LiveProgram IO -> IO ()
-debug debugger (LiveProgram state _) = debugger state
+launchWithDebugger :: LiveProgram IO -> Debugger -> IO (MVar (LiveProgram IO))
+launchWithDebugger liveProg debugger = do
+  var <- newMVar liveProg
+  forkIO $ backgroundWithDebugger var debugger
+  return var
 
-stepProgram :: LiveProgram IO -> IO (LiveProgram IO)
+debug :: Debugger -> LiveProgram IO -> IO ()
+debug Debugger { .. } (LiveProgram state _) = debugState state
+
+newtype CountObserver = CountObserver { observe :: IO Integer }
+countDebugger :: IO (Debugger, CountObserver)
+countDebugger = do
+  countRef <- newIORef 0
+  observeVar <- newEmptyMVar
+  let debugger = Debugger $ const $ do
+        n <- readIORef countRef
+        putMVar observeVar n
+        yield
+        void $ takeMVar observeVar
+        writeIORef countRef $ n + 1
+      observer = CountObserver $ yield >> readMVar observeVar
+  return (debugger, observer)
+
+await :: CountObserver -> Integer -> IO ()
+await CountObserver { .. } nMax = go
+ where
+  go = do
+    n <- observe
+    if n > nMax then return () else go
+
+stepProgram :: Monad m => LiveProgram m -> m (LiveProgram m)
 stepProgram LiveProgram {..} = do
   liveState' <- liveStep liveState
   return LiveProgram { liveState = liveState', .. }
@@ -61,4 +90,7 @@ combineLiveProgram (LiveProgram oldState oldStep) (LiveProgram newState newStep)
 
 update :: MVar (LiveProgram IO) -> LiveProgram IO -> IO ()
 update var liveProg = void $ forkIO $ putMVar var liveProg
+
+foreground :: Monad m => LiveProgram m -> m ()
+foreground liveProgram = stepProgram liveProgram >>= foreground
 \end{code}

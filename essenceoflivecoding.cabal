@@ -47,8 +47,26 @@ test-suite essenceoflivecoding
     , syb == 0.7.*
     , essenceoflivecoding
 
-executable Demo
-  main-is: Demo.hs
+executable DemoSine
+  main-is: DemoSine.hs
+  other-modules:
+      Examples
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+
+executable DemoSineChange
+  main-is: DemoSineChange.hs
+  other-modules:
+      Examples
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+
+executable DemoSinesForever
+  main-is: DemoSinesForever.hs
   other-modules:
       Examples
   hs-source-dirs: app
@@ -71,3 +89,18 @@ executable DemoWai
     , warp == 3.2.*
     , http-types == 0.12.*
     , bytestring == 0.10.*
+
+executable SpeedTest
+  main-is: SpeedTest.hs
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+    , transformers == 0.5.*
+
+executable SpeedTestYampa
+  main-is: SpeedTestYampa.hs
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , Yampa
