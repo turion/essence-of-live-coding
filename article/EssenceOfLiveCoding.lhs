@@ -175,6 +175,8 @@ By parametrizing the cells over arbitrary monads,
 and leveraging the exception monad,
 we can reason about effects and separate data flow aspects from control flow.
 
+\fxerror{Speedtest: Nearly double as fast as dunai (& therefore Yampa). Could use Data to optimize the state even more? Or rather we'd use GADTs for that, I guess}
+
 \paragraph{Further directions}
 Given that the state of the live programs always satisfies the \mintinline{haskell}{Data} typeclass,
 and the control state is even finite,

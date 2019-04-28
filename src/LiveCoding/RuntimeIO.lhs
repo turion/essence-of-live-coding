@@ -1,5 +1,6 @@
 \begin{comment}
 \begin{code}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -33,7 +34,7 @@ launch liveProg = do
 debug :: Debugger -> LiveProgram IO -> IO ()
 debug debugger (LiveProgram state _) = debugger state
 
-stepProgram :: LiveProgram IO -> IO (LiveProgram IO)
+stepProgram :: Monad m => LiveProgram m -> m (LiveProgram m)
 stepProgram LiveProgram {..} = do
   liveState' <- liveStep liveState
   return LiveProgram { liveState = liveState', .. }
@@ -61,4 +62,7 @@ combineLiveProgram (LiveProgram oldState oldStep) (LiveProgram newState newStep)
 
 update :: MVar (LiveProgram IO) -> LiveProgram IO -> IO ()
 update var liveProg = void $ forkIO $ putMVar var liveProg
+
+foreground :: Monad m => LiveProgram m -> m ()
+foreground liveProgram = stepProgram liveProgram >>= foreground
 \end{code}

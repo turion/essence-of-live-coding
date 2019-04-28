@@ -4,6 +4,7 @@
 \begin{code}
 -- | TODO: Proper haddock docs
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -11,6 +12,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE TupleSections #-}
 module LiveCoding.Cell where
 
@@ -18,6 +20,7 @@ module LiveCoding.Cell where
 import Control.Arrow
 import Control.Category
 import Control.Concurrent (threadDelay)
+import Control.Monad ((>=>)) -- Only for rewrite rule
 import Control.Monad.Fix
 import Data.Data
 import Prelude hiding ((.), id)
@@ -69,10 +72,11 @@ the building blocks of everything live:
 \end{comment}
 \begin{code}
 data Cell m a b = forall s . Data s => Cell
-  { cellState :: s
+  { cellState :: !s
   , cellStep  :: s -> a -> m (b, s)
   }
 \end{code}
+\fxwarning{Comment on bang patterns if we keep them}
 
 Such a cell may progress by one step,
 consuming an \mintinline{haskell}{a} as input,
@@ -86,7 +90,7 @@ step
   => Cell m a b
   -> a -> m (b, Cell m a b)
 step Cell { .. } a = do
-  (b, cellState') <- cellStep cellState a
+  (!b, !cellState') <- cellStep cellState a
   return (b, Cell { cellState = cellState', .. })
 \end{code}
 
@@ -172,10 +176,14 @@ they implement sequential composition:
 
 \begin{comment}
 \begin{code}
-data Composition state1 state2 = Composition
+{-data Composition state1 state2 = Composition
   { state1 :: state1
   , state2 :: state2
-  } deriving (Typeable, Data)
+  } deriving Data
+-}
+
+newtype Composition state1 state2 = Composition (state1, state2)
+  deriving Data
 
 instance Monad m => Category (Cell m) where
   id = Cell
@@ -185,11 +193,14 @@ instance Monad m => Category (Cell m) where
 
   Cell state2 step2 . Cell state1 step1 = Cell { .. }
     where
-      cellState = Composition state1 state2
-      cellStep (Composition state1 state2) a = do
+      cellState = Composition (state1, state2)
+      cellStep (Composition (state1, state2)) a = do
         (b, state1') <- step1 state1 a
         (c, state2') <- step2 state2 b
-        return (c, (Composition state1' state2'))
+        return (c, Composition (state1', state2'))
+{-# RULES
+"arrM/>>>" forall (f :: forall a b m . Monad m => a -> m b) g . arrM f >>> arrM g = arrM (f >=> g)
+#-} -- Don't really need rules here because GHC will inline all that anyways
 \end{code}
 \end{comment}
 For two cells \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2},

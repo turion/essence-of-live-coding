@@ -25,7 +25,7 @@ stateShow = gshow `ext2Q` compositionShow `ext2Q` foreverEShow `ext2Q` feedbackS
     myExtQ = extQ
 
     compositionShow :: (Data s1, Data s2) => Composition s1 s2 -> String
-    compositionShow (Composition s1 s2) = stateShow s1 ++ " >>> " ++ stateShow s2
+    compositionShow (Composition (s1, s2)) = stateShow s1 ++ " >>> " ++ stateShow s2
 
     foreverEShow :: (Data e, Data s) => ForeverE e s -> String
     foreverEShow ForeverE { .. } = "forever(" ++ gshow lastException ++ ", " ++ stateShow initState ++ "): " ++ stateShow currentState
