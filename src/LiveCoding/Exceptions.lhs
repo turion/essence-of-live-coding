@@ -76,8 +76,14 @@ Before the exception is thrown, this should certainly be the state of \mintinlin
 but what afterwards?
 Worse, the state type of \mintinline{haskell}{handler e1} depends on the \emph{value} of the exception \mintinline{haskell}{e1}!
 Without having ordered them, dependent types suddenly jump in our faces,
-in the disguise of existential quantification.
-
+in the disguise of existential quantification.\footnote{%
+Unfortunately, we cannot achieve the goal by reverting to the preliminary definition of live programs,
+which did not make the state type existential.
+The corresponding \mintinline{haskell}{Cell} definition would not be an instance of \mintinline{haskell}{Arrow} anymore,
+and the type signatures would bloat indefinitely.
+But worst of all, \mintinline{haskell}{bindCell} would restrict the state of all cells the handler could output to the same type!
+Except in very simple cases, we could not branch to different cells at all.
+}
 Impulsively, we want to shove the existential state type back where it came from.
 Why not simply store \mintinline{haskell}{handler e1} as state once the exception \mintinline{haskell}{e1} was thrown,
 and use the aptly named \mintinline{haskell}{step} from Section \ref{sec:cells} as step function?

@@ -113,7 +113,7 @@ we turn to control flow in Section \ref{sec:control flow}.
 A monadic interface to our live programs is presented.
 
 This article is written in literate Haskell and supplies the library presented here.
-The source code will be made openly available upon publication.\fxerror{Do it}
+The source code will be made openly available upon publication.\fxerror{Do it, or at least post a preview link for the reviewers here.}
 
 \input{../src/LiveCoding/LiveProgram.lhs}
 \input{../app/DemoWai/Env.lhs}
@@ -185,6 +185,7 @@ To use the framework in any setting beyond a toy application,
 wrappers have to be written that explicitly integrate it in the external loops of existing frameworks,
 such as OpenGL, Gloss, or audio libraries.
 \fxerror{And web front- and backends! Reflex is FRPish, so why not this here as well?}
+\fxerror{Implement some example apps in these to show that it works in principle}
 
 The \mintinline{haskell}{Typeable} class allows to extend a generic function such as \mintinline{haskell}{migrate}
 by type-specific cases.
