@@ -19,8 +19,8 @@ import Data.Data
 \fxerror{Split up even more into the individual modules and integrate more with the code}
 
 Our model of a live program will consist of a state and an effectful state transition function.
-A preliminary version is shown in Figure \ref{fig:LiveProgram1}.
-\input{LiveProgram/LiveProgram1.lhs}
+A preliminary version is shown in Figure \ref{fig:LiveProgramPreliminary}.
+\input{LiveProgram/LiveProgramPreliminary.lhs}
 The program is initialised at a certain state,
 and from there its behaviour is defined by repeatedly applying the function \mintinline{haskell}{liveStep} to advance the state and produce effects.
 The type of the state should be encapsulated and thus invisible to the outside,

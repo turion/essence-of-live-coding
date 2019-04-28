@@ -112,6 +112,7 @@ liveCell Cell {..} = LiveProgram
   , liveStep  = fmap snd . flip cellStep ()
   }
 \end{code}
+\fxerror{Isn't this just step from before?}
 \fxwarning{Consider making LiveProgram not a type alias but leave it at its original type and just implement the isomorphism.
 That way we can honestly reuse the machinery from section 2.}
 
@@ -137,6 +138,7 @@ liftCell
   -> Cell      (t m) a b
 liftCell = hoistCell lift
 \end{code}
+\fxerror{I haven't commented on liftCell anywhere?}
 This way, we can successively handle effects until we arrive at \mintinline{haskell}{IO},
 at which point we can execute the live program in the same fashion as in the last section.
 \fxerror{Expand on this, possibly elsewhere. At least cite the relevant sections in the Dunai paper.}
@@ -352,7 +354,7 @@ Making use of the \mintinline{haskell}{Arrows} syntax extension,
 \mintinline{haskell}{feedback} is enough to implement a harmonic oscillator that will produce a sine wave:
 \begin{code}
 sine
-  :: MonadFix m
+  :: Monad m
   => Double -> Cell m () Double
 sine k = feedback 5.5 $ proc ((), pos) -> do
   let acc = - k * pos
@@ -450,7 +452,7 @@ Let us execute it:
 It is clearly visible how the period of the oscillator changed,
 while its position (or, in terms of signal processing, its phase)
 does not jump!
-If we were to use the oscillator in an audio application,
+If we use the oscillator in an audio application,
 we can retune it without hearing a glitch.
 
 \subsection{Monadic stream functions and final coalgebras}
@@ -471,7 +473,8 @@ the \mintinline{haskell}{MSF} definition can be recast in explicit fixpoint form
 type StateTransition m a b s = a -> m (b, s)
 
 data MSF m a b = MSF
-  (StateTransition m a b (MSF m a b))
+  { unMSF :: StateTransition m a b (MSF m a b)
+  }
 \end{code}
 This definition tells us that monadic stream functions are so-called \emph{final coalgebras} of the \mintinline{haskell}{StateTransition} functor
 (for fixed \mintinline{haskell}{m}, \mintinline{haskell}{a}, and \mintinline{haskell}{b}).
@@ -507,12 +510,6 @@ finalityC Cell { .. } = MSF $ \a -> do
   return (b, finalityC $ Cell cellState' cellStep)
 \end{code}
 And the final coalgebra is of course a mere coalgebra itself:
-\begin{code}
-unMSF
-  :: MSF m a b
-  -> StateTransition m a b (MSF m a b)
-unMSF (MSF f) a = f a
-\end{code}
 \begin{code}
 coalgebra :: MSF m a b -> Coalg m a b
 coalgebra msf = Coalg msf unMSF
