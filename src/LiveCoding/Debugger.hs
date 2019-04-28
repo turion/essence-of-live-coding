@@ -19,7 +19,7 @@ import Data.Generics.Aliases
 import Data.Generics.Text (gshow)
 
 stateShow :: Data s => s -> String
-stateShow = gshow `ext2Q` compositionShow `ext2Q` foreverEShow `ext2Q` feedbackShow
+stateShow = gshow `ext2Q` compositionShow `ext2Q` foreverEShow `ext2Q` feedbackShow `ext2Q` parallelShow
   where
     myExtQ :: (Data a, Data b) => (a -> String) -> (b -> String) -> a -> String
     myExtQ = extQ
@@ -27,11 +27,15 @@ stateShow = gshow `ext2Q` compositionShow `ext2Q` foreverEShow `ext2Q` feedbackS
     compositionShow :: (Data s1, Data s2) => Composition s1 s2 -> String
     compositionShow (Composition (s1, s2)) = stateShow s1 ++ " >>> " ++ stateShow s2
 
+    parallelShow :: (Data s1, Data s2) => Parallel s1 s2 -> String
+    parallelShow (Parallel (s1, s2)) = stateShow s1 ++ " >>> " ++ stateShow s2
+
+    -- TODO Where is parallelShow?
     foreverEShow :: (Data e, Data s) => ForeverE e s -> String
     foreverEShow ForeverE { .. } = "forever(" ++ gshow lastException ++ ", " ++ stateShow initState ++ "): " ++ stateShow currentState
 
     feedbackShow :: (Data state, Data s) => Feedback state s -> String
-    feedbackShow (Feedback state s) = "feedback " ++ gshow s ++ " $ " ++ stateShow state
+    feedbackShow (Feedback (state, s)) = "feedback " ++ gshow s ++ " $ " ++ stateShow state
 
     liveBindShow :: (Data e, Data s1, Data s2) => LiveBindState e s1 s2 -> String
     liveBindShow (NotYetThrown s1 s2) = "[NotYet " ++ stateShow s1 ++ "; " ++ stateShow s2 ++ "]"

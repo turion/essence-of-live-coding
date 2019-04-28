@@ -278,8 +278,9 @@ constM
 
 \begin{comment}
 \begin{code}
-data Parallel s1 s2 = Parallel s1 s2
-  deriving (Typeable, Data)
+--data Parallel s1 s2 = Parallel s1 s2
+newtype Parallel s1 s2 = Parallel (s1, s2)
+  deriving Data
 
 instance Monad m => Arrow (Cell m) where
   arr f = Cell
@@ -289,11 +290,11 @@ instance Monad m => Arrow (Cell m) where
 
   Cell state1 step1 *** Cell state2 step2 = Cell { .. }
     where
-      cellState = Parallel state1 state2
-      cellStep (Parallel state1 state2) (a, c) = do
+      cellState = Parallel (state1, state2)
+      cellStep (Parallel (state1, state2)) (a, c) = do
         (b, state1') <- step1 state1 a
         (d, state2') <- step2 state2 c
-        return ((b, d), Parallel state1' state2')
+        return ((b, d), Parallel (state1', state2'))
 
 arrM :: Functor m => (a -> m b) -> Cell m a b
 arrM f = Cell
@@ -313,7 +314,8 @@ Encapsulating state.
 \fxerror{This is unclear. Either have to stress that it's maybe not so nice to encapsulate state by explicitly building the Cell, like we have done with the sum, or move feedback at the beginning of the section.}
 The most general such construction is the feedback loop:
 \begin{code}
-data Feedback s s' = Feedback s s'
+-- data Feedback s s' = Feedback s s'
+newtype Feedback s s' = Feedback (s, s')
   deriving Data
 
 feedback
@@ -326,10 +328,10 @@ feedback
 \begin{code}
 feedback s (Cell state step) = Cell { .. }
   where
-    cellState = Feedback state s
-    cellStep (Feedback state s) a = do
+    cellState = Feedback (state, s)
+    cellStep (Feedback (state, s)) a = do
       ((b, s'), state') <- step state (a, s)
-      return (b, Feedback state' s')
+      return (b, Feedback (state', s'))
 
 instance MonadFix m => ArrowLoop (Cell m) where
   loop (Cell state step) = Cell { .. }
