@@ -101,7 +101,7 @@ sumC :: (Monad m, Num a, Data a) => Cell m a a
 sumC = Cell { .. }
   where
     cellState = 0
-    cellStep accum a = return (accum + a, accum + a)
+    cellStep accum a = return (accum, accum + a)
 \end{code}
 
 \fxerror{Possibly put IO later because here we can't explain yet how we'll end up with () input/output}
@@ -357,23 +357,25 @@ sumFeedback
   :: (Monad m, Num a, Data a)
   => Cell m a a
 sumFeedback = feedback 0 $ arr
-  $ \(a, accum) -> (a + accum, a + accum)
+  $ \(a, accum) -> (accum, a + accum)
 \end{code}
 \fxwarning{Depending on implementation use let again (and above)}
 \fxwarning{It's more concise maybe if we return accum and not accum'? Then we can elide the let?}
 \fxwarning{Possibly remark on Data instance of s?}
 
 Making use of the \mintinline{haskell}{Arrows} syntax extension,
-\mintinline{haskell}{feedback} is enough to implement a harmonic oscillator that will produce a sine wave:
+we can implement a harmonic oscillator that will produce a sine wave with amplitude 10 and given period length:
+\fxwarning{Probably comment on rec and ArrowFix}
 \begin{code}
 sine
-  :: Monad m
+  :: MonadFix m
   => Double -> Cell m () Double
-sine k = feedback 5.5 $ proc ((), pos) -> do
-  let acc = - k * pos
-  vel <- integrate -< acc
-  pos <- integrate -< vel
-  returnA -< (pos, pos)
+sine t = proc () -> do
+  rec
+    let acc = - (2 * pi / t) ^ 2 * (pos - 10)
+    vel <- integrate -< acc
+    pos <- integrate -< vel
+  returnA -< pos
 \end{code}
 \fxerror{I might have changed the implementation here.
 So update readouts. Or just include them as files and have a makefile to update them
