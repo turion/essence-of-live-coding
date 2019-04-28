@@ -39,9 +39,8 @@ sinesForever' = do
 It typechecks, but it does \emph{not} execute correctly.
 \fxerror{Why does it hang? Does it really hang?}
 As the initial state is built up,
-the definition of \mintinline{haskell}{foo} inquires about the initial state of the right hand side of \mintinline{haskell}{*>},
-but this is again \mintinline{haskell}{foo},
-\fxerror{foo*>!}
+the definition of \mintinline{haskell}{sinesForever'} inquires about the initial state of all cells in the \mintinline{haskell}{do}-expression,
+but last one is again \mintinline{haskell}{foo},
 and thus already initialising such a cell hangs in an infinite loop.
 The resolution is an explicit loop operator,
 and faith in the library user to remember to employ it.
@@ -111,30 +110,17 @@ Now we can finally implement our cell:
 \begin{code}
 sinesForever :: MonadFix m => Cell m () Double
 sinesForever = foreverC $ runCellExcept $ do
-  try $ sine 3  >>> throwWhen0
-  try $ sine 10 >>> throwWhen0
+  try $ sine 4 >>> throwWhen0
+  try $ sine 6 >>> throwWhen0
 
 printSinesForever :: LiveProgram IO
 printSinesForever = liveCell
   $   sinesForever
-  >>> arrM print
-  >>> constM (threadDelay 100000)
+  >>> printEverySecond
 \end{code}
-
-\begin{verbatim}
-0.1
-0.18115044407846126
-0.22815483389823715
-0.23215305071467096
-0.19239144841308464
-0.11636491245461553
-1.8404107249964052e-2
-0.1
-0.13716814692820414
-8.815100531717399e-2
-0.1
-[...]
-\end{verbatim}
+Let us run it:
+\verbatiminput{../DemoSinesForever.txt}
+\fxwarning{Not looking too good. Also, is the [...] good or not? (Here and elsewhere)}
 
 \fxerror{``Forever and ever?'' Show graceful shutdown with ExceptT. Have to change the runtime slightly for this.}
 \fxnote{Awesome idea: Electrical circuits simulation where we can change the circuits live!}

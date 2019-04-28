@@ -149,18 +149,19 @@ Let us again change the period of the oscillator,
 only this time not manually,
 but at the moment the position reaches 0:
 
+\fxerror{This is evil. pos < 0 depends on numerical instability.}
 \begin{code}
 throwWhen0
   :: Monad m
   => Cell (ExceptT () m) Double Double
 throwWhen0 = proc pos ->
-  if pos <= 0
+  if pos < 0
   then throwC  -< ()
   else returnA -< pos
 
 sineChangeE :: CellExcept IO () Double Void
 sineChangeE = do
-  try $ sine 3 >>> throwWhen0
+  try $ sine 6 >>> throwWhen0
   try $ (constM $ lift $ putStrLn "I changed!")
       >>> throwC
   safe $ sine 10
@@ -168,26 +169,10 @@ sineChangeE = do
 printSineChange :: LiveProgram IO
 printSineChange = liveCell
   $   safely sineChangeE
-  >>> arrM print
-  >>> constM (threadDelay 100000)
+  >>> printEverySecond
 \end{code}
-\begin{verbatim}
-0.1
-0.18115044407846126
-0.22815483389823715
-0.23215305071467096
-0.19239144841308464
-0.11636491245461553
-1.8404107249964052e-2
-I changed!
-0.1
-0.13716814692820414
-8.815100531717399e-2
--1.625304643605388e-2
--0.11044500793288962
--0.1352423243201989
-\end{verbatim}
-
+Executing it gives:
+\verbatiminput{../DemoSineChange.txt}
 \begin{comment}
 \begin{code}
 
