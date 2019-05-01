@@ -16,5 +16,7 @@ speedtest: build
 build:
 	stack build
 
-pdf: demos
-	cd article && pdflatex -shell-escape -interact nonstopmode EssenceOfLiveCoding.lhs
+article: demos latex
+
+latex:
+	cd article && pdflatex -shell-escape -interact nonstopmode EssenceOfLiveCoding.lhs && pdflatex -shell-escape -interact nonstopmode EssenceOfLiveCodingAppendix.lhs

@@ -12,7 +12,6 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo #-}
-{-# LANGUAGE StrictData #-}
 {-# LANGUAGE TupleSections #-}
 module LiveCoding.Cell where
 
@@ -90,7 +89,7 @@ step
   => Cell m a b
   -> a -> m (b, Cell m a b)
 step Cell { .. } a = do
-  (!b, !cellState') <- cellStep cellState a
+  (b, cellState') <- cellStep cellState a
   return (b, Cell { cellState = cellState', .. })
 \end{code}
 
@@ -185,6 +184,9 @@ they implement sequential composition:
 newtype Composition state1 state2 = Composition (state1, state2)
   deriving Data
 
+getState2 :: Composition state1 state2 -> state2
+getState2 (Composition (state1, state2)) = state2
+
 instance Monad m => Category (Cell m) where
   id = Cell
     { cellState = ()
@@ -196,13 +198,14 @@ instance Monad m => Category (Cell m) where
       cellState = Composition (state1, state2)
       cellStep (Composition (state1, state2)) a = do
         (b, state1') <- step1 state1 a
-        (c, state2') <- step2 state2 b
+        (!c, state2') <- step2 state2 b
         return (c, Composition (state1', state2'))
 {-# RULES
 "arrM/>>>" forall (f :: forall a b m . Monad m => a -> m b) g . arrM f >>> arrM g = arrM (f >=> g)
 #-} -- Don't really need rules here because GHC will inline all that anyways
 \end{code}
 \end{comment}
+\fxwarning{Would be nice to understand the strictness and also the tuple story}
 For two cells \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2},
 the composite \mintinline{haskell}{cell1 >>> cell2} holds the state of both \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2},
 \fxwarning{Syntax highlighting is off}
@@ -339,10 +342,22 @@ instance MonadFix m => ArrowLoop (Cell m) where
     where
       cellState = state
       cellStep state a = do
-        rec ((b, c), state') <- step state (a, c)
+        rec ((b, c), state') <- (\c' -> step state (a, c')) c
         return (b, state')
+
+{-
+instance ArrowLoop (Cell Identity) where
+  loop (Cell state step) = Cell { .. }
+    where
+      cellState = state
+      changedStep state (a, c) = runIdentity $ step state (a, c)
+      cellStep state a = let ((b, c), state') = (\c' -> changedStep state (a, c')) c
+        in return (b, state')
+-}
 \end{code}
 \end{comment}
+\fxwarning{It's probably a performance penalty to have fixIO. Can we tweak the Identity thing in?}
+\fxerror{Choose: Either need to rewrite stuff somehow without fixIO (e.g. Arrowloop only for polymorphic stuff or Identity monad), or spaceleaks, or different integral}
 \fxwarning{Say that ArrowLoop exists and isn't the same as feedback}
 It enables us to write delays:
 \begin{code}
@@ -367,11 +382,15 @@ sumFeedback = feedback 0 $ arr
 Making use of the \mintinline{haskell}{Arrows} syntax extension,
 we can implement a harmonic oscillator that will produce a sine wave with amplitude 10 and given period length:
 \fxwarning{Probably comment on rec and ArrowFix}
+\fxerror{Hoistthing is not explain}
 \begin{code}
+--hoistThing :: Monad m => Cell Identity a b -> Cell m a b
+--hoistThing = hoistCell $ return . runIdentity
 sine
   :: MonadFix m
   => Double -> Cell m () Double
-sine t = proc () -> do
+sine t = --hoistThing $ 
+  proc () -> do
   rec
     let acc = - (2 * pi / t) ^ 2 * (pos - 10)
     vel <- integrate -< acc

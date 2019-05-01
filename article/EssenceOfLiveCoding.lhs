@@ -1,15 +1,4 @@
-\documentclass[sigplan,10pt,screen]{acmart}
-
-\usepackage[utf8]{inputenc}
-\usepackage{minted}
-\usepackage[nomargin,inline]{fixme}
-\usepackage{hyperref}
-\usepackage{verbatim}
-
-\bibliographystyle{ACM-Reference-Format}
-
-\newenvironment{code}{\VerbatimEnvironment\begin{minted}{haskell}}{\end{minted}}
-\newenvironment{spec}{\VerbatimEnvironment\begin{minted}{haskell}}{\end{minted}}
+\documentclass{essence}
 
 \begin{document}
 \title{The essence of live coding: Change the program, keep the state!}
@@ -154,7 +143,8 @@ We would like to adopt this approach here,
 but we are forewarned:
 \mintinline{haskell}{Cell}s are slightly less expressive than Dunai's stream functions,
 due to the \mintinline{haskell}{Data} constraint on the internal state.
-It will turn out that we can implement \mintinline{haskell}{Functor} and \mintinline{haskell}{Applicative} instances effortlessly,
+It will turn out that we can implement a \mintinline{haskell}{Functor} instance effortlessly,
+and an \mintinline{haskell}{Applicative} instance with a little work,
 but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 
 \input{../src/LiveCoding/Exceptions.lhs}

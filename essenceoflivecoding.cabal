@@ -15,17 +15,22 @@ cabal-version:       >=1.10
 library
   exposed-modules:
       LiveCoding
-    , LiveCoding.ApplicativeCellExcept
     , LiveCoding.Bind
     , LiveCoding.Cell
     , LiveCoding.CellExcept
+    , LiveCoding.CellExcept.Applicative
+    , LiveCoding.CellExcept.Monad
     , LiveCoding.Commutable
     , LiveCoding.Debugger
+    , LiveCoding.Debugger.StatePrint
     , LiveCoding.Exceptions
     , LiveCoding.Forever
     , LiveCoding.LiveProgram
     , LiveCoding.Migrate
     , LiveCoding.RuntimeIO
+
+  other-modules:
+      LiveCoding.CellExcept.Newtype
 
   other-extensions:    DeriveDataTypeable
   build-depends:
