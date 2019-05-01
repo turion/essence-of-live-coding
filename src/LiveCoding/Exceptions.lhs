@@ -28,6 +28,7 @@ import LiveCoding.Cell
 \end{comment}
 
 \paragraph{The return of the monad?}
+\fxwarning{This paragraph name makes no sense}
 For simply throwing exceptions, no new concepts are needed:
 \begin{code}
 throwC
@@ -52,7 +53,7 @@ throwIf_ condition = throwIf condition ()
 \end{code}
 \end{comment}
 
-\input{../src/LiveCoding/ApplicativeCellExcept.lhs}
+\input{../src/LiveCoding/CellExcept/Newtype.lhs}
 
 \paragraph{An existential crisis}
 Invigorated, we want to implement the holy grail of Haskell,
@@ -83,7 +84,7 @@ which did not make the state type existential.
 The corresponding \mintinline{haskell}{Cell} definition would not be an instance of \mintinline{haskell}{Arrow} anymore,
 and the type signatures would bloat indefinitely.
 But worst of all, \mintinline{haskell}{bindCell} would restrict the state of all cells the handler could output to the same type!
-Except in very simple cases, we could not branch to different cells at all.
+Except in very simple cases, we could not branch between different cells at all.
 }
 Impulsively, we want to shove the existential state type back where it came from.
 Why not simply store \mintinline{haskell}{handler e1} as state once the exception \mintinline{haskell}{e1} was thrown,
@@ -162,34 +163,13 @@ The state of \mintinline{haskell}{cell1 >>>= cell2} not only holds the state of 
 but also the \emph{control flow state},
 that is, it designates which cell currently has control.
 
-\paragraph{Applying it to \mintinline{haskell}{Applicative}}
+\paragraph{Using exceptions}
+\fxerror{Put Applicative in an appendix. Maybe Monad as well?}
 Armed with this new control flow operator,
 we can already implement quite a few nontrivial programs.
 \fxerror{example}
-And like the sequential application operator \mintinline{haskell}{<*>} of the \mintinline{haskell}{Applicative} class
+Like the sequential application operator \mintinline{haskell}{<*>} of the \mintinline{haskell}{Applicative} class
 can be defined from \mintinline{haskell}{>>=},
-it can also be defined from \mintinline{haskell}{>>>=},
-as we shall see now!
-If we are allowed to read the first exception during the execution of the second cell,
-we can simply re-raise it once the second exception is thrown:
-\begin{code}
-andThen
-  :: (Data e1, Monad m)
-  => Cell (ExceptT  e1      m) a b
-  -> Cell (ExceptT      e2  m) a b
-  -> Cell (ExceptT (e1, e2) m) a b
-cell1 `andThen` cell2
-  = cell1 >>>= hoistCell readException cell2
-  where
-    readException
-      :: Functor m
-      => ExceptT                 e2  m  x
-      -> ReaderT e1 (ExceptT(e1, e2) m) x
-    readException exception = ReaderT
-      $ \e1 -> withExceptT (e1, ) exception
-\end{code}
-Given two \mintinline{haskell}{Cell}s,
-the first may throw an exception,
-upon which the second cell gains control.
-As soon as it throws a second exception,
-both exceptions are thrown as a tuple.
+it can also be defined from \mintinline{haskell}{>>>=}.
+This is shown at length in the separate appendix.
+\fxerror{And we can also do monads. Also in the appendix.}

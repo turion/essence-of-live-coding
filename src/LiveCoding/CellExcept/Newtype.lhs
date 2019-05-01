@@ -1,12 +1,7 @@
 \begin{comment}
 \begin{code}
-module LiveCoding.ApplicativeCellExcept where
+module LiveCoding.CellExcept.Newtype where
 
--- transformers
-import Control.Monad.Trans.Except
-
--- essenceoflivecoding
-import LiveCoding.Cell
 \end{code}
 \end{comment}
 
@@ -34,5 +29,5 @@ instance Functor m
 The \mintinline{haskell}{pure} function of the \mintinline{haskell}{Applicative} class
 (or equivalently, \mintinline{haskell}{return} of the \mintinline{haskell}{Monad}),
 is simply throwing an exception,
+\fxwarning{Can quote the actual function and section}
 wrapped in the newtype.
-

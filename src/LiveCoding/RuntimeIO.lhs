@@ -15,16 +15,12 @@ import Data.IORef
 
 -- essenceoflivecoding
 import LiveCoding.LiveProgram
-import LiveCoding.Debugger -- TODO This is where Debuggers should live
+import LiveCoding.Debugger
 import LiveCoding.Migrate
 
 \end{code}
 \end{comment}
 \begin{code}
--- Could also consider debuggers that modify the state
-newtype Debugger = Debugger { debugState :: forall s . Data s => s -> IO () }
-
-noDebugger = Debugger $ const $ return ()
 
 launch :: LiveProgram IO -> IO (MVar (LiveProgram IO))
 launch liveProg = do
@@ -75,7 +71,6 @@ backgroundWithDebugger var debugger = forever $ do
   combine var liveProg'
 
 background :: MVar (LiveProgram IO) -> IO ()
--- background var = backgroundWithDebugger var $ stateShow >>> putStrLn
 background var = backgroundWithDebugger var noDebugger
 
 combine :: MVar (LiveProgram IO) -> LiveProgram IO -> IO ()
