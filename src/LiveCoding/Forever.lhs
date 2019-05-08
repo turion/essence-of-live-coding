@@ -85,7 +85,7 @@ data ForeverE e s = ForeverE
 and the initial exception \mintinline{haskell}{e}.
 Then \mintinline{haskell}{cell} is stepped until it encounters an exception.
 This new exception is stored,
-and the cell restarted with the original initial state.
+and the cell is restarted with the original initial state.
 The cell may use the \mintinline{haskell}{ReaderT e} effect
 to ask for the last thrown exception
 (or the initial exception, if none was thrown yet).

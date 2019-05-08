@@ -9,7 +9,8 @@ module DemoWai.DemoWai2 where
 -- base
 import Control.Concurrent.MVar
 import Data.Data
-import Data.Maybe (fromMaybe)
+import Data.Maybe (maybeToList)
+import Prelude hiding (unlines)
 
 -- bytestring
 import Data.ByteString.Lazy.Char8
@@ -28,6 +29,7 @@ import DemoWai.Env
 \end{code}
 \end{comment}
 
+\fxwarning{Can we simplify this server?}
 \fxwarning{For fun we could also make a server out of it that says "You again!" when the same user agent comes and doesn't increment the counter. (That would save the fromStrict)}
 \begin{figure}
 \begin{code}
@@ -43,15 +45,15 @@ newServer = LiveProgram
       Env { .. } <- ask
       request <- lift $ takeMVar requestVar
       let nVisitorsNew = nVisitors + 1
-          msg =  "This is Fancy Nu $3rv3r!\n"
-            <> "You are visitor #"
-            <> (pack $ show nVisitorsNew)
-            <> maybe "." (".\nLast agent: " <>)
-               lastAgent
           lastAgentNew = fmap fromStrict
             $ lookup "User-Agent"
             $ requestHeaders request
-      lift $ putMVar responseVar msg
+      lift $ putMVar responseVar $ unlines $
+        [ "This is Fancy Nu $3rv3r!"
+        , "You are visitor #"
+        <> (pack $ show nVisitorsNew) <> "."
+        ] ++ maybeToList
+        (("Last agent: " <>) <$> lastAgent)
       return $ State nVisitorsNew lastAgentNew
   }
 \end{code}

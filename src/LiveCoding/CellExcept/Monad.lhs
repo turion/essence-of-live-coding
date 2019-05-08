@@ -1,3 +1,19 @@
+\begin{comment}
+\begin{code}
+{-# LANGUAGE Arrows #-}
+
+module LiveCoding.CellExcept.Monad where
+
+-- transformers
+import Control.Monad.Trans.Except
+import Control.Monad.Trans.Reader
+
+-- essenceoflivecoding
+import LiveCoding.Cell
+import LiveCoding.Exceptions
+
+\end{code}
+\end{comment}
 
 \subsection{Finite patience with monads}
 \fxerror{Explain that we're using applicative do, and use it in example?}
@@ -72,7 +88,7 @@ as has been done for \mintinline{haskell}{Bool}.
 
 But certainly, we don't want to write out all possible values of a type before we can bind it!
 Again, the Haskellers' aversion to boilerplate has created a solution that can be tailored to our needs:
-Generic deriving \cite{magalhaes2010generic}.
+Generic deriving \cite{GenericDeriving}.
 We simply need to implement a bind function for generic sum types and product types,
 then this function can be abstracted into a type class \mintinline{haskell}{Finite},
 and GHC can infer a default instance for every algebraic data type by adding a single line of boilerplate.

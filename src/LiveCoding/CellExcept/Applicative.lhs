@@ -1,14 +1,47 @@
 \begin{comment}
 \begin{code}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
+
 module LiveCoding.CellExcept.Applicative where
+
+-- base
+import Data.Data
 
 -- transformers
 import Control.Monad.Trans.Except
+import Control.Monad.Trans.Reader
 
 -- essenceoflivecoding
 import LiveCoding.Cell
+import LiveCoding.Exceptions
+
 \end{code}
 \end{comment}
+If we are allowed to read the first exception during the execution of the second cell,
+we can simply re-raise it once the second exception is thrown:
+\begin{code}
+andThen
+  :: (Data e1, Monad m)
+  => Cell (ExceptT  e1      m) a b
+  -> Cell (ExceptT      e2  m) a b
+  -> Cell (ExceptT (e1, e2) m) a b
+cell1 `andThen` cell2
+  = cell1 >>>= hoistCell readException cell2
+  where
+    readException
+      :: Functor m
+      => ExceptT                 e2  m  x
+      -> ReaderT e1 (ExceptT(e1, e2) m) x
+    readException exception = ReaderT
+      $ \e1 -> withExceptT (e1, ) exception
+\end{code}
+Given two \mintinline{haskell}{Cell}s,
+the first may throw an exception,
+upon which the second cell gains control.
+As soon as it throws a second exception,
+both exceptions are thrown as a tuple.
 
 At this point, we unfortunately have to give up the efficient \mintinline{haskell}{newtype}.
 The spoilsport is, again the type class \mintinline{haskell}{Data},
@@ -27,7 +60,7 @@ data CellExcept m a b e = forall e' .
   }
 \end{code}
 While ensuring that we only store cells with exceptions that can be \emph{bound},
-we allow do not restrict the parameter type \mintinline{haskell}{e}.
+we do not restrict the parameter type \mintinline{haskell}{e}.
 
 It is known that this construction gives rise to a \mintinline{haskell}{Functor} instance for free:
 \begin{code}
@@ -57,39 +90,3 @@ instance Monad m
       cellExcept = cell1 `andThen` cell2
 \end{code}
 \end{comment}
-
-We can enter the \mintinline{haskell}{CellExcept} context from an exception-throwing cell,
-trying to execute it until the exception occurs:
-\begin{spec}
-try
-  :: Data          e
-  => Cell (ExceptT e m) a b
-  -> CellExcept      m  a b e
-\end{spec}
-\begin{comment}
-\begin{code}
--- try :: (Data e, Commutable e) => Cell (ExceptT e m) a b -> CellExcept m a b e
-try :: Data e => Cell (ExceptT e m) a b -> CellExcept m a b e
-\end{code}
-\end{comment}
-\begin{code}
-try = CellExcept id
-\end{code}
-And we can leave it safely once we have proven that there are no exceptions left to throw,
-i.e. the exception type is empty:
-\begin{code}
-safely
-  :: Monad      m
-  => CellExcept m a b Void
-  -> Cell       m a b
-safely = hoistCell discardVoid . runCellExcept
-
-discardVoid
-  :: Functor      m
-  => ExceptT Void m a
-  ->              m a
-discardVoid
-  = fmap (fromRight
-      (error "safely: Received Left")
-    ) . runExceptT
-\end{code}

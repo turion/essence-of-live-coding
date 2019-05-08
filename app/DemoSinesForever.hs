@@ -1,12 +1,13 @@
 -- TODO Fix imports to a single one
 -- essenceoflivecoding
-import LiveCoding
+import LiveCoding.Debugger
+import LiveCoding.Debugger.StatePrint
 import LiveCoding.Cell
 import LiveCoding.RuntimeIO
 import LiveCoding.Forever
 
 main = do
   (debugger, observer) <- countDebugger
-  var <- launchWithDebugger printSinesForever debugger
+  var <- launchWithDebugger printSinesForever $ debugger -- <> statePrint
   await observer $ 20 * stepRate
   putStrLn "[...]"

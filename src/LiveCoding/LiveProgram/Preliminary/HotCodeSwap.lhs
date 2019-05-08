@@ -1,10 +1,25 @@
+\begin{comment}
+\begin{code}
+{-# LANGUAGE RecordWildCards #-}
+
+module LiveCoding.LiveProgram.Preliminary.HotCodeSwap where
+
+-- base
+import Control.Concurrent
+import Control.Monad (forever)
+
+-- essenceoflivecoding
+import LiveCoding.LiveProgram.Preliminary.LiveProgramPreliminary
+\end{code}
+\end{comment}
+
 \begin{figure}
 \begin{code}
 hotCodeSwap
   :: (s -> s')
-  -> LiveProgram s'
-  -> LiveProgram s
-  -> LiveProgram s'
+  -> LiveProgram m s'
+  -> LiveProgram m s
+  -> LiveProgram m s'
 hotCodeSwap migrate newProgram oldProgram
   = LiveProgram
     { liveState = migrate $ liveState oldProgram
@@ -18,24 +33,24 @@ hotCodeSwap migrate newProgram oldProgram
 It's getting even more complicated: We have to kill the old MVar and create a new one every time we update. Then we also have to kill the old server, or update the ticking function}
 \begin{comment}
 \begin{code}
-type LiveRef s = (MVar (LiveProgram s), MVar (IO ()))
-launch :: LiveProgram s -> IO (LiveRef s)
+type LiveRef s = (MVar (LiveProgram IO s), MVar (IO ()))
+launch :: LiveProgram IO s -> IO (LiveRef s)
 launch liveProg = do
-  var <- newMVar liveProg
-  var <- newMVar $ tick var
+  progVar <- newMVar liveProg
+  tickVar <- newMVar $ tick progVar
   forkIO $ forever $ do
-    action <- takeMVar var
+    action <- takeMVar tickVar
     action
-    tryPutMVar var action
-  return (var, var)
+    tryPutMVar tickVar action
+  return (progVar, tickVar)
 
-tick :: MVar (LiveProgram s) -> IO ()
+tick :: MVar (LiveProgram IO s) -> IO ()
 tick var = do
   LiveProgram {..} <- takeMVar var
   liveState' <- liveStep liveState
   putMVar var LiveProgram { liveState = liveState', .. }
 
-swapWith :: (s -> s') -> LiveProgram s' -> LiveRef s -> IO (LiveRef s')
+swapWith :: (s -> s') -> LiveProgram IO s' -> LiveRef s -> IO (LiveRef s')
 swapWith migrate (LiveProgram _newState newStep) (progVar, actionVar) = do
   _ <- takeMVar actionVar
   LiveProgram oldState oldStep <- takeMVar progVar

@@ -2,6 +2,11 @@
 \begin{code}
 module LiveCoding.CellExcept.Newtype where
 
+-- transformers
+import Control.Monad.Trans.Except
+
+-- essenceoflivecoding
+import LiveCoding.Cell
 \end{code}
 \end{comment}
 

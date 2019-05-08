@@ -27,6 +27,8 @@
 
 \maketitle
 
+\fxerror{What's this blank page doing? Might be from my class definition.}
+
 \section{Introduction}
 
 Livecoding has come to denote various concepts,
@@ -115,19 +117,19 @@ The source code will be made openly available upon publication.\fxerror{Do it, o
 
 \fxwarning{Small overview paragraph here? And in the other corresponding places?}
 
-Writing out the complete state of the live program explicitly is, of course, tedious.
+Writing out the complete state of the live program explicitly is tedious.
 We have to plan the whole program in advance and artificially separate its state from the step function.
 Such a development approach prevents us from writing programs in a modular fashion.
 But composing simple reusable building blocks is a key tenet in functional programming which we would not want to miss.
 The purpose of this section is to show that we can develop live programs in a modular fashion by extending the approach presented so far to an arrowized FRP framework.
 
-\subsection{Arrowized FRP with effects}
+%\subsection{Arrowized FRP with effects}
 
 \input{../src/LiveCoding/Cell.lhs}
 
 \subsection{Exceptions}
 Section \ref{sec:msfs and final coalgebras} showed that \mintinline{haskell}{Cell}s and Dunai's monadic stream functions are very much alike,
-and it makes only sense to adopt its approach to control flow.
+and it makes sense to adopt its approach to control flow.
 In Dunai, we can switch from executing one stream function to another by \emph{throwing an exception}.
 Whenever we wish to hand over control to another component,
 we throw an exception as an effect in the \mintinline{haskell}{ExceptT} monad
@@ -154,6 +156,10 @@ but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 \input{../src/LiveCoding/Bind.lhs}
 \input{../src/LiveCoding/Forever.lhs}
 \fxerror{reactimate}
+
+\section{Tooling}
+\input{../src/LiveCoding/Debugger.lhs}
+\input{../essenceoflivecoding-quickcheck/src/LiveCoding/QuickCheck.lhs}
 
 \section{Conclusion}
 
@@ -187,6 +193,9 @@ Usability could be increased by offering to extend the automatic migration by ma
 
 \fxerror{FRP was originally about the passage of time. Can recover that and much more by reimplementing Rhine in this framework (should now be possible)}
 
+\fxerror{We could quickcheck stuff because the state could be automatically generated}
+\fxerror{Say somewhere why we used syb instead of Generics?}
+
 The automatic migration only guarantees that the new state will typecheck.
 However, if further invariants beyond the reach of Haskell's type system are expected to hold for the old state,
 those are not guaranteed for the new state.
@@ -198,8 +207,9 @@ It would be very interesting to see whether automatic migration can be generalis
 
 \medskip
 
-The author thanks Iván Pérez for his work on Yampa, Dunai, and numerous other projects in the FRP world,
-Paolo Capriotti for the initial idea that led to monadic exception control flow,
+The author thanks Iván Pérez for his work on Yampa, Dunai, and numerous other projects in the FRP world;
+the reviewers of the Haskell Symposium for very helpful comments that enriched and streamlined this work;
+Paolo Capriotti for the initial idea that led to monadic exception control flow;
 and the sonnen VPP team, especially Fabian Linges,
 for helpful discussions about hot code swap in Erlang.
 
