@@ -26,8 +26,7 @@ import LiveCoding.Cell
 \end{code}
 \end{comment}
 
-\paragraph{The return of the monad?}
-\fxwarning{This paragraph name makes no sense}
+\paragraph{Throwing exceptions}
 For simply throwing exceptions, no new concepts are needed:
 \begin{code}
 throwC
@@ -38,6 +37,19 @@ throwC = arrM throwE
 The above function simply throws the incoming exception.
 To throw an exception only if a certain condition is satisfied,
 \mintinline{haskell}{if}-constructs in arrow syntax can be readily used.
+For example, this cell forwards its input for a given number of seconds,
+and then throws an exception:
+\begin{code}
+wait
+  :: Monad            m
+  => Double
+  -> Cell (ExceptT () m) a a
+wait tMax = proc a -> do
+  t <- localTime -< ()
+  if t >= tMax
+    then throwC  -< ()
+    else returnA -< a
+\end{code}
 
 \begin{comment}
 \begin{code}
@@ -51,8 +63,6 @@ throwIf_ :: Monad m => (a -> Bool) -> Cell (ExceptT () m) a a
 throwIf_ condition = throwIf condition ()
 \end{code}
 \end{comment}
-
-\input{../src/LiveCoding/CellExcept/Newtype.lhs}
 
 \paragraph{Handling exceptions}
 In usual Haskell, the \mintinline{haskell}{ExceptT e} monad transformer is handled by running it in its underlying context:
@@ -86,10 +96,6 @@ the state switches to \mintinline{haskell}{Exception e},
 and the exception is output forever.
 \begin{comment}
 \begin{code}
-runExceptC
-  :: (Data e, Monad m)
-  => Cell (ExceptT e m) a           b
-  -> Cell            m  a (Either e b)
 runExceptC (Cell state step) = Cell { .. }
   where
     cellState = NotThrown state
@@ -106,7 +112,7 @@ runExceptC (Cell state step) = Cell { .. }
 \end{comment}
 
 As soon as the exception is thrown,
-we can ``bind'' it to further cells as an extra input:
+we can ``live bind'' it to further cells as an extra input:
 \begin{code}
 (>>>=) :: (Data e1, Monad m)
   => Cell (ExceptT e1    m)      a  b
@@ -125,16 +131,15 @@ As soon as the exception is thrown, the second cell is activated and fed with th
 
 \begin{comment}
 \begin{code}
-(>>>=) :: (Data e1, Monad m)
+(>>>==) :: (Data e1, Monad m)
   => Cell (ExceptT e1             m)  a b
   -> Cell (ReaderT e1 (ExceptT e2 m)) a b
   -> Cell             (ExceptT e2 m)  a b
-(>>>=) cell1 cell2 = proc a -> do
+(>>>==) cell1 cell2 = proc a -> do
   eb <- liftCell $ runExceptC cell1 -< a
   case eb of
     Left e -> runReaderC' cell2 -< (e, a)
     Right b -> returnA -< b
---cell1 >>>= cell2 = liveBind (liftCell $ runExceptC cell1) (runReaderC' cell2)
 
 runReaderC' :: Cell (ReaderT r m) a b -> Cell m (r, a) b
 runReaderC' Cell { .. } = Cell
@@ -143,25 +148,6 @@ runReaderC' Cell { .. } = Cell
   }
 \end{code}
 \end{comment}
-Armed with this new control flow operator,
-called ``live bind'',
-we can already implement quite a few nontrivial programs.
-\fxerror{example}
-The crucial advantage of handling control flow this way
-is that the \emph{control state}
--- that is, the information which exceptions have been thrown and which cell is currently active --
-is encoded completely in the overall state of the live program,
-and can thus be migrated automatically.
-If \mintinline{haskell}{cell1 >>>= cell2} has already passed control to \mintinline{haskell}{cell2},
-and we edit the definition of \mintinline{haskell}{cell2} and reload,
-then the migrated state will correctly migrate the state of \mintinline{haskell}{cell2} and remember to execute it.
-This is in contrast to simplistic approaches to live coding in which the control flow state is forgotten upon reload,
-and restarted.
-\fxerror{example}
 
-Like the sequential application operator \mintinline{haskell}{<*>} of the \mintinline{haskell}{Applicative} class
-can be defined from \mintinline{haskell}{>>=},
-it can also be defined from \mintinline{haskell}{>>>=}.
-As a technical tour-de-force,
-even a constrained \mintinline{haskell}{Monad} instance for \mintinline{haskell}{CellExcept} can be derived.
-This is shown at length in the separate appendix.
+\input{../src/LiveCoding/CellExcept/Newtype.lhs}
+

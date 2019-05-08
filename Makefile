@@ -1,4 +1,4 @@
-demos: build demo-sine demo-sine-change demo-sines-forever
+demos: build demo-sine demo-sine-wait demo-sine-wait-change demo-sines-forever
 
 demo-sine:
 	stack exec DemoSine > DemoSine.txt
@@ -7,8 +7,11 @@ demo-sine:
 demo-sines-forever:
 	stack exec DemoSinesForever > DemoSinesForever.txt
 
-demo-sine-change:
-	stack exec DemoSineChange > DemoSineChange.txt
+demo-sine-wait:
+	stack exec DemoSineWait > DemoSineWait.txt
+
+demo-sine-wait-change:
+	stack exec DemoSineWaitChange > DemoSineWaitChange.txt
 
 speedtest: build
 	time stack exec SpeedTest

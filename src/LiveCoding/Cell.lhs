@@ -491,11 +491,11 @@ with our favourite Haskell operator varying its horizontal position:
 simpleASCIIArt :: Double -> String
 simpleASCIIArt n = replicate (round n) ' ' ++ ">>="
 
-printEverySecond :: Cell IO Double ()
-printEverySecond = proc pos -> do
+printEverySecond :: Cell IO String ()
+printEverySecond = proc string -> do
   count <- sumC -< 1 :: Integer
   if count `mod` stepRate == 0
-    then arrM putStrLn -< simpleASCIIArt pos
+    then arrM putStrLn -< string
     else returnA       -< ()
 \end{code}
 \fxerror{Bring ArrowChoice earlier and give it "print every 100th" as example}
@@ -505,6 +505,7 @@ written in FRP, is ready:
 printSine :: Double -> LiveProgram IO
 printSine t = liveCell
   $   sine t
+  >>> arr simpleASCIIArt
   >>> printEverySecond
 \end{code}
 \fxwarning{At least ASCII art. Maybe mention that we could use this in gloss, audio or whatever?}

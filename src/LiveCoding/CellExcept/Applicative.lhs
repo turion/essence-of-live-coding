@@ -28,7 +28,7 @@ andThen
   -> Cell (ExceptT      e2  m) a b
   -> Cell (ExceptT (e1, e2) m) a b
 cell1 `andThen` cell2
-  = cell1 >>>= hoistCell readException cell2
+  = cell1 >>>== hoistCell readException cell2
   where
     readException
       :: Functor m

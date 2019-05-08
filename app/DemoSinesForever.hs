@@ -9,5 +9,5 @@ import LiveCoding.Forever
 main = do
   (debugger, observer) <- countDebugger
   var <- launchWithDebugger printSinesForever $ debugger -- <> statePrint
-  await observer $ 20 * stepRate
+  await observer $ 12 * stepRate
   putStrLn "[...]"

@@ -18,6 +18,7 @@ import Control.Monad.Trans.Reader
 -- essenceoflivecoding
 import LiveCoding.Bind
 import LiveCoding.Cell
+import LiveCoding.Exceptions
 import LiveCoding.Commutable (CellExcept)
 import LiveCoding.LiveProgram
 
@@ -26,14 +27,27 @@ import LiveCoding.LiveProgram
 
 \subsection{Exceptions forever}
 
-But what if we want to change between the two oscillators indefinitely?
-The one temptation we have to resist is to recurse in the \mintinline{haskell}{CellExcept} context to prove the absence of exceptions:
-\fxerror{Example}
+\fxwarning{Opportunity to call this an SF here (and elsewhere)}
+But what if we want to change between the oscillator and a waiting period indefinitely?
+In other words, how do we repeatedly execute this action:
 \begin{code}
-sinesForever' :: CellExcept IO () Double Void
+sinesWaitAndTry
+  :: MonadFix   m
+  => CellExcept m () String ()
+sinesWaitAndTry = do
+  try $   arr (const "Waiting...")
+      >>> wait 1
+  try $   sine 5
+      >>> arr simpleASCIIArt
+      >>> wait 5
+\end{code}
+The one temptation we have to resist is to recurse in the \mintinline{haskell}{CellExcept} context to prove the absence of exceptions:
+\begin{code}
+sinesForever'
+  :: MonadFix   m
+  => CellExcept m () String Void
 sinesForever' = do
-  try $ sine 3  >>> throwWhen0
-  try $ sine 10 >>> throwWhen0
+  sinesWaitAndTry
   sinesForever'
 \end{code}
 It typechecks, but it does \emph{not} execute correctly.
@@ -42,6 +56,10 @@ As the initial state is built up,
 the definition of \mintinline{haskell}{sinesForever'} inquires about the initial state of all cells in the \mintinline{haskell}{do}-expression,
 but last one is again \mintinline{haskell}{foo},
 and thus already initialising such a cell hangs in an infinite loop.
+Using the standard function \mintinline{haskell}{forever :: Applicative f => f a -> f ()} has the same deficiency,
+\fxerror{Have we tested that?}
+as it is defined in essentially the same way.
+
 The resolution is an explicit loop operator,
 and faith in the library user to remember to employ it.
 \begin{code}
@@ -53,7 +71,7 @@ foreverE
 \end{code}
 The loop function receives as arguments an initial exception,
 and a cell that is to be executed forever\footnote{%
-Of course, the monad \mintinline{haskell}{m} may again contain exceptions that can be used to gracefully shut down the execution.
+Of course, the monad \mintinline{haskell}{m} may again contain exceptions that can be used to break from this loop.
 }.
 \begin{comment}
 \begin{code}
@@ -100,18 +118,15 @@ foreverC
   :: (Data e, Monad m)
   => Cell (ExceptT e m) a b
   -> Cell            m  a b
+foreverC = foreverE () . liftCell
+  . hoistCell (withExceptT $ const ())
 \end{code}
-\begin{comment}
-\begin{code}
-foreverC cell = foreverE () $ liftCell $ hoistCell (withExceptT $ const ()) cell
-\end{code}
-\end{comment}
 Now we can finally implement our cell:
 \begin{code}
-sinesForever :: MonadFix m => Cell m () Double
-sinesForever = foreverC $ runCellExcept $ do
-  try $ sine 4 >>> throwWhen0
-  try $ sine 6 >>> throwWhen0
+sinesForever :: MonadFix m => Cell m () String
+sinesForever = foreverC
+  $ runCellExcept
+  $ sinesWaitAndTry
 
 printSinesForever :: LiveProgram IO
 printSinesForever = liveCell
@@ -120,7 +135,7 @@ printSinesForever = liveCell
 \end{code}
 Let us run it:
 \verbatiminput{../DemoSinesForever.txt}
-\fxwarning{Not looking too good. Also, is the [...] good or not? (Here and elsewhere)}
+\fxwarning{Is the [...] good or not? (Here and elsewhere)}
 
 \fxerror{``Forever and ever?'' Show graceful shutdown with ExceptT. Have to change the runtime slightly for this.}
 \fxnote{Awesome idea: Electrical circuits simulation where we can change the circuits live!}
