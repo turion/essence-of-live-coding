@@ -32,9 +32,8 @@ import LiveCoding.LiveProgram
 This point is completely underrepresented and needs to be illustrated at least with an example where we handle exceptions and stay in the control state.
 }
 
-\fxerror{It's not a long excursion anymore}
-After this long excursion,
-we can finally return to the example.
+%After this long excursion,
+We can finally return to the example.
 Let us again change the period of the oscillator,
 only this time not manually,
 but at the moment the position reaches 0:
@@ -135,9 +134,7 @@ discardVoid
   => ExceptT Void m a
   ->              m a
 discardVoid
-  = fmap (fromRight
-      (error "safely: Received Left")
-    ) . runExceptT
+  = fmap (either absurd id) . runExceptT
 safe :: Monad m => Cell m a b -> CellExcept m a b void
 safe cell = CellExcept
   { fmapExcept = absurd

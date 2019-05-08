@@ -13,7 +13,11 @@ but some readers may want to satisfy their curiosity.
 \maketitle
 
 
+\input{../src/LiveCoding/Coalgebra.lhs}
+\fxerror{This is already in the article:}
 \input{../src/LiveCoding/CellExcept/Newtype.lhs}
+\fxerror{We've now switched to using runExceptC, so liveBind is implemented in terms of it.}
+\input{../src/LiveCoding/LiveBind.lhs}
 \input{../src/LiveCoding/CellExcept/Applicative.lhs}
 \input{../src/LiveCoding/CellExcept/Monad.lhs}
 

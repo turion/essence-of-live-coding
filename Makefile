@@ -20,3 +20,6 @@ article: demos latex
 
 latex:
 	cd article && pdflatex -shell-escape -interact nonstopmode EssenceOfLiveCoding.lhs && pdflatex -shell-escape -interact nonstopmode EssenceOfLiveCodingAppendix.lhs
+
+bibtex:
+	cd article && bibtex EssenceOfLiveCoding && bibtex EssenceOfLiveCodingAppendix

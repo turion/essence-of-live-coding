@@ -1,11 +1,48 @@
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
+
 module LiveCoding.Debugger.StatePrint where
-statePrint = Debugger $ stateShow >>> putStrLn
+
+-- base
+import Data.Data
+import Data.Maybe (fromMaybe, fromJust)
+import Data.Proxy
+import Data.Typeable
+import Unsafe.Coerce
+
+-- syb
+import Data.Generics.Aliases
+import Data.Generics.Text (gshow)
+
+-- essenceoflivecoding
+import LiveCoding.Cell
+import LiveCoding.Debugger
+import LiveCoding.Forever
+import LiveCoding.Exceptions
+
+statePrint :: Debugger
+statePrint = Debugger $ \s -> putStrLn (stateShow s) >> return s
 
 stateShow :: Data s => s -> String
-stateShow = gshow `ext2Q` compositionShow `ext2Q` foreverEShow `ext2Q` feedbackShow `ext2Q` parallelShow
+stateShow
+  =       gshow
+  `ext2Q` compositionShow
+  `ext2Q` foreverEShow
+  `ext2Q` feedbackShow
+  `ext2Q` parallelShow
+  `ext2Q` exceptShow
+  `ext2Q` choiceShow
 
 isUnit :: Data s => s -> Bool
-isUnit = mkQ False (\() -> True) `ext2Q` (\(a, b) -> isUnit a && isUnit b) `ext2Q` (\(Composition (s1, s2)) -> isUnit s1 && isUnit s2)
+isUnit = mkQ False
+          (\() -> True)
+  `ext2Q` (\(a, b) -> isUnit a && isUnit b)
+  `ext2Q` (\(Composition (s1, s2)) -> isUnit s1 && isUnit s2)
+  `ext2Q` (\(Parallel (s1, s2)) -> isUnit s1 && isUnit s2)
+  `ext2Q` (\(Choice sL sR) -> isUnit sL && isUnit sR)
 
 compositionShow :: (Data s1, Data s2) => Composition s1 s2 -> String
 compositionShow (Composition (s1, s2))
@@ -21,10 +58,26 @@ parallelShow (Parallel (s1, s2))
   | otherwise = "(" ++ stateShow s1 ++ " *** " ++ stateShow s2 ++ ")"
 
 foreverEShow :: (Data e, Data s) => ForeverE e s -> String
-foreverEShow ForeverE { .. } = "forever(" ++ gshow lastException ++ ", " ++ stateShow initState ++ "): " ++ stateShow currentState
+foreverEShow ForeverE { .. }
+  =  "forever("
+  ++ (if isUnit lastException then "" else gshow lastException ++ ", ")
+  ++ stateShow initState ++ "): " ++ stateShow currentState
 
 feedbackShow :: (Data state, Data s) => Feedback state s -> String
 feedbackShow (Feedback (state, s)) = "feedback " ++ gshow s ++ " $ " ++ stateShow state
+
+exceptShow :: (Data s, Data e) => ExceptState s e -> String
+exceptShow (NotThrown s) = "NotThrown: " ++ stateShow s ++ "\n"
+exceptShow (Exception e)
+  =  "Exception"
+  ++ (if isUnit e then "" else " " ++ gshow e)
+  ++ ":\n"
+
+choiceShow :: (Data stateL, Data stateR) => Choice stateL stateR -> String
+choiceShow Choice { .. }
+  | isUnit choiceLeft  = "+" ++ stateShow choiceRight ++ "+"
+  | isUnit choiceRight = "+" ++ stateShow choiceLeft  ++ "+"
+  | otherwise     = "+" ++ stateShow choiceLeft ++ " +++ " ++ stateShow choiceRight ++ "+"
 
 -- TODO  Leave out for now from the examples and open bug when public
 liveBindShow :: (Data e, Data s1, Data s2) => LiveBindState e s1 s2 -> String
@@ -41,6 +94,9 @@ gcast3
 gcast3 x = fmap (\Refl -> x) (eqT :: Maybe (t :~: t'))
 
 -- from https://stackoverflow.com/questions/14447050/how-to-define-syb-functions-for-type-extension-for-tertiary-type-constructors-e?rq=1
+-- sclv said to just give all the things in the where clause explicit types.
+-- I guess one also needs to extend typeOf3' to include all the arguments. (Same for x/typeOf3)
+-- Another possibility might be kind-heterogeneous type equality
 {-
 dataCast3
   :: (Typeable t, Data a)

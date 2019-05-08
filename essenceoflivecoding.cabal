@@ -21,6 +21,7 @@ library
     , LiveCoding.CellExcept.Applicative
     , LiveCoding.CellExcept.Monad
     , LiveCoding.Commutable
+    , LiveCoding.Coalgebra
     , LiveCoding.Debugger
     , LiveCoding.Debugger.StatePrint
     , LiveCoding.Exceptions
@@ -31,6 +32,9 @@ library
 
   other-modules:
       LiveCoding.CellExcept.Newtype
+    , LiveCoding.LiveProgram.Preliminary.HotCodeSwap
+    , LiveCoding.LiveProgram.Preliminary.LiveProgram2
+    , LiveCoding.LiveProgram.Preliminary.LiveProgramPreliminary
 
   other-extensions:    DeriveDataTypeable
   build-depends:
@@ -69,6 +73,16 @@ executable DemoSineChange
   build-depends:
       base >=4.11 && <4.13
     , essenceoflivecoding
+
+executable TestExceptions
+  main-is: TestExceptions.hs
+  other-modules:
+      Examples
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+    , transformers == 0.5.*
 
 executable DemoSinesForever
   main-is: DemoSinesForever.hs

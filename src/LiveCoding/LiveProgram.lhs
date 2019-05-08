@@ -11,6 +11,9 @@ import Control.Concurrent.MVar
 import Control.Monad (forever)
 import Data.Data
 
+-- essenceoflivecoding
+import LiveCoding.Migrate
+
 \end{code}
 \end{comment}
 
@@ -20,19 +23,20 @@ import Data.Data
 
 Our model of a live program will consist of a state and an effectful state transition function.
 A preliminary version is shown in Figure \ref{fig:LiveProgramPreliminary}.
-\input{LiveProgram/LiveProgramPreliminary.lhs}
+\input{../src/LiveCoding/LiveProgram/Preliminary/LiveProgramPreliminary.lhs}
 The program is initialised at a certain state,
 and from there its behaviour is defined by repeatedly applying the function \mintinline{haskell}{liveStep} to advance the state and produce effects.
 The type of the state should be encapsulated and thus invisible to the outside,
 it is through its effects that the live program communicates.
 This is especially convenient if we want to run the program in a separate thread
 (while compiling a new version of the program in the foreground).
-We can store the program in an \mintinline{haskell}{MVar} and repeatedly call \mintinline{haskell}{stepProgram} from a background thread:
+We can store the program in an \mintinline{haskell}{MVar} and repeatedly call \mintinline{haskell}{stepProgram} from a background thread.
 \fxerror{We really need to show the MVar code here and in the next paragraphs.
 Of course, the migration won't quite work, we can only replace the whole program.
 This is like migrating with `const`.
 }
 \fxerror{Demonstrate the runtime also with a GHCI session.}
+\fxerror{The following sentence maybe makes no sense?}
 Its result is the new, encapsulated state of the program,
 which is to be stored in the \mintinline{haskell}{MVar} again.
 
@@ -80,7 +84,7 @@ Its schema is the type \mintinline{haskell}{s}.
 Given a \emph{type migration} function,
 we can perform hot code swap,
 as shown in Figure \ref{fig:hot code swap}.
-\input{LiveProgram/HotCodeSwap.lhs}
+\input{../src/LiveCoding/LiveProgram/Preliminary/HotCodeSwap.lhs}
 This may be an acceptable solution to perform a planned, well-prepared intervention,
 but it does spoil the fun in a musical live coding performance if the programmer has to write a migration function after every single edit.
 What a live performer actually needs,
@@ -116,44 +120,70 @@ and arrive at an effective migration function.
 \subsection{Type-driven migrations}
 \fxerror{This is the essence of the article. Show explicitly what the migration function would do.}
 In many cases, knowing the old state and the new initial state is sufficient to derive the new, migrated state safely.
-As an example, assume the old state were defined as:
-\fxwarning{Later quote from examples}
-\fxerror{Have an example that threads through the article. Introduce earlier}
+As an example, imagine the internal state of a simple webserver that counts the number of visitors to a page.
+\fxwarning{Later show how migrate behaves on these examples}
+\fxwarning{In general: All examples should be in a separate directory, not in src. We should only have the final library in src.}
+\fxwarning{Typecheck the example somehow? Put it in different files and make figures?}
+\fxwarning{Possible example for user migration: Start with Int and upgrade to Integer}
 \begin{spec}
-data Foo = Foo { n :: Integer }
+data State = State { nVisitors :: Integer }
 \end{spec}
-\fxerror{Show the different definitions of Foo as different modules, either in the same file if this works or by directly quoting different files as figures.}
-We now change the definition to:
+The server is initialised at 0,
+and increments the number of visitors every step.
+(For a full-fledged webserver,
+the reader is asked to patiently wait until the end of this section.)
+\begin{spec}
+server = LiveProgram (State 0) $ \State { .. }
+  -> State $ return $ nVisitors + 1
+\end{spec}
+\fxerror{Show the different definitions of State as different modules by directly quoting different files as figures.
+Use same files like the wai demo. Maybe rename them in order not to say Wai before we've introduced it.}
+We extend the state by the name of the last user agent to access the server (initially not present):
 \fxwarning{What if we add another constructor Bar here? 
-Could it still find out that there is a Foo constructor in the type?}
+Could it still find out that there is a State constructor in the type?}
 \begin{spec}
-data Foo = Foo Integer Bool
+data State = State Integer (Maybe ByteString)
+initState = State 0 Nothing
 \end{spec}
-Obviously, we would want to keep the \mintinline{haskell}{Integer} argument when migrating.
-For the new \mintinline{haskell}{Bool} argument
+From just comparing the two datatype definitions,
+it is apparent that we would want to keep the number of visitors,
+of type \mintinline{haskell}{Integer},
+when migrating.
+For the new argument of type \mintinline{haskell}{Maybe ByteString},
 we cannot infer any sensible value from the old state,
-but we can take the \mintinline{haskell}{Bool} value from the new initial state,
+but we can take the value \mintinline{haskell}{Nothing} from the new initial state,
 and interpret it as a default value.
-
-Our task was less obvious if the definition had been updated to:
+A general state migration function should specialise to:
 \begin{spec}
-data Foo = Foo Integer Integer
+migrate (Server1.State nVisitors)
+        (Server2.State _         mUserAgent)
+      =  Server2.State nVisitors mUserAgent
+\end{spec}
+Our task was less obvious if we would have extended the state by the last access time,
+encoded as a UNIX timestamp:
+\begin{spec}
+data State = State Integer Integer
 \end{spec}
 Here it is unclear to which of the \mintinline{haskell}{Integer}s the old value should be migrated.
 It is obvious again if the datatype was defined as a record as well:
 \begin{spec}
-data Foo = Foo { k :: Integer, n :: Integer }
+data State = State
+  { nVisitors      :: Integer
+  , lastAccessUNIX :: Integer
+  }
 \end{spec}
-Clearly, the labels help us to identify the correct target field.
+We need to copy the \mintinline{haskell}{nVisitors} field from the old state,
+and initialise the \mintinline{haskell}{lastAccessUNIX} field from the new state.
+Clearly, the record labels enabled us to identify the correct target field.
 The solution lies in the type,
 or rather, the datatype definition.
 
 If we were to migrate back to the original definition,
-there is no way but to lose the data stored in \mintinline{haskell}{k}.
-This is also apparent just from the definition of the algebraic datatype!
+there is no way but to lose the data stored in \mintinline{haskell}{lastAccessUNIX}.
+This is also apparent just from the definition of the algebraic datatype.
 
 We can meta-program a migration function by reasoning about the structure of the type definition.
-This is possible with the techniques presented in the seminal, now classical article ``Scrap Your Boilerplate'' \cite{syb}.
+This is possible with the techniques presented in the seminal, now classic article ``Scrap Your Boilerplate'' \cite{syb}.
 It supplies a typeclass \mintinline{haskell}{Typeable} which enables us to compare types and safely type-cast at runtime,
 and a typeclass \mintinline{haskell}{Data} which allows us,
 amongst many other features,
@@ -184,6 +214,18 @@ data LiveProgram m = forall s . Data s
   { liveState :: s
   , liveStep  :: s -> m s
   }
+
+hotCodeSwap
+  :: LiveProgram m
+  -> LiveProgram m
+  -> LiveProgram m
+hotCodeSwap
+  (LiveProgram newState newStep)
+  (LiveProgram oldState _)
+  = LiveProgram
+  { liveState = migrate newState oldState
+  , liveStep  = newStep
+  }
 \end{code}
 \caption{\texttt{LiveProgram.lhs}}
 \label{fig:LiveProgram}
@@ -195,9 +237,17 @@ We have to refactor our live program such that all functions are contained in \m
 (and can consequently not be migrated),
 and all data is contained in \mintinline{haskell}{liveState}.
 
-\fxerror{I've only made the state existential here now. Explain here and remove previous mention.
-"We have also taken the liberty to hide the state parameter"...}
+Now that we have a universal migration function,
+it is not necessary to carry the type of the state around.
+(In fact it would be a burden when later trying to modularise this approach.)
+Consequently, it is made existential.
+The only necessary information is that it is an instance of \mintinline{haskell}{Data}.
+
+\input{../src/LiveCoding/RuntimeIO.lhs}
+
 \subsection{Livecoding a webserver}
+
+\fxwarning{Consider redoing this as a GHCi session where we call the server from within Haskell, e.g. with the curl or a HTTP package}
 
 To show that live coding can be applied to domains outside audio and video applications,
 let us create a tiny webserver using the WAI/Warp framework \fxfatal{Cite}.

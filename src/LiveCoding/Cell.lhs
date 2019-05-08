@@ -6,8 +6,7 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -38,32 +37,35 @@ Make clear that we do this FRP approach because of modularity.
 Maybe don't show the definitions of the primitives, but show the state types,
 and the custom migrations implemented so that FRP reloads correctly.
 Ideally, show the custom migrations as examples how users can add their own migrations.
+The main connective could be that Cells build up their state automatically in a way that the migration works well.
+(Test)
 }
 In ordinary functional programming, the smallest building blocks are functions.
 It stands to reason that in live coding, they should also be some flavour of functions,
 in fact, \mintinline{haskell}{Arrow}s \fxfatal{Cite}.
 We will see that it is possible to define bigger live programs from reusable components.
-
-\fxerror{Combine this sentence with first sentence from nextsection}
-In our definition of live programs as pairs of state and state steppers,
-we can generalise the step functions to an additional input and output type:
-\begin{spec}
-mStep :: a -> s -> m (b, s)
-\end{spec}
-\begin{comment}
-By now, the reader may have rightfully become weary of the ubiquitous \mintinline{haskell}{IO} monad;
-and promoting it to an arbitrary monad will turn out shortly to be a very useful generalisation.
-\fxerror{This has now been introduced earlier, in the WAI example, as Reader.}
-\end{comment}
+Crucially, the library user is disburdened from separating state and step function.
+The state type is built up behind the scenes,
+in a manner compatible with the automatic state migration.
 
 \subsection{Cells}
 \label{sec:cells}
 
-We collect these insights in a definition,
-calling them cells,
-the building blocks of everything live:
+In our definition of live programs as pairs of state and state steppers,
+we can generalise the step functions to an additional input and output type.
+\begin{comment}
+\begin{spec}
+mStep :: a -> s -> m (b, s)
+\end{spec}
+By now, the reader may have rightfully become weary of the ubiquitous \mintinline{haskell}{IO} monad;
+and promoting it to an arbitrary monad will turn out shortly to be a very useful generalisation.
+\fxerror{This has now been introduced earlier, in the WAI example, as Reader.}
 
-\fxerror{I haven't cited any state automaton literature.}
+We collect these insights in a definition,
+\end{comment}
+Live programs are thus generalised to \emph{effectful Mealy machines}.
+\fxerror{I haven't cited any state automaton literature yet.}
+Let us call them cells, the building blocks of everything live:
 \begin{comment}
 \begin{code}
 -- | The basic building block of a live program.
@@ -75,6 +77,7 @@ data Cell m a b = forall s . Data s => Cell
   , cellStep  :: s -> a -> m (b, s)
   }
 \end{code}
+\fxerror{Does the bang serve any purpose?}
 \fxwarning{Comment on bang patterns if we keep them}
 
 Such a cell may progress by one step,
@@ -93,7 +96,7 @@ step Cell { .. } a = do
   return (b, Cell { cellState = cellState', .. })
 \end{code}
 
-As a simple example, consider the following \mintinline{haskell}{Cell} which adds all input and returns the accumulated sum each step:
+As a simple example, consider the following \mintinline{haskell}{Cell} which adds all input and returns the delayed accumulated sum each step:
 \fxwarning{Possibly mention that it's a delayed sum?}
 \begin{code}
 sumC :: (Monad m, Num a, Data a) => Cell m a a
@@ -104,21 +107,31 @@ sumC = Cell { .. }
 \end{code}
 
 \fxerror{Possibly put IO later because here we can't explain yet how we'll end up with () input/output}
-We recover live programs as the special case of trivial input and output,
-with effects in \mintinline{haskell}{IO}:
-
-\fxerror{Also say "we just need to elide the units".}
+We recover live programs as the special case of trivial input and output:
 \begin{code}
-liveCell :: Functor m => Cell m () () -> LiveProgram m
+liveCell
+  :: Functor     m
+  => Cell        m () ()
+  -> LiveProgram m
 liveCell Cell {..} = LiveProgram
   { liveState = cellState
   , liveStep  = fmap snd . flip cellStep ()
   }
 \end{code}
-\fxerror{Isn't this just step from before?}
-\fxwarning{Consider making LiveProgram not a type alias but leave it at its original type and just implement the isomorphism.
-That way we can honestly reuse the machinery from section 2.}
+\fxwarning{Also say "we just need to elide the units"?}
 
+\subsection{An FRP API}
+\fxerror{This is called "Automata-based programming". What we put on top is composability of automata in FRP idioms}
+Effectful Mealy machines, here cells,
+offer a wide variety of applications in FRP.
+The essential parts of the API,
+which is heavily inspired by the FRP library \verb|dunai|
+\cite{Dunai},
+is shown here.
+
+\medskip
+
+\paragraph{Monads and their morphisms}
 In case our \mintinline{haskell}{Cell} is in another monad than \mintinline{haskell}{IO},
 it is easy to define a function that transports a cell along a monad morphism:
 \begin{code}
@@ -142,7 +155,9 @@ liftCell
 liftCell = hoistCell lift
 \end{code}
 \fxerror{I haven't commented on liftCell anywhere?}
-This way, we can successively handle effects until we arrive at \mintinline{haskell}{IO},
+This way, we can successively handle effects
+(such as global state, read-only variables, logging, exceptions, and others)
+until we arrive at \mintinline{haskell}{IO},
 at which point we can execute the live program in the same fashion as in the last section.
 \fxerror{Expand on this, possibly elsewhere. At least cite the relevant sections in the Dunai paper.}
 
@@ -161,6 +176,7 @@ and sequentially in the control flow sense.
 We will address the data flow aspects in this section,
 investigating control flow later in Section \ref{sec:control flow}.
 
+\paragraph{Composition}
 By virtue of being an instance of the type class \mintinline{haskell}{Category}
 for any fixed monad \mintinline{haskell}{m},
 they implement sequential composition:
@@ -175,12 +191,7 @@ they implement sequential composition:
 
 \begin{comment}
 \begin{code}
-{-data Composition state1 state2 = Composition
-  { state1 :: state1
-  , state2 :: state2
-  } deriving Data
--}
-
+-- TODO For some weird reason, this is more efficient than my own ADT
 newtype Composition state1 state2 = Composition (state1, state2)
   deriving Data
 
@@ -200,16 +211,24 @@ instance Monad m => Category (Cell m) where
         (b, state1') <- step1 state1 a
         (!c, state2') <- step2 state2 b
         return (c, Composition (state1', state2'))
-{-# RULES
-"arrM/>>>" forall (f :: forall a b m . Monad m => a -> m b) g . arrM f >>> arrM g = arrM (f >=> g)
-#-} -- Don't really need rules here because GHC will inline all that anyways
+-- {-# RULES
+-- "arrM/>>>" forall (f :: forall a b m . Monad m => a -> m b) g . arrM f >>> arrM g = arrM (f >=> g)
+-- #-} -- Don't really need rules here because GHC will inline all that anyways
 \end{code}
 \end{comment}
 \fxwarning{Would be nice to understand the strictness and also the tuple story}
-For two cells \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2},
-the composite \mintinline{haskell}{cell1 >>> cell2} holds the state of both \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2},
+For two cells \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2}
+with state types \mintinline{haskell}{state1} and \mintinline{haskell}{state2},
+the composite \mintinline{haskell}{cell1 >>> cell2} holds a pair of both states:
 \fxwarning{Syntax highlighting is off}
-but the step function only touches each state variable individually,
+\begin{spec}
+data Composition state1 state2 = Composition
+  { state1 :: state1
+  , state2 :: state2
+  } deriving Data
+\end{spec}
+The step function executes the steps of both cells after each other.
+They only touch their individual state variable,
 the state stays encapsulated.
 
 Composing \mintinline{haskell}{Cell}s sequentially allows us to form live programs out of \emph{sensors}, pure signal functions and \emph{actuators}:
@@ -228,8 +247,11 @@ buildLiveProg sensor sf actuator = liveCell
 \end{code}
 \fxwarning{If this breaks, the alignment is pointless}
 This will conveniently allow us to build a whole live program from smaller components.
+It is never necessary to specify a big state type manually,
+it will be composed from basic building blocks like \mintinline{haskell}{Composition}
 
-\mintinline{haskell}{Cell}s can also be made an instance of the \mintinline{haskell}{Arrow} type class,
+\paragraph{Arrowized FRP}
+\mintinline{haskell}{Cell}s can be made an instance of the \mintinline{haskell}{Arrow} type class,
 which allows us to lift arbitrary functions to \mintinline{haskell}{Cell}s:
 \begin{spec}
 arr
@@ -237,22 +259,41 @@ arr
   ->         (a -> b)
   -> Cell  m  a    b
 \end{spec}
-Let us, just for the sake of the example,
+\fxerror{Cite arrows here or earlier}
+Together with the \mintinline{haskell}{ArrowChoice} and \mintinline{haskell}{ArrowLoop} classes,
+which are readily implemented,
+cells can be used in \emph{arrow notation} with \mintinline{haskell}{case}-expressions, \mintinline{haskell}{if then else} constructs and recursion.
+The next subsection gives some examples.
+
+An essential aspect of an FRP framework is some notion of \emph{time}.
+\fxwarning{Citation?}
+As this approach essentially uses the \verb|dunai| API,
+a detailed treatment of time domains and clocks as in \cite{Rhine} can be readily applied here.
+But let us, for simplicity and explicitness,
 assume that we will execute all \mintinline{haskell}{Cell}s at a certain fixed step rate,
-say ten steps per second.
+say a thousand steps per second.
 Then an Euler integration cell can be defined:
 \begin{code}
-type PerSecond a = a
-
 stepRate :: Num a => a
 stepRate = 1000
 
 integrate
   :: (Data a, Fractional a, Monad m)
-  => Cell m a (PerSecond a)
+  => Cell m a a
 integrate = arr (/ stepRate) >>> sumC
 \end{code}
+The time since start of the program is then famously \cite[Section 2.4]{Yampa} defined as:
+\begin{code}
+localTime
+  :: (Data a, Fractional a, Monad m)
+  => Cell m b a
+localTime = arr (const 1) >>> integrate
+\end{code}
 
+\fxwarning{I cut a more detailed discussion about ArrowChoice and ArrowLoop here. Put in the appendix?}
+\begin{comment}
+\fxwarning{Move before the time discussion?}
+\fxerror{Just type signatures aren't so helpful. Maybe cut this to a very short paragraph that says that we have all the classes for arrow notation, if then else and recursion.}
 The \mintinline{haskell}{Arrow} type class also allows for data-parallel composition:
 \begin{spec}
 (***)
@@ -263,6 +304,45 @@ The \mintinline{haskell}{Arrow} type class also allows for data-parallel composi
 \end{spec}
 Again, the state type of the composed cell is the product type of the constituent states.
 
+%The arrow operator \mintinline{haskell}{(***)} for parallel composition
+This operator
+has a dual,
+supplied by the \mintinline{haskell}{ArrowChoice} type class,
+\fxwarning{Cite something? For example, we fulfil the noninterference (?) law from "Settable and Non-Interfering Signal Functions for FRP - How a First-Order Switch is More Than Enough"}
+which \mintinline{haskell}{Cell}s implement:
+\begin{spec}
+(+++)
+  :: Monad m
+  => Cell m         a            b
+  -> Cell m           c            d
+  -> Cell m (Either a c) (Either b d)
+\end{spec}
+Like \mintinline{haskell}{cell1 *** cell2},
+its dual \mintinline{haskell}{cell1 +++ cell2} holds the state of both cells.
+But while the former executes both cells,
+and consumes input and produces output for both of them,
+the latter steps only one of them forward each time,
+depending on which input was provided.
+This enables basic control flow in arrow expressions,
+such as \mintinline{haskell}{if}- and \mintinline{haskell}{case}-statements.
+We can momentarily switch from one cell to another,
+depending on live input.
+
+The \mintinline{haskell}{ArrowLoop} class exists to enable recursive definitions in arrow expressions,
+and once again \mintinline{haskell}{Cell}s implement it:\footnote{%
+A word of caution has to be issued here:
+The instance is implemented using the monadic fixed point operator \mintinline{haskell}{mfix} \cite{MonadFix},
+and can thus crash at runtime if the current output of the intermediate value \mintinline{haskell}{s} is calculated strictly from the current input \mintinline{haskell}{s}.
+}
+\begin{spec}
+loop
+  :: MonadFix m
+  => Cell     m (a, s) (b, s)
+  -> Cell     m  a      b
+\end{spec}
+\end{comment}
+
+\paragraph{Effects}
 Beyond standard arrows, a \mintinline{haskell}{Cell} can encode effects in a monad,
 so it is not surprising that Kleisli arrows can be lifted:
 \begin{spec}
@@ -310,6 +390,8 @@ constM = arrM . const
 \end{code}
 \end{comment}
 
+\begin{comment}
+\fxwarning{Do we really need feedback? It's never used again! Possibly comment or move to appendix, with other library stuff.}
 We would like to have all basic primitives needed to develop standard synchronous signal processing components,
 without touching the \mintinline{haskell}{Cell} constructor anymore.
 One crucial bit is missing:
@@ -328,6 +410,7 @@ feedback
   -> Cell m (a, s) (b, s)
   -> Cell m  a      b
 \end{code}
+\end{comment}
 \begin{comment}
 \begin{code}
 feedback s (Cell state step) = Cell { .. }
@@ -359,6 +442,7 @@ instance ArrowLoop (Cell Identity) where
 \fxwarning{It's probably a performance penalty to have fixIO. Can we tweak the Identity thing in?}
 \fxerror{Choose: Either need to rewrite stuff somehow without fixIO (e.g. Arrowloop only for polymorphic stuff or Identity monad), or spaceleaks, or different integral}
 \fxwarning{Say that ArrowLoop exists and isn't the same as feedback}
+\begin{comment}
 It enables us to write delays:
 \begin{code}
 delay :: (Data s, Monad m) => s -> Cell m s s
@@ -375,40 +459,30 @@ sumFeedback
 sumFeedback = feedback 0 $ arr
   $ \(a, accum) -> (accum, a + accum)
 \end{code}
-\fxwarning{Depending on implementation use let again (and above)}
-\fxwarning{It's more concise maybe if we return accum and not accum'? Then we can elide the let?}
 \fxwarning{Possibly remark on Data instance of s?}
+\end{comment}
 
+\subsection{A sine generator}
 Making use of the \mintinline{haskell}{Arrows} syntax extension,
 we can implement a harmonic oscillator that will produce a sine wave with amplitude 10 and given period length:
-\fxwarning{Probably comment on rec and ArrowFix}
-\fxerror{Hoistthing is not explain}
+\fxwarning{Comment on rec and ArrowFix}
 \begin{code}
---hoistThing :: Monad m => Cell Identity a b -> Cell m a b
---hoistThing = hoistCell $ return . runIdentity
 sine
   :: MonadFix m
   => Double -> Cell m () Double
-sine t = --hoistThing $ 
-  proc () -> do
+sine t = proc () -> do
   rec
     let acc = - (2 * pi / t) ^ 2 * (pos - 10)
     vel <- integrate -< acc
     pos <- integrate -< vel
   returnA -< pos
 \end{code}
-\fxerror{I might have changed the implementation here.
-So update readouts. Or just include them as files and have a makefile to update them
-Also, just calculate the correct value such that the amplitude is 1.}
 By the laws of physics, velocity is the integral of accelleration,
 and position is the integral of velocity.
 In a harmonic oscillator, the acceleration is in the negative direction of the position,
-multiplied by a spring factor which can be given as an argument.
-The integration arrow encapsulates the current position and velocity of the oscillator as internal state, and return the position.
-By using \mintinline{haskell}{feedback},
-we also store the current acceleration,
-which is used to give the oscillator initial energy.
-\fxwarning{Two aspects mixed up here.}
+multiplied by a spring factor depending on the period length,
+which can be given as an argument.
+The integration arrow encapsulates the current position and velocity of the oscillator as internal state, and returns the position.
 
 The sine generator could in principle be used in an audio or video application.
 For simplicity, we choose to visualise the signal on the console instead,
@@ -441,121 +515,31 @@ This is exactly what the framework was designed for.
 \fxerror{Show Demo.hs as soon as I've explained the runtime in the previous section}
 We execute the program such that after a certain time,
 the live environment inserts \mintinline{haskell}{printSine} with a different period.
-\fxerror{Those constants might change. Better to just display the runtime thing}
-Let us execute it:
+\fxerror{Actually, now that we have those fancy GHCi commands,
+We can insert them instead of manually printing stuff.
+Increases the immersion.}
+Let us execute it:\footnote{%
+From now on, the GHCi commands will be suppressed.
+}
 \verbatiminput{../DemoSine.txt}
 It is clearly visible how the period of the oscillator changed,
 while its position (or, in terms of signal processing, its phase)
-did not jump!
+did not jump.
 If we use the oscillator in an audio application,
-we can retune it without hearing a glitch.
-
-\subsection{Monadic stream functions and final coalgebras}
-
-\label{sec:msfs and final coalgebras}
-
-As mentioned earlier, our \mintinline{haskell}{Cell}s follow Dunai's monadic stream functions (\mintinline{haskell}{MSF}s) closely.
-But can they fill their footsteps completely in terms of expressiveness?
-If not, which programs exactly can be represented as \mintinline{haskell}{MSF}s and which can't?
-To find the answer to these questions,
-let us reexamine both types.
-
-With the help of a simple type synonym,
-the \mintinline{haskell}{MSF} definition can be recast in explicit fixpoint form:
-
-\fxwarning{Maybe a record for MSF}
-\begin{code}
-type StateTransition m a b s = a -> m (b, s)
-
-data MSF m a b = MSF
-  { unMSF :: StateTransition m a b (MSF m a b)
-  }
-\end{code}
-This definition tells us that monadic stream functions are so-called \emph{final coalgebras} of the \mintinline{haskell}{StateTransition} functor
-(for fixed \mintinline{haskell}{m}, \mintinline{haskell}{a}, and \mintinline{haskell}{b}).
-An ordinary coalgebra for this functor is given by some type \mintinline{haskell}{s} and a coalgebra structure map:
-\begin{code}
-data Coalg m a b where
-  Coalg
-    :: s
-    -> (s -> StateTransition m a b s)
-    -> Coalg m a b
-\end{code}
-But hold on, the astute reader will intercept,
-is this not simply the definition of \mintinline{haskell}{Cell}?
-Alas, it is not, for it lacks the type class restriction \mintinline{haskell}{Data s},
-which we need so dearly for the type migration.
-Any cell is a coalgebra,
-but only those coalgebras that satisfy this type class are a cell.
-
-Oh, if only there were no such distinction.
-By the very property of the final coalgebra,
-we can embed every coalgebra therein:
-\begin{code}
-finality :: Monad m => Coalg m a b -> MSF m a b
-finality (Coalg state step) = MSF $ \a -> do
-  (b, state') <- step state a
-  return (b, finality $ Coalg state' step)
-\end{code}
-And analogously, every cell can be easily made into an \mintinline{haskell}{MSF} without loss of information:
-\begin{code}
-finalityC :: Monad m => Cell m a b -> MSF m a b
-finalityC Cell { .. } = MSF $ \a -> do
-  (b, cellState') <- cellStep cellState a
-  return (b, finalityC $ Cell cellState' cellStep)
-\end{code}
-And the final coalgebra is of course a mere coalgebra itself:
-\begin{code}
-coalgebra :: MSF m a b -> Coalg m a b
-coalgebra msf = Coalg msf unMSF
-\end{code}
-But we miss the abilty to encode \mintinline{haskell}{MSF}s as \mintinline{haskell}{Cell}s by just the \mintinline{haskell}{Data} type class:
-\begin{code}
-coalgebraC
-  :: Data (MSF m a b)
-  => MSF m a b
-  -> Cell m a b
-coalgebraC msf = Cell msf unMSF
-\end{code}
-We are out of luck if we would want to derive an instance of \mintinline{haskell}{Data (MSF m a b)}.
-Monadic stream functions are, well, functions,
-and therefore have no \mintinline{haskell}{Data} instance.
-The price of \mintinline{haskell}{Data} is loss of higher-order state.
-Just how big this loss is will be demonstrated in the following section.
-
-\begin{comment}
-\subsection{Initial algebras}
-
-\begin{code}
-type AlgStructure m a b s = StateTransition m a b s -> s
-data Alg m a b where
-  Alg
-    :: s
-    -> AlgStructure m a b s
-    -> Alg m a b
-
-algMSF :: MSF m a b -> Alg m a b
-algMSF msf = Alg msf MSF
-
--- TODO Could explain better why this is simpler in the coalgebra case
-initiality
-  :: Functor m
-  => AlgStructure m a b s
-  -> MSF m a b
-  -> s
-initiality algStructure = go
-  where
-    go msf = algStructure $ \a -> second go <$> unMSF msf a
-
-\end{code}
-\end{comment}
+we can retune it without hearing a glitch;
+if we use it in a video application,
+the widget will smoothly change its oscillating velocity without a jolt.
 
 \section{Control flow}
 \label{sec:control flow}
-
+\fxerror{Idea: Let's cut liveBind, or at least the failed monad instance to the appendix as well. Problem: We can't show an example of how the migration keeps the control state. But we have to cut something if we want to show such an example.}
+\fxerror{Show only stuff where I can show most of the implementation. Reimplement, in a separate file, the API for the newtype, show its code and explain it.}
 Although we now have the tools to build big signal pathways from single cells,
-we have no way yet to let the incoming data decide which of several offered pathways to take.
-We are lacking \emph{control flow}.
+we have no way yet to let the incoming data decide which of several offered pathways to take for the rest of the execution.
+While we can (due to \mintinline{haskell}{ArrowChoice}) temporarily branch between two cells using \mintinline{haskell}{if then else},
+the branching is reevaluated (and the previous choice forgotten) every step.
+\fxwarning{We have ArrowChoice.}
+We are lacking permanent \emph{control flow}.
 
 The primeval arrowized FRP framework Yampa \cite{Yampa} caters for this requirement by means of switching from a signal function to another if an event occurs.
 \fxwarning{Possibly I've mentioned both earlier}
@@ -565,41 +549,33 @@ We shall see that,
 although the state of a \mintinline{haskell}{Cell} is strongly restricted by the \mintinline{haskell}{Data} type class,
 we can get very close to this powerful approach to control flow.
 
-\subsection{The choice of arrows}
-
-The arrow operator \mintinline{haskell}{(***)} for parallel composition has a dual,
-supplied by the \mintinline{haskell}{ArrowChoice} type class:
-\begin{spec}
-(+++)
-  :: ArrowChoice arrow
-  => arrow         a            b
-  -> arrow           c            d
-  -> arrow (Either a c) (Either b d)
-\end{spec}
-While \mintinline{haskell}{arr1 *** arr2} is expected to execute both arrows,
-and to consume input and produce output for both of them,
-\mintinline{haskell}{arr1 +++ arr2} executes only one of them,
-depending on which input was provided.
-
-\mintinline{haskell}{Cell}s implement this type class:
-\mintinline{haskell}{cell1 +++ cell2} holds the state of both cells,
-stepping only one of them forward each time.
-This enables basic control flow in arrow expressions,
-such as \mintinline{haskell}{if}- and \mintinline{haskell}{case}-statements.
-We can momentarily switch from one cell to another,
-depending on live input.
-However, \mintinline{haskell}{ArrowChoice} does not enable us to switch to another cell \emph{permanently}.
-This issue will be addressed in the next subsection.
 
 \begin{comment}
 \begin{code}
+-- FIXME Why the hell is my left definition wrong or leads to the wrong instance?
+data Choice stateL stateR = Choice
+  { choiceLeft  :: stateL
+  , choiceRight :: stateR
+  }
+  deriving Data
 instance Monad m => ArrowChoice (Cell m) where
+{-
   left (Cell state step) = Cell { cellState = state, .. }
     where
       cellStep cellState (Left a) = do
         (b, cellState') <- step state a
         return (Left b, cellState')
       cellStep cellState (Right b) = return (Right b, cellState)
+      -}
+  (Cell stateL stepL) +++ (Cell stateR stepR) = Cell { .. }
+    where
+      cellState = Choice stateL stateR
+      cellStep (Choice stateL stateR) (Left a) = do
+        (b, stateL') <- stepL stateL a
+        return (Left b, (Choice stateL' stateR))
+      cellStep (Choice stateL stateR) (Right c) = do
+        (d, stateR') <- stepR stateR c
+        return (Right d, (Choice stateL stateR'))
 \end{code}
 
 \fxerror{Do we need to talk about this?}

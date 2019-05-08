@@ -9,6 +9,7 @@ module DemoWai.DemoWai1 where
 -- base
 import Data.Data
 import Control.Concurrent.MVar
+import Prelude hiding (unlines)
 
 -- bytestring
 import Data.ByteString.Lazy.Char8
@@ -37,11 +38,11 @@ oldServer = LiveProgram
       Env { .. } <- ask
       _ <- lift $ takeMVar requestVar
       let nVisitorsNew = nVisitors + 1
-          msg = pack
-            $  "This is Ye Olde Server.\n"
-            <> "You are visitor #"
-            <> show nVisitorsNew <> "."
-      lift $ putMVar responseVar msg
+      lift $ putMVar responseVar $ unlines
+        [ "This is Ye Olde Server."
+        , "You are visitor #"
+        <> (pack $ show nVisitorsNew) <> "."
+        ]
       return $ State nVisitorsNew
   }
 \end{code}

@@ -1,7 +1,12 @@
 \begin{figure}
 \begin{comment}
 \begin{code}
-module LiveProgram2 where
+{-# LANGUAGE ExistentialQuantification #-}
+
+module LiveCoding.LiveProgram.Preliminary.LiveProgram2 where
+
+-- base
+import Data.Data
 \end{code}
 \end{comment}
 \begin{code}
