@@ -36,7 +36,7 @@ bindBool
   => Cell (ExceptT Bool       m) a b
   -> (Bool -> Cell (ExceptT e m) a b)
   -> Cell          (ExceptT e m) a b
-bindBool cell handler = cell >>>= proc a -> do
+bindBool cell handler = cell >>>== proc a -> do
   bool <- constM ask -< ()
   if bool
   then liftCell $ handler True  -< a

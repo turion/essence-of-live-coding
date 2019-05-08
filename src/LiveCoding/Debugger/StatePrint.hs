@@ -79,10 +79,12 @@ choiceShow Choice { .. }
   | isUnit choiceRight = "+" ++ stateShow choiceLeft  ++ "+"
   | otherwise     = "+" ++ stateShow choiceLeft ++ " +++ " ++ stateShow choiceRight ++ "+"
 
+{-
 -- TODO  Leave out for now from the examples and open bug when public
 liveBindShow :: (Data e, Data s1, Data s2) => LiveBindState e s1 s2 -> String
 liveBindShow (NotYetThrown s1 s2) = "[NotYet " ++ stateShow s1 ++ "; " ++ stateShow s2 ++ "]"
 liveBindShow (Thrown e s2) = "[Thrown " ++ gshow e ++ ". " ++ stateShow s2 ++ "]"
+-}
 
 gcast2 :: forall c t t' a b. (Typeable t, Typeable t')
        => c (t a b) -> Maybe (c (t' a b))

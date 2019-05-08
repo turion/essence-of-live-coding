@@ -150,12 +150,10 @@ and an \mintinline{haskell}{Applicative} instance with a little work,
 but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 
 \input{../src/LiveCoding/Exceptions.lhs}
-\input{../src/LiveCoding/CellExcept.lhs}
+%\input{../src/LiveCoding/CellExcept.lhs}
 
-\fxerror{Possibly cut the applicative detour? Need to reorder forever then}
 \input{../src/LiveCoding/Bind.lhs}
 \input{../src/LiveCoding/Forever.lhs}
-\fxerror{reactimate}
 
 \section{Tooling}
 \input{../src/LiveCoding/Debugger.lhs}

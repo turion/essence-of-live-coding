@@ -65,8 +65,17 @@ executable DemoSine
       base >=4.11 && <4.13
     , essenceoflivecoding
 
-executable DemoSineChange
-  main-is: DemoSineChange.hs
+executable DemoSineWait
+  main-is: DemoSineWait.hs
+  other-modules:
+      Examples
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+
+executable DemoSineWaitChange
+  main-is: DemoSineWaitChange.hs
   other-modules:
       Examples
   hs-source-dirs: app
