@@ -127,7 +127,8 @@ sinesForever :: MonadFix m => Cell m () String
 sinesForever = foreverC
   $ runCellExcept
   $ sinesWaitAndTry
-
+\end{code}
+\begin{code}
 printSinesForever :: LiveProgram IO
 printSinesForever = liveCell
   $   sinesForever

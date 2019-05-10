@@ -36,7 +36,8 @@ stepProgramMVar var = do
 \label{sec:runtime}
 
 \subsection{Hands on interaction}
-Enough declaration, let us get semantic and run some live programs!
+Enough declaration.
+Let us get semantic and run some live programs!
 In the preliminary version,
 a function \mintinline{haskell}{stepProgram} implemented a single execution step,
 and it can be reused here,

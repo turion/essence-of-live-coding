@@ -26,21 +26,18 @@ A preliminary version is shown in Figure \ref{fig:LiveProgramPreliminary}.
 \input{../src/LiveCoding/LiveProgram/Preliminary/LiveProgramPreliminary.lhs}
 The program is initialised at a certain state,
 and from there its behaviour is defined by repeatedly applying the function \mintinline{haskell}{liveStep} to advance the state and produce effects.
-The type of the state should be encapsulated and thus invisible to the outside,
-it is through its effects that the live program communicates.
-This is especially convenient if we want to run the program in a separate thread
-(while compiling a new version of the program in the foreground).
-We can store the program in an \mintinline{haskell}{MVar} and repeatedly call \mintinline{haskell}{stepProgram} from a background thread.
-\fxerror{We really need to show the MVar code here and in the next paragraphs.
-Of course, the migration won't quite work, we can only replace the whole program.
-This is like migrating with `const`.
-}
-\fxerror{Demonstrate the runtime also with a GHCI session.}
-\fxerror{The following sentence maybe makes no sense?}
-Its result is the new, encapsulated state of the program,
-which is to be stored in the \mintinline{haskell}{MVar} again.
+This is implemented in \mintinline{haskell}{stepProgram}.
+%The type of the state should be encapsulated and thus invisible to the outside,
+%it is through its effects that the live program communicates.
+Since we want to run the program in a separate thread while compiling a new version of the program in the foreground,
+we have to store the program in a a concurrent variable, here an \mintinline{haskell}{MVar}.
+Given this variable, stepping the program it contains is a simple \mintinline{haskell}{IO} action,
+implemented in \mintinline{haskell}{stepProgramMVar}.
+To run the program,
+we fork a background thread and repeatedly call \mintinline{haskell}{stepProgramMVar} there.
 
-In a dynamically typed language, this would in principle be enough to implement hot code swap.
+In a dynamically typed language,
+such a setup is in principle enough to implement hot code swap.
 At some point, the execution will be paused,
 and the function \mintinline{haskell}{liveStep} is simply exchanged for a new one.
 Then the execution is resumed with the new transition function,
@@ -49,7 +46,7 @@ Of course, the new step function has to take care of migrating the state to a ne
 should this be necessary.
 The difficulties arise
 (apart from the practicalities of the implementation),
-in the inherent unsafety of this operation:
+from the inherent unsafety of this operation:
 Even if the old transition function behaved correctly,
 and the old state is in a valid format,
 the new transition function may crash or otherwise misbehave on the old state.
@@ -131,7 +128,7 @@ data State = State { nVisitors :: Int }
 The server is initialised at 0,
 and increments the number of visitors every step.
 (For a full-fledged webserver,
-the reader is asked to patiently wait until the end of this section.)
+the reader is asked to patiently wait until the next section.)
 \begin{spec}
 server = LiveProgram (State 0) $ \State { .. }
   -> State $ return $ nVisitors + 1
@@ -174,13 +171,11 @@ data State = State
 \end{spec}
 We need to copy the \mintinline{haskell}{nVisitors} field from the old state,
 and initialise the \mintinline{haskell}{lastAccessUNIX} field from the new state.
+(Conversely, if we were to migrate back to the original definition,
+there is no way but to lose the data stored in \mintinline{haskell}{lastAccessUNIX}.)
 Clearly, the record labels enabled us to identify the correct target field.
 The solution lies in the type,
 or rather, the datatype definition.
-
-If we were to migrate back to the original definition,
-there is no way but to lose the data stored in \mintinline{haskell}{lastAccessUNIX}.
-This is also apparent just from the definition of the algebraic datatype.
 
 We can meta-program a migration function by reasoning about the structure of the type definition.
 This is possible with the techniques presented in the seminal, now classic article ``Scrap Your Boilerplate'' \cite{syb}.
@@ -203,8 +198,7 @@ but possibly a different order.
 In nested datatype definitions,
 the function recurses into all children of the data tree.
 Needless to say, if the types do match, then the old state is identically copied.
-\fxerror{Not sure whether I know how to insert user migrations in this}
-\fxerror{This works also across recompilations! Demonstrate in the following!}
+\fxwarning{Show examples here?}
 
 Sometimes it is necessary to manually migrate some part of the state.
 Assume, for the sake of the example,
@@ -235,7 +229,8 @@ data LiveProgram m = forall s . Data s
   { liveState :: s
   , liveStep  :: s -> m s
   }
-
+\end{code}
+\begin{code}
 hotCodeSwap
   :: LiveProgram m
   -> LiveProgram m
@@ -259,9 +254,11 @@ We have to refactor our live program such that all functions are contained in \m
 and all data is contained in \mintinline{haskell}{liveState}.
 
 Now that we have a universal migration function,
-it is not necessary to carry the type of the state around.
-(In fact it would be a burden when later trying to modularise this approach.)
-Consequently, it is made existential.
+it is not necessary to carry the type of the state around in the type signature.
+In fact it would be cumbersome in combination with \mintinline{haskell}{MVar}s
+(which can't change their type),
+and a real burden when later modularising the state.
+Consequently, the type is made existential.
 The only necessary information is that it is an instance of \mintinline{haskell}{Data}.
 
 \input{../src/LiveCoding/RuntimeIO.lhs}
@@ -271,7 +268,7 @@ The only necessary information is that it is an instance of \mintinline{haskell}
 \fxwarning{Consider redoing this as a GHCi session where we call the server from within Haskell, e.g. with the curl or a HTTP package}
 
 To show that live coding can be applied to domains outside audio and video applications,
-let us create a tiny webserver using the WAI/Warp framework \fxfatal{Cite}.
+let us realise the example from the previous section and create a tiny webserver using the WAI/Warp framework \fxfatal{Cite}.
 It is supposed to count the number of visitors,
 and keep this state in memory when we change the implementation.
 

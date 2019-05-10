@@ -91,8 +91,9 @@ Compare \href{https://elm-lang.org/blog/interactive-programming}{https://elm-lan
 \fxerror{Reference to blog entry}
 What is new about this approach is the consequential application of this motto to create a general purpose, type-safe FRP framework\footnote{%
 It shall be remarked that FRP is long past niche applications in the video and audio domains.
-It is possible to write web servers and frontends, simulations and games in it,
-FRP can even be used for file batch processing.}
+It is possible to write web servers and frontends, simulations and games in it.
+%FRP can even be used for file batch processing.
+}
 with \emph{automatic state migration}.
 
 Arriving at a simple \emph{state migration function} by faithfully following the live coding mantra is a manageable task,
