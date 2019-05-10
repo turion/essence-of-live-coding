@@ -30,7 +30,8 @@ import DemoWai.Env
 data State = State
   { nVisitors :: Integer
   } deriving Data
-
+\end{code}
+\begin{code}
 oldServer :: LiveProgram (ReaderT Env IO)
 oldServer = LiveProgram
   { liveState = State 0

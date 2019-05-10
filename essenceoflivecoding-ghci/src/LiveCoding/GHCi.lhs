@@ -22,7 +22,8 @@ liveinit progName = return $ unlines
   [ "var <- newMVar " ++ progName
   , "save var"
   ]
-
+\end{code}
+\begin{code}
 livereload "" = livereload "liveProgram"
 livereload progName = return $ unlines
   [ ":reload"
@@ -35,21 +36,25 @@ livereload progName = return $ unlines
 \begin{code}
 load :: IO (MVar (LiveProgram IO))
 load = readStore (Store 0)
-
+\end{code}
+\begin{code}
 save :: MVar (LiveProgram IO) -> IO ()
 save var = writeStore (Store 0) var
-
+\end{code}
+\begin{code}
 liveinit _ = return $ unlines
   [ "var <- newMVar liveProgram"
   , "save var"
   ]
-
+\end{code}
+\begin{code}
 livereload _ = return $ unlines
   [ ":reload"
   , "var <- load"
   , "update var liveProgram"
   ]
-
+\end{code}
+\begin{code}
 livestep _ = return "stepProgramMVar var"
 \end{code}
 \caption{\texttt{GHCi.lhs}}

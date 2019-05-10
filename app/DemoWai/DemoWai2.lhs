@@ -37,7 +37,8 @@ data State = State
   { nVisitors :: Integer
   , lastAgent :: Maybe ByteString
   } deriving Data
-
+\end{code}
+\begin{code}
 newServer :: LiveProgram (ReaderT Env IO)
 newServer = LiveProgram
   { liveState = State 0 Nothing

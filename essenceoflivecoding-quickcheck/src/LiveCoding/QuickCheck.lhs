@@ -106,6 +106,7 @@ cell1 `agreesWith` cell2 = property $ proc a -> do
   cell2      -< (a, b)
 \end{code}
 Along these lines, one can set up stateful property-based testing \cite{ProperTesting} for the livecoding environment.
+\begin{comment}
 Similarly, we can check the output of one cell against a reference implementation:
 \begin{code}
 bisimulates
@@ -118,6 +119,7 @@ cell1 `bisimulates` cell2 = property $ proc a -> do
   b2 <- cell2 -< a
   returnA -< b1 === b2
 \end{code}
+\end{comment}
 One shortcoming of the testing methods presented so far is that the cells will always be initialised at the same state.
 This can restrict the search space for the cell state greatly,
 as it will only reach those states reachable from the initial state after a number of steps,

@@ -98,13 +98,15 @@ NotThrown: (2.0009999999998906)
 Exception:
  >>> +(3.9478417604357436e-3) >>> (0.0)+
  >>> (2002)
+[...]
+\end{verbatim}
+\begin{comment}
 Exception:
  >>> +(7.895683520871487e-3) >>>
  (3.947841760435744e-6)+
  >>> (2003)
-[...]
-\end{verbatim}
-First, the cell is initialised in a state where the exception hasn't ben thrown yet,
+\end{comment}
+First, the cell is initialised in a state where the exception hasn't been thrown yet,
 and the local time has progressed to \mintinline{haskell}{1.0e-3} seconds.
 The next line corresponds to the initial state (position and velocity) of the sine generator which will be activated after the exception has been thrown,
 followed by the internal counter of \mintinline{haskell}{printEverySecond}.

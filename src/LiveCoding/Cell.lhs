@@ -73,13 +73,10 @@ Let us call them cells, the building blocks of everything live:
 \end{comment}
 \begin{code}
 data Cell m a b = forall s . Data s => Cell
-  { cellState :: !s
+  { cellState :: s
   , cellStep  :: s -> a -> m (b, s)
   }
 \end{code}
-\fxerror{Does the bang serve any purpose?}
-\fxwarning{Comment on bang patterns if we keep them}
-
 Such a cell may progress by one step,
 consuming an \mintinline{haskell}{a} as input,
 and producing, by means of an effect in an arbitrary monad \mintinline{haskell}{m},
@@ -147,7 +144,8 @@ runReaderC
   -> Cell (ReaderT r m) a b
   -> Cell            m  a b
 runReaderC r = hoistCell $ flip runReaderT r
-
+\end{code}
+\begin{code}
 liftCell
   :: (Monad m, MonadTrans t)
   => Cell         m  a b
@@ -236,7 +234,8 @@ Composing \mintinline{haskell}{Cell}s sequentially allows us to form live progra
 type Sensor   a   = Cell   IO         () a
 type SF       a b = forall m . Cell m    a b
 type Actuator   b = Cell   IO              b ()
-
+\end{code}
+\begin{code}
 buildLiveProg
   :: Sensor   a
   -> SF       a b
@@ -276,7 +275,8 @@ Then an Euler integration cell can be defined:
 \begin{code}
 stepRate :: Num a => a
 stepRate = 1000
-
+\end{code}
+\begin{code}
 integrate
   :: (Data a, Fractional a, Monad m)
   => Cell m a a
@@ -351,6 +351,7 @@ arrM
   ->         (a -> m b)
   -> Cell  m  a      b
 \end{spec}
+\begin{comment}
 Mere monadic actions become a special case thereof:
 \begin{spec}
 constM
@@ -358,7 +359,7 @@ constM
   ->       m   b
   -> Cell  m a b
 \end{spec}
-
+\end{comment}
 \begin{comment}
 \begin{code}
 --data Parallel s1 s2 = Parallel s1 s2
@@ -490,7 +491,8 @@ with our favourite Haskell operator varying its horizontal position:
 \begin{code}
 simpleASCIIArt :: Double -> String
 simpleASCIIArt n = replicate (round n) ' ' ++ ">>="
-
+\end{code}
+\begin{code}
 printEverySecond :: Cell IO String ()
 printEverySecond = proc string -> do
   count <- sumC -< 1 :: Integer
