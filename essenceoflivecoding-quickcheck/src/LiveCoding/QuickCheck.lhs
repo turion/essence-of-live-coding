@@ -121,13 +121,33 @@ cell1 `bisimulates` cell2 = property $ proc a -> do
 One shortcoming of the testing methods presented so far is that the cells will always be initialised at the same state.
 This can restrict the search space for the cell state greatly,
 as it will only reach those states reachable from the initial state after a number of steps,
-depending on the size of the .
+depending on the generator size.
+Luckily, since the state of our cells is an instance of \mintinline{haskell}{Data},
+we can use generic programming to automatically generate values for it.
+For example, the package \texttt{boltzmann-samplers} provides \mintinline{haskell}{generator' :: Data a => Size' -> Gen a}.
+We can use this to reinitialise an arbitrary cell:
 \begin{code}
 reinitialise :: Cell m a b -> Gen (Cell m a b)
 reinitialise Cell { .. } = do
   cellState <- generator' 1000
   return Cell { .. }
 \end{code}
+This can be used to test cells starting at arbitrary states.
+\fxerror{But how to test the cell after migration? This is really hard! Black box vs. white box testing}
+\begin{comment}
+Still, what we are actually interested in is whether the state after a migration would be valid!
+We can apply our insights from the last section:
+This is a job for a debugger.
+Given our current test cell implementation,
+\begin{code}
+quickCheckDebugger
+  :: (Arbitrary a, Show a, Testable prop)
+  => Cell IO a prop
+  -> Debugger
+quickCheckDebugger testCell
+  = Debugger $ \s -> do
+    let Cell { .. } = 
+    testCell <- 
+\end{code}
+\end{comment}
 \fxwarning{Could use quickcheck `counterexamples` on `gshow cellState` somehow}
-\fxwarning{How to test freshly migrated state?}
-\fxwarning{LTL}

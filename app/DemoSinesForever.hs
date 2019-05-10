@@ -8,6 +8,6 @@ import LiveCoding.Forever
 
 main = do
   (debugger, observer) <- countDebugger
-  var <- launchWithDebugger printSinesForever $ debugger -- <> statePrint
+  var <- launchWithDebugger printSinesForever $ debugger
   await observer $ 12 * stepRate
   putStrLn "[...]"

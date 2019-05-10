@@ -15,7 +15,7 @@ import qualified TestData.Foo2 as Foo2
 
 
 intToInteger :: Int -> Integer
-intToInteger = fromIntegral
+intToInteger = toInteger
 
 main = do
   print $ 13 == migrate (10 :: Integer) (13 :: Integer)

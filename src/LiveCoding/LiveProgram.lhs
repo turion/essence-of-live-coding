@@ -126,7 +126,7 @@ As an example, imagine the internal state of a simple webserver that counts the 
 \fxwarning{Typecheck the example somehow? Put it in different files and make figures?}
 \fxwarning{Possible example for user migration: Start with Int and upgrade to Integer}
 \begin{spec}
-data State = State { nVisitors :: Integer }
+data State = State { nVisitors :: Int }
 \end{spec}
 The server is initialised at 0,
 and increments the number of visitors every step.
@@ -142,12 +142,12 @@ We extend the state by the name of the last user agent to access the server (ini
 \fxwarning{What if we add another constructor Bar here? 
 Could it still find out that there is a State constructor in the type?}
 \begin{spec}
-data State = State Integer (Maybe ByteString)
+data State = State Int (Maybe ByteString)
 initState = State 0 Nothing
 \end{spec}
 From just comparing the two datatype definitions,
 it is apparent that we would want to keep the number of visitors,
-of type \mintinline{haskell}{Integer},
+of type \mintinline{haskell}{Int},
 when migrating.
 For the new argument of type \mintinline{haskell}{Maybe ByteString},
 we cannot infer any sensible value from the old state,
@@ -162,14 +162,14 @@ migrate (Server1.State nVisitors)
 Our task was less obvious if we would have extended the state by the last access time,
 encoded as a UNIX timestamp:
 \begin{spec}
-data State = State Integer Integer
+data State = State Int Int
 \end{spec}
-Here it is unclear to which of the \mintinline{haskell}{Integer}s the old value should be migrated.
+Here it is unclear to which of the \mintinline{haskell}{Int}s the old value should be migrated.
 It is obvious again if the datatype was defined as a record as well:
 \begin{spec}
 data State = State
-  { nVisitors      :: Integer
-  , lastAccessUNIX :: Integer
+  { nVisitors      :: Int
+  , lastAccessUNIX :: Int
   }
 \end{spec}
 We need to copy the \mintinline{haskell}{nVisitors} field from the old state,
@@ -188,7 +188,8 @@ It supplies a typeclass \mintinline{haskell}{Typeable} which enables us to compa
 and a typeclass \mintinline{haskell}{Data} which allows us,
 amongst many other features,
 to inspect constructor names and record field labels.
-Using the \verb|syb|-package, which supplies common utilities when working with \mintinline{haskell}{Data},
+Using the package \texttt{syb},
+which supplies common utilities when working with \mintinline{haskell}{Data},
 our migration function is implemented in under 50 lines of code,
 with the following signature:
 \begin{spec}
@@ -204,7 +205,26 @@ the function recurses into all children of the data tree.
 Needless to say, if the types do match, then the old state is identically copied.
 \fxerror{Not sure whether I know how to insert user migrations in this}
 \fxerror{This works also across recompilations! Demonstrate in the following!}
-To use this migration function,
+
+Sometimes it is necessary to manually migrate some part of the state.
+Assume, for the sake of the example,
+that our webserver has become wildly popular,
+and \mintinline{haskell}{nVisitors} is close to \mintinline{haskell}{maxInt}.
+We need to migrate this value to an arbitrary precision \mintinline{haskell}{Integer}.
+It is easy to extend \mintinline{haskell}{migrate} by a special case provided by the user:
+\begin{spec}
+userMigrate
+  :: (Data a, Data b, Typeable c, Typeable d)
+  => (c -> d)
+  -> a -> b -> a
+
+intToInteger :: Int -> Integer
+intToInteger = toInteger
+\end{spec}
+In our example, we would use \mintinline{haskell}{userMigrate intToInteger} to migrate the state.
+\fxwarning{Show example. Extend runtime.}
+
+To use the automatic migration function,
 we only need to update the live program definition to include the \mintinline{haskell}{Data} constraint,
 as shown in Figure \ref{fig:LiveProgram}.
 \begin{figure}

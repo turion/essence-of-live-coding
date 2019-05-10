@@ -128,6 +128,7 @@ The purpose of this section is to show that we can develop live programs in a mo
 \input{../src/LiveCoding/Cell.lhs}
 
 \subsection{Exceptions}
+
 Section \ref{sec:msfs and final coalgebras} showed that \mintinline{haskell}{Cell}s and Dunai's monadic stream functions are very much alike,
 and it makes sense to adopt its approach to control flow.
 In Dunai, we can switch from executing one stream function to another by \emph{throwing an exception}.
@@ -191,7 +192,7 @@ Usability could be increased by offering to extend the automatic migration by ma
 
 \fxerror{FRP was originally about the passage of time. Can recover that and much more by reimplementing Rhine in this framework (should now be possible)}
 
-\fxerror{We could quickcheck stuff because the state could be automatically generated}
+\fxwarning{LTL}
 \fxerror{Say somewhere why we used syb instead of Generics?}
 
 The automatic migration only guarantees that the new state will typecheck.
