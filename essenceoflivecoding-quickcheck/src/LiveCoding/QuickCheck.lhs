@@ -88,9 +88,25 @@ instance (Arbitrary a, Show a, Testable prop)
 \end{code}
 Let us execute our test:
 \begin{verbatim}
-> quickCheck testCell
+ > quickCheck testCell
 +++ OK, passed 100 tests.
 \end{verbatim}
+Any property that can be expressed as a cell can tested.
+This includes a large class of properties.
+If we want to ensure that the output of some complex cell \mintinline{haskell}{cell1} satisfies a property depending on the current input and internal state,
+we can remodel the relevant portions of its state in a simplified cell and check the property:
+\begin{code}
+agreesWith
+  :: (Arbitrary a, Show a, Testable prop)
+  => Cell IO  a  b
+  -> Cell IO (a, b) prop
+  -> Property
+cell1 `agreesWith` cell2 = property $ proc a -> do
+  b <- cell1 -<  a
+  cell2      -< (a, b)
+\end{code}
+Along these lines, one can set up stateful property-based testing \cite{ProperTesting} for the livecoding environment.
+Similarly, we can check the output of one cell against a reference implementation:
 \begin{code}
 bisimulates
   :: (Arbitrary a, Show a, Eq b, Show b)
@@ -101,10 +117,15 @@ cell1 `bisimulates` cell2 = property $ proc a -> do
   b1 <- cell1 -< a
   b2 <- cell2 -< a
   returnA -< b1 === b2
-
+\end{code}
+One shortcoming of the testing methods presented so far is that the cells will always be initialised at the same state.
+This can restrict the search space for the cell state greatly,
+as it will only reach those states reachable from the initial state after a number of steps,
+depending on the size of the .
+\begin{code}
 reinitialise :: Cell m a b -> Gen (Cell m a b)
 reinitialise Cell { .. } = do
-  cellState <- generator' 100000
+  cellState <- generator' 1000
   return Cell { .. }
 \end{code}
 \fxwarning{Could use quickcheck `counterexamples` on `gshow cellState` somehow}
