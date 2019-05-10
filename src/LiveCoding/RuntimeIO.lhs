@@ -33,6 +33,7 @@ stepProgramMVar var = do
 \end{comment}
 
 \section{The runtime}
+\label{sec:runtime}
 
 \subsection{Hands on interaction}
 Enough declaration, let us get semantic and run some live programs!
