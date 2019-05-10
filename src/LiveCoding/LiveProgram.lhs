@@ -227,6 +227,7 @@ In our example, we would use \mintinline{haskell}{userMigrate intToInteger} to m
 To use the automatic migration function,
 we only need to update the live program definition to include the \mintinline{haskell}{Data} constraint,
 as shown in Figure \ref{fig:LiveProgram}.
+\fxwarning{Idea for elsewhere: LiveProgram m = forall s (m s, s -> m s), to ease initialisation}
 \begin{figure}
 \begin{code}
 data LiveProgram m = forall s . Data s

@@ -36,22 +36,24 @@ from hot code swap on a production server to artistic performances with code tha
 From the implementor's perspective,
 the common denominator is a framework to update the definition of a program while not interrupting its execution.
 
-In a dynamically typed language with a virtual machine, such as Erlang \cite{armstrong2013programming},
+In a dynamically typed, process-oriented language, such as Erlang \cite{armstrong2013programming},
 hot code swap is conceptually simple:
-A new server is started, the state of the old server is transferred to the new one, and the old server is shut down.
-\fxwarning{``Server''? Program? Or introduce ``Server''? E.g. ''Erlang deals with servers. There hot code swap is simple.''}
+A new server process is started, the state of the old server is transferred to the new one, and the old server is shut down.
 The challenge lies in ensuring that the state is correctly migrated,
 as corrupt state might crash the server.
 This is a nontrivial task if no type checker is available to verify if the migrated state conforms to the schema required by the new server.
 
-Domain specific live coding frameworks \cite{wilson2011supercollider}
+Domain specific live coding frameworks
 usually have a central server that generates the desired effect
 -- be it audio, video or device communication --
 and offers an API through which users can create ``cells'',
-such as oscillators or signal processors in the case of audio,
+such as oscillators or signal processors in the case of audio
+(such as \cite{wilson2011supercollider}),
 and connect, reorder, update or destroy them during execution.
 The central server guarantees safe updates,
-and strongly typed user-side libraries such as Tidal \cite{mclean2014tidal} exist,
+and strongly typed user-side libraries
+(such as Tidal \cite{mclean2014tidal} for audio applications)
+exist,
 but ultimately the user is restricted to a domain specific language.
 
 In this article, we implement a lightweight general purpose livecoding framework in Haskell from scratch.
@@ -93,16 +95,19 @@ It is possible to write web servers and frontends, simulations and games in it,
 FRP can even be used for file batch processing.}
 with \emph{automatic state migration}.
 
-Arriving at a simple live coding framework by faithfully following the live coding mantra is a manageable task,
+Arriving at a simple \emph{state migration function} by faithfully following the live coding mantra is a manageable task,
 carried out in Section \ref{sec:core}.
+Upon the migration function, a live coding framework is constructed in Section \ref{sec:runtime}.
 It is much more rewarding to recast this framework in the form of functional reactive programming,
 which allows us to reuse modular, functional components and separate data flow from control flow.
+Crucially, the state of our live programs is built up automatically by using FRP idioms.
 The result is presented in Section \ref{sec:FRP},
 which heavily draws inspiration from Dunai,
 a monadic arrowized FRP framework.
 After having implemented the data flow aspects of our framework,
 we turn to control flow in Section \ref{sec:control flow}.
 A monadic interface to our live programs is presented.
+In Section \ref{sec:tooling}, several useful tools such as debuggers and quickchecking utilities are shown.
 
 This article is written in literate Haskell and supplies the library presented here.
 The source code will be made openly available upon publication.\fxerror{Do it, or at least post a preview link for the reviewers here.}
@@ -157,6 +162,7 @@ but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 \input{../src/LiveCoding/Forever.lhs}
 
 \section{Tooling}
+\label{sec:tooling}
 \input{../src/LiveCoding/Debugger.lhs}
 \input{../essenceoflivecoding-quickcheck/src/LiveCoding/QuickCheck.lhs}
 
