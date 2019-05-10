@@ -32,4 +32,7 @@ data Baz = Baz
 
 baz = Baz foo bar
 
+data Frob = Frob Int
+  deriving (Show, Eq, Typeable, Data)
 
+frob = Frob 1

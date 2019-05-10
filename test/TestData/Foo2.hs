@@ -38,3 +38,9 @@ data Baz = Baz
 
 baz = Baz bar foo
 baz' = Baz bar' foo'
+
+data Frob = Frob Integer
+  deriving (Show, Eq, Typeable, Data)
+
+frob  = Frob 2
+frob' = Frob 1

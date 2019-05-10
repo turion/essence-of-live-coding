@@ -25,7 +25,13 @@ import Data.Generics.Twins
 
 \begin{code}
 migrate :: (Data a, Data b) => a -> b -> a
-migrate a b
+migrate = userMigrate (\() -> ())
+
+userMigrate
+  :: (Data a, Data b, Typeable c, Typeable d)
+  => (c -> d)
+  -> a -> b -> a
+userMigrate specific a b
   |  isAlgType typeA  && isAlgType typeB
   && show typeA == show typeB
   && showConstr constrA == showConstr constrB
@@ -43,16 +49,18 @@ migrate a b
       && (not $ null constrFieldsB)
       = setChildren getFieldSetters a
       -- One of the two is not a record, just try to match 1-1 as far as possible
-      | otherwise = setChildren (getChildrenSetters b) a
-    settersB = zip constrFieldsB $ getChildrenSetters b
+      | otherwise = setChildren (getChildrenSetters specific b) a
+    settersB = zip constrFieldsB $ getChildrenSetters specific b
     getFieldSetters = constrFieldsA <&>
       \field -> fromMaybe (GT id)
         $ lookup field settersB
 
-migrate a b = fromMaybe a $ cast b
+--userMigrate specific a b = fromMaybe a $ listToMaybe $ catMaybes $ fromMaybe a <$> ($ a) <$> [cast . specific, cast]
+userMigrate specific a b = fromMaybe a $ (cast `extQ` (cast . specific)) b
+--userMigrate specific a b = (fromMaybe a . cast . specific) `extQ` (fromMaybe a . cast) $ a
 
-getChildrenSetters :: Data a => a -> [GenericT']
-getChildrenSetters = gmapQ $ \child -> GT $ flip migrate child
+getChildrenSetters :: (Data a, Typeable c, Typeable d) => (c -> d) -> a -> [GenericT']
+getChildrenSetters specific = gmapQ $ \child -> GT $ flip (userMigrate specific) child
 
 setChildren :: Data a => [GenericT'] -> a -> a
 setChildren updates a = snd $ gmapAccumT f updates a
@@ -60,8 +68,4 @@ setChildren updates a = snd $ gmapAccumT f updates a
     f [] e = ([], e)
     f (update : updates) e = (updates, unGT update $ e)
 
-addMigration
-  :: (Data a, Data b, Typeable c, Typeable d)
-  => (c -> d) -> a -> b -> a
-addMigration specific a b = flip migrate b `extQ` (fromMaybe a . cast . specific) $ a
 \end{code}
