@@ -16,6 +16,7 @@ import LiveCoding.Exceptions
 \end{comment}
 
 \subsection{Control flow context}
+\label{sec:control flow context}
 %\paragraph{Wrapping exceptions}
 To create our own control flow context,
 we introduce a newtype:
