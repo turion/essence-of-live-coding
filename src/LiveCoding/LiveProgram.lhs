@@ -289,7 +289,7 @@ The final version is given in Figure \ref{fig:LiveProgram}.
 \end{comment}
 which needs to supplied to the live program before execution.
 This can be done by transporting the program along the \mintinline{haskell}{runReaderT} monad morphism.
-The utility \mintinline{haskell}{hoistLiveProgram} is supplied for this
+A function \mintinline{haskell}{hoistLiveProgram} does this
 (borrowing nomenclature from the \texttt{mmorph} \cite{mmorph} package).
 \begin{comment}
 Abstracting this operation, we need a utility that applies a monad morphism to a live program.

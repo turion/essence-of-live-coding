@@ -71,8 +71,8 @@ embed (a : as) cell = do
 \end{code}
 If the input type \mintinline{haskell}{a} can be generated arbitrarily,
 then so can a list of \mintinline{haskell}{a}s.
-Once we have run the cell with the given inputs,
-we form the conjunction of the properties tested at each step,
+After running the cell with all inputs,
+we form the conjunction of all properties,
 with \texttt{QuickCheck}'s \mintinline{haskell}{conjoin}.
 Effects in \mintinline{haskell}{IO} can be embedded in \texttt{QuickCheck} \cite{QuickCheckIO}
 with the monad morphism \mintinline{haskell}{run},
@@ -105,7 +105,8 @@ We can unit test all components of a new version of our live program before relo
 To go further, one could set up \emph{stateful property-based testing} \cite{ProperTesting} for the livecoding environment.
 
 \paragraph{Migration tests}
-The best use case is to test whether the newly migrated state is valid.
+Even better, we can test \emph{before reloading}
+whether the newly migrated state would be valid.
 Given some tests on intermediate values in the computation,
 we collect all test properties in a \mintinline{haskell}{Writer} effect:
 \begin{code}

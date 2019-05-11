@@ -212,7 +212,7 @@ it will be composed from basic building blocks like \mintinline{haskell}{Composi
 
 \paragraph{Arrowized FRP}
 \mintinline{haskell}{Cell}s can be made an instance of the \mintinline{haskell}{Arrow} type class,
-which allows us to lift arbitrary functions to \mintinline{haskell}{Cell}s:
+which allows us to lift pure functions to \mintinline{haskell}{Cell}s:
 \begin{spec}
 arr
   :: Monad m
