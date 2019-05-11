@@ -78,7 +78,7 @@ data Cell m a b = forall s . Data s => Cell
 \end{code}
 Such a cell may progress by one step,
 consuming an \mintinline{haskell}{a} as input,
-and producing, by means of an effect in an arbitrary monad \mintinline{haskell}{m},
+and producing, by means of an effect in some monad \mintinline{haskell}{m},
 not only the updated cell,
 but also an output datum \mintinline{haskell}{b}:
 
@@ -92,8 +92,7 @@ step Cell { .. } a = do
   return (b, Cell { cellState = cellState', .. })
 \end{code}
 
-As a simple example, consider the following \mintinline{haskell}{Cell} which adds all input and returns the delayed accumulated sum each step:
-\fxwarning{Possibly mention that it's a delayed sum?}
+As a simple example, consider the following \mintinline{haskell}{Cell} which adds all input and returns the delayed sum each step:
 \begin{code}
 sumC :: (Monad m, Num a, Data a) => Cell m a a
 sumC = Cell { .. }
@@ -484,8 +483,8 @@ The sine generator could in principle be used in an audio or video application.
 For simplicity, we choose to visualise the signal on the console instead,
 with our favourite Haskell operator varying its horizontal position:
 \begin{code}
-simpleASCIIArt :: Double -> String
-simpleASCIIArt n = replicate (round n) ' ' ++ ">>="
+asciiArt :: Double -> String
+asciiArt n = replicate (round n) ' ' ++ ">>="
 \end{code}
 \begin{code}
 printEverySecond :: Cell IO String ()

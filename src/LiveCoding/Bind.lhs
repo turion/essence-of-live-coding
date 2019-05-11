@@ -60,16 +60,15 @@ sineWait t = do
   try  $   arr (const "Waiting...")
        >>> wait 2
   safe $   sine t
-       >>> arr simpleASCIIArt
+       >>> arr asciiArt
 \end{code}
 This \mintinline{haskell}{do}-block can be read intuitively.
 Initially, the first cell is executed,
 which returns the message \mintinline{haskell}{"Waiting..."} every second.
-After three seconds, it throws an exception.
-It is handled by activating the sine generator.
-
+After three seconds, it throws an exception,
+which is handled by activating the sine generator.
 Since all exceptions have been handled,
-let us leave the \mintinline{haskell}{CellExcept} context and run the resulting program:
+we leave the \mintinline{haskell}{CellExcept} context and run the resulting program:
 \begin{code}
 printSineWait :: LiveProgram IO
 printSineWait = liveCell

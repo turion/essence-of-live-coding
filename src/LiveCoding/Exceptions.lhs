@@ -36,8 +36,8 @@ throwC
 throwC = arrM throwE
 \end{code}
 The above function simply throws the incoming exception.
-To throw an exception only if a certain condition is satisfied,
-\mintinline{haskell}{if}-constructs in arrow syntax can be readily used.
+To do this only if a certain condition is satisfied,
+\mintinline{haskell}{if}-constructs can be used.
 For example, this cell forwards its input for a given number of seconds,
 and then throws an exception:
 \begin{code}
@@ -66,7 +66,7 @@ throwIf_ condition = throwIf condition ()
 \end{comment}
 
 \paragraph{Handling exceptions}
-In usual Haskell, the \mintinline{haskell}{ExceptT e} monad transformer is handled by running it in its underlying context:
+In usual Haskell, the \mintinline{haskell}{ExceptT} monad transformer is handled by running it:
 \begin{spec}
 runExceptT :: ExceptT e m b -> m (Either e b)
 \end{spec}

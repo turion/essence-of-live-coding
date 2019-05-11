@@ -43,14 +43,14 @@ gshowDebugger = Debugger $ \state -> do
 Thanks to the \mintinline{haskell}{Data} typeclass,
 the state does not need to be an instance of \mintinline{haskell}{Show} for this to work.
 A more sophisticated debugger could connect to a GUI and display the state there,
-even offering the user to edit it live.
+even offering the user to pause the execution and edit the state live.
 \fxwarning{Should I explain countDebugger? What for?}
-
+\begin{comment}
 Debuggers are endomorphisms in the Kleisli category of \mintinline{haskell}{IO},
 and thus \mintinline{haskell}{Monoid}s:
 A pair of them can be chained by executing them sequentially,
 and the trivial debugger purely \mintinline{haskell}{return}s the state unchanged.
-
+\end{comment}
 We can start them alongside with the live program:
 \fxwarning{Move appropriately, e.g. a separate file RuntimeDebugger}
 \begin{spec}
@@ -71,30 +71,25 @@ Waiting...
 (Composition ((,) (Composition ((,) (()) 
 (Composition ((,) (()) (Composition ((,) 
 (Composition ((,) (()) (Composition ((,) 
-(Parallel ((,) (Composition ((,) (()) 
-(NotThrown (Composition ((,) (()) 
 [...]
 \end{verbatim}
 \fxerror{I still hav the tuples here!}
 The arrow syntax desugaring introduces a lot of irrelevant overhead such as compositions with the trivial state type \mintinline{haskell}{()},
-hiding the actual parts of the state we are interested in.
+hiding the parts of the state we are actually interested in.
 Luckily, it is a simple, albeit lengthy exercise in generic programming to prune all irrelevant parts of the state,
-resulting in a tidy output\footnote{%
-Line breaks were added to fit the columns.}
-like:
+resulting in a tidy output%\footnote{%
+%Line breaks were added to fit the columns.}
+ like:
 \begin{verbatim}
 Waiting...
 NotThrown: (1.0e-3)
- >>> +(0.0) >>> (0.0)+
- >>> (1)
+ >>> +(0.0) >>> (0.0)+ >>> (1)
 NotThrown: (2.0e-3)
- >>> +(0.0) >>> (0.0)+
- >>> (2)
+ >>> +(0.0) >>> (0.0)+ >>> (2)
 [...]
 Waiting...
 NotThrown: (2.0009999999998906)
- >>> +(0.0) >>> (0.0)+
- >>> (2001)
+ >>> +(0.0) >>> (0.0)+ >>> (2001)
 Exception:
  >>> +(3.9478417604357436e-3) >>> (0.0)+
  >>> (2002)
