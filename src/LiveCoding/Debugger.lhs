@@ -213,4 +213,3 @@ await CountObserver { .. } nMax = go
     if n > nMax then return () else go
 \end{code}
 \end{comment}
-\fxerror{Examples for cells and stateprintdebugger}

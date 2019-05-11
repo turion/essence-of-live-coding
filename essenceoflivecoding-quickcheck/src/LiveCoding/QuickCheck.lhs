@@ -165,7 +165,7 @@ cell1 `bisimulates` cell2 = property $ proc a -> do
   returnA -< b1 === b2
 \end{code}
 \end{comment}
-
+\fxwarning{I cut reinitialise here}
 \begin{comment}
 One shortcoming of the testing methods presented so far is that the cells will always be initialised at the same state.
 This can restrict the search space for the cell state greatly,
