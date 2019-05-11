@@ -54,7 +54,7 @@ The central server guarantees safe updates,
 and strongly typed user-side libraries
 (such as Tidal \cite{mclean2014tidal} for audio applications)
 exist,
-but ultimately the user is restricted to a domain specific language.
+but the user is restricted to a domain specific language.
 
 In this article, we implement a lightweight general purpose livecoding framework in Haskell from scratch.
 It is not only type-safe, but also type-driven, in that boilerplate code for state migrations
@@ -65,14 +65,14 @@ Any domain- or library-specific effect can be incorporated effortlessly,
 and handled with standard Haskell functions.
 The framework follows the tradition of monadic arrowized Functional Reactive Programming (FRP) as developed in \cite{Dunai} and \cite{Yampa}.
 To run live programs created in it,
-a simple runtime environment \fxerror{is this the right term?}
+a runtime environment \fxerror{is this the right term?}
 in the \mintinline{haskell}{IO} monad is supplied,
 but since the framework does not hide \mintinline{haskell}{IO} in its abstraction
 (such as many other FRP frameworks do),
 it is an easy exercise to execute the live programs in e.g. the \mintinline{haskell}{STM} monad \cite{composable-memory-transactions}
 \fxerror{Then do it}
 or any other concurrency context such as an external main loop.
-The state of the live program can be inspected and debugged safely at every step of the execution.
+The state of the live program can be inspected and debugged safely during the execution.
 \fxerror{Consider talking about testing? We don't have anything implemented but it's easily possible}
 \fxerror{Something something plants}
 
@@ -126,8 +126,8 @@ The source code will be made openly available upon publication.\fxerror{Do it, o
 Writing out the complete state of the live program explicitly is tedious.
 We have to plan the whole program in advance and artificially separate its state from the step function.
 Such a development approach prevents us from writing programs in a modular fashion.
-But composing simple reusable building blocks is a key tenet in functional programming which we would not want to miss.
-The purpose of this section is to show that we can develop live programs in a modular fashion by extending the approach presented so far to an arrowized FRP framework.
+%But composing simple reusable building blocks is a key tenet in functional programming which we would not want to miss.
+The purpose of this section is to show that we can develop live programs modularly by extending the approach presented so far to an arrowized FRP framework.
 
 %\subsection{Arrowized FRP with effects}
 
