@@ -21,8 +21,13 @@ build:
 
 article: demos latex
 
-latex:
-	cd article && pdflatex -shell-escape -interact nonstopmode EssenceOfLiveCoding.lhs && pdflatex -shell-escape -interact nonstopmode EssenceOfLiveCodingAppendix.lhs
+latex: latex-article latex-appendix
+
+latex-article:
+	cd article && pdflatex -shell-escape -interact nonstopmode EssenceOfLiveCoding.lhs
+
+latex-appendix:
+	cd article && pdflatex -shell-escape -interact nonstopmode EssenceOfLiveCodingAppendix.lhs
 
 bibtex:
 	cd article && bibtex EssenceOfLiveCoding && bibtex EssenceOfLiveCodingAppendix

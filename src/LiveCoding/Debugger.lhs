@@ -25,7 +25,7 @@ if necessary.
 These patterns are abstracted in a simple definition:
 \fxerror{Could make Debuggers Cells as well,
 or rather \mintinline{haskell}{type Debugger = LiveProgram (ReaderT (Data s => s)) IO}.
-Then have \mintinline{haskell}{withDebugger :: LiveProgram IO -> Debugger -> LiveProgram IO.
+Then have \mintinline{haskell}{withDebugger :: LiveProgram IO -> Debugger -> LiveProgram IO}.
 Either the dbugger coul dbe synhronous,
 or even asynchronous and only rceive th estate through an IORef.}
 \begin{code}

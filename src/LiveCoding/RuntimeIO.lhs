@@ -87,16 +87,15 @@ And so begins our first live coding session in GHCi
  > stepProgramMVar var
 0
 \end{verbatim}
-When the live program was updated,
+%When the live program was updated,
+Upon updating,
 the state was correctly preserved.
-
 The programs were specified in the interactive session here,
 but of course we will want to load the program from a file,
 and use GHCi's \texttt{:reload} functionality when we have edited it.
 But as soon as we do this,
 the local binding \mintinline{haskell}{var} is lost.
-The package \texttt{foreign-store} offers a remedy:
-\fxerror{Cite. Other packages as well.}
+The package \texttt{foreign-store} \cite{foreign-store} offers a remedy:
 \mintinline{haskell}{var} can be stored persistently across reloads.
 To facilitate its usage, GHCi macros are defined for the initialisation and reload operations (Figure \ref{fig:ghci}).
 \input{../essenceoflivecoding-ghci/src/LiveCoding/GHCi.lhs}

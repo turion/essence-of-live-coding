@@ -1,8 +1,3 @@
-* Test with initial state, for one step or many steps
-* Test bisimulation with initial state, for many steps (is this really bisimulation?) Allows for stateful property-based testing
-* Test with arbitrary state (using boltzmann-samplers)
-
-TODO: insert figure for ghci, insert debugging after cells
 \begin{comment}
 \begin{code}
 {-# LANGUAGE Arrows #-}
@@ -58,6 +53,7 @@ But let it be remarked that we will be able to test cells with actual side effec
 Given a faulty cell, it is impossible to predict how often it must be stepped until it returns an invalid value.
 The number of successive inputs has to be variable in a test.
 We therefore begin by running a cell repeatedly against a list of inputs, collecting its outputs:
+\fxerror{Shortening candidate}
 \begin{code}
 embed
   :: Monad m
@@ -75,8 +71,8 @@ then so can a list of \mintinline{haskell}{a}s.
 Once we have run the cell with the given inputs,
 we form the conjunction of the properties tested at each step,
 with \texttt{QuickCheck}'s \mintinline{haskell}{conjoin}.
-Effects in \mintinline{haskell}{IO} can be embedded in \texttt{QuickCheck}
-\fxerror{Cite "Testing Monadic Code with QuickCheck", http://www.cse.chalmers.se/~rjmh/Papers/QuickCheckST.ps} with the monad morphism \mintinline{haskell}{run},
+Effects in \mintinline{haskell}{IO} can be embedded in \texttt{QuickCheck} \cite{QuickCheckIO}
+with the monad morphism \mintinline{haskell}{run},
 and executed with \mintinline{haskell}{monadicIO}.
 Cobbling all those pieces together makes cells testable:
 \begin{code}
@@ -120,14 +116,17 @@ cell1 `bisimulates` cell2 = property $ proc a -> do
   returnA -< b1 === b2
 \end{code}
 \end{comment}
+
 One shortcoming of the testing methods presented so far is that the cells will always be initialised at the same state.
 This can restrict the search space for the cell state greatly,
 as it will only reach those states reachable from the initial state after a number of steps,
 depending on the generator size.
 Luckily, since the state of our cells is an instance of \mintinline{haskell}{Data},
 we can use generic programming to automatically generate values for it.
-For example, the package \texttt{boltzmann-samplers} provides \mintinline{haskell}{generator' :: Data a => Size' -> Gen a}.
-We can use this to reinitialise an arbitrary cell:
+For example, the package \texttt{boltzmann-samplers}
+\cite{boltzmann-samplers}
+provides a function \mintinline{haskell}{generator' :: Data a => Size' -> Gen a}.
+We can use it to reinitialise an arbitrary cell:
 \begin{code}
 reinitialise :: Cell m a b -> Gen (Cell m a b)
 reinitialise Cell { .. } = do

@@ -23,6 +23,7 @@
   The approach can be generalised to an arrowized Functional Reactive Programming framework that is parametrized by its side effects.
   It allows for building up complete live programs from reusable, modular components,
   and to separate data flow cleanly from control flow.
+  Useful utilities for debugging and quickchecking are presented.
 \end{abstract}
 
 \maketitle
@@ -135,23 +136,20 @@ The purpose of this section is to show that we can develop live programs modular
 
 \subsection{Exceptions}
 
-Section \ref{sec:msfs and final coalgebras} showed that \mintinline{haskell}{Cell}s and Dunai's monadic stream functions are very much alike,
-and it makes sense to adopt its approach to control flow.
+\fxwarning{Shortening candidate, together with previous paragraph}
+%Section \ref{sec:msfs and final coalgebras} showed that \mintinline{haskell}{Cell}s and Dunai's monadic stream functions are very much alike,
+%and it makes sense to adopt its approach to control flow.
 In Dunai, we can switch from executing one stream function to another by \emph{throwing an exception}.
 Whenever we wish to hand over control to another component,
 we throw an exception as an effect in the \mintinline{haskell}{ExceptT} monad
 (which is simply the \mintinline{haskell}{Either} monad beefed up as a monad transformer).
-This exception has to be handled by choosing a new component based on the exception.
+This exception has to be handled by choosing a new component based on the exception value.
 The type checker can verify at the end that all exceptions have been handled.
 
 Dunai offers a \mintinline{haskell}{Monad} interface where the values in the context are the \emph{thrown exceptions}
 (and not the output data).
 This offers a comfortable and idiomatic way of separating data flow and control flow,
 resulting in well-structured code.
-We would like to adopt this approach here,
-but we are forewarned:
-\mintinline{haskell}{Cell}s are slightly less expressive than Dunai's stream functions,
-due to the \mintinline{haskell}{Data} constraint on the internal state.
 It will turn out that we can implement a \mintinline{haskell}{Functor} instance effortlessly,
 and an \mintinline{haskell}{Applicative} instance with a little work,
 but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
@@ -181,21 +179,13 @@ we can reason about effects and separate data flow aspects from control flow.
 \fxerror{Speedtest: Nearly double as fast as dunai. Could use Data to optimize the state even more? Or rather we'd use GADTs for that, I guess. We still have to speed up 3-4 times to reach Yampa.}
 
 \paragraph{Further directions}
-Given that the state of the live programs always satisfies the \mintinline{haskell}{Data} typeclass,
-and the control state is even finite,
-this opens up the possibility to implement a rich debugger that inspects and displays the state live,
-and even allows to modify it.
-
 To use the framework in any setting beyond a toy application,
 wrappers have to be written that explicitly integrate it in the external loops of existing frameworks,
-such as OpenGL, Gloss, or audio libraries.
+such as OpenGL, Gloss \cite{Gloss}, or audio libraries.
 \fxerror{And web front- and backends! Reflex is FRPish, so why not this here as well?}
 \fxerror{Implement some example apps in these to show that it works in principle}
 
-The \mintinline{haskell}{Typeable} class allows to extend a generic function such as \mintinline{haskell}{migrate}
-by type-specific cases.
-Usability could be increased by offering to extend the automatic migration by manual migration functions supplied by the user.
-\fxerror{Implement that!}
+\fxwarning{How to generalise Debuggers?}
 
 \fxerror{FRP was originally about the passage of time. Can recover that and much more by reimplementing Rhine in this framework (should now be possible)}
 
@@ -205,11 +195,11 @@ Usability could be increased by offering to extend the automatic migration by ma
 The automatic migration only guarantees that the new state will typecheck.
 However, if further invariants beyond the reach of Haskell's type system are expected to hold for the old state,
 those are not guaranteed for the new state.
+Within Haskell, quickchecking is our only hope.
 An extension such as refinement types
 (see e.g. \cite{LiquidHaskell} about LiquidHaskell)
-would allow to specify, for example,
-certain algebraic constraints.
-It would be very interesting to see whether automatic migration can be generalised to such a context.
+can automatically verify certain algebraic constraints, though.
+It would be a great enrichment to generalise automatic migration to such a type system.
 
 \medskip
 
@@ -219,5 +209,6 @@ Paolo Capriotti for the initial idea that led to monadic exception control flow;
 and the sonnen VPP team, especially Fabian Linges,
 for helpful discussions about hot code swap in Erlang.
 
+\clearpage
 \bibliography{EssenceOfLiveCoding.bib}
 \end{document}

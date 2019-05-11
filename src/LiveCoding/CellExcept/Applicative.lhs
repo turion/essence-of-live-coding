@@ -19,6 +19,8 @@ import LiveCoding.Exceptions
 
 \end{code}
 \end{comment}
+
+\paragraph{Applying it to \mintinline{haskell}{Applicative}}
 If we are allowed to read the first exception during the execution of the second cell,
 we can simply re-raise it once the second exception is thrown:
 \begin{code}
@@ -27,8 +29,16 @@ andThen
   => Cell (ExceptT  e1      m) a b
   -> Cell (ExceptT      e2  m) a b
   -> Cell (ExceptT (e1, e2) m) a b
-cell1 `andThen` cell2
-  = cell1 >>>== hoistCell readException cell2
+cell1 `andThen` Cell { .. } = cell1 >>>= Cell
+  { cellStep = \state (e1, a) ->
+      withExceptT (e1, ) $ cellStep state a
+  , ..
+  }
+\end{code}
+
+\begin{comment}
+\begin{spec}
+  hoistCell readException cell2
   where
     readException
       :: Functor m
@@ -36,7 +46,8 @@ cell1 `andThen` cell2
       -> ReaderT e1 (ExceptT(e1, e2) m) x
     readException exception = ReaderT
       $ \e1 -> withExceptT (e1, ) exception
-\end{code}
+\end{spec}
+\end{comment}
 Given two \mintinline{haskell}{Cell}s,
 the first may throw an exception,
 upon which the second cell gains control.
@@ -89,4 +100,3 @@ instance Monad m
         $ fmap2 e2
       cellExcept = cell1 `andThen` cell2
 \end{code}
-\end{comment}

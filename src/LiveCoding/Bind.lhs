@@ -28,10 +28,6 @@ import LiveCoding.LiveProgram
 \end{code}
 \end{comment}
 
-\fxerror{The only reason why monads and bind have much to do with live coding is because the control state is also encoded via LiveBindState and the migration works on it (or at least ought to).
-This point is completely underrepresented and needs to be illustrated at least with an example where we handle exceptions and stay in the control state.
-}
-
 \begin{comment}
 %After this long excursion,
 We can finally return to the example.
@@ -39,7 +35,6 @@ Let us again change the period of the oscillator,
 only this time not manually,
 but at the moment the position reaches 0:
 
-\fxerror{This is evil. pos < 0 depends on numerical instability.}
 \begin{code}
 throwWhen0
   :: Monad m
@@ -87,9 +82,9 @@ is that the \emph{control state}
 -- that is, the information which exceptions have been thrown and which cell is currently active --
 is encoded completely in the overall state of the live program,
 and can thus be migrated automatically.
-In the above example,
-let us shorten the period length of the sine wave and reload,
-after the first \mintinline{haskell}{try} statement has already passed control to the sine generator:
+Let us rerun the above example,
+but after the first \mintinline{haskell}{try} statement has already passed control to the sine generator
+we shorten the period length of the sine wave and reload:
 \verbatiminput{../DemoSineWaitChange.txt}
 The migrated program did not restart and wait again,
 but remembered to immediately continue executing the sine generator from the same phase as before.
