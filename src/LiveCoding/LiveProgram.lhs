@@ -52,7 +52,7 @@ and the old state is in a valid format,
 the new transition function may crash or otherwise misbehave on the old state.
 It is very hard to reduce the probability of such a failure with tests since the current state constantly changes
 (by design).
-A static typechecker is sorely missing,
+A static typechecker is missing,
 to guarantee the safety of this operation.
 
 But let us return to Haskell,
@@ -107,8 +107,8 @@ migrate :: s' -> s -> s'
 A theoretician will probably invoke a free theorem \cite{wadler1989theorems} here,
 and infer that there is in fact a unique such function:
 \mintinline{haskell}{const}!
-But it is hardly what we were hoping for.
-\mintinline{haskell}{const s' s} will simply throw away the old state and run the program with the new initial state
+But it is not what we were hoping for.
+\mintinline{haskell}{const s' s} will throw away the old state and run the program with the new initial state
 -- effectively restarting our program from a blank slate.
 
 In this generality, we cannot hope for any other solution.
@@ -175,14 +175,15 @@ and initialise the \mintinline{haskell}{lastAccessUNIX} field from the new state
 (Conversely, if we were to migrate back to the original definition,
 there is no way but to lose the data stored in \mintinline{haskell}{lastAccessUNIX}.)
 Clearly, the record labels enabled us to identify the correct target field.
-The solution lies in the type,
-or rather, the datatype definition.
+%The solution lies in the type,
+%or rather, the datatype definition.
+The solution lies in the datatype definition.
 
 We can meta-program a migration function by reasoning about the structure of the type definition.
 This is possible with the techniques presented in the seminal, now classic article ``Scrap Your Boilerplate'' \cite{syb}.
 It supplies a typeclass \mintinline{haskell}{Typeable} which enables us to compare types and safely type-cast at runtime,
-and a typeclass \mintinline{haskell}{Data} which allows us,
-amongst many other features,
+and a typeclass \mintinline{haskell}{Data} which allows us
+%amongst many other features,
 to inspect constructor names and record field labels.
 Using the package \texttt{syb},
 which supplies common utilities when working with \mintinline{haskell}{Data},
@@ -280,7 +281,7 @@ and waits for user input to update it.
 
 To save ourselves an introduction to Warp,
 we will communicate to it via two \mintinline{haskell}{MVar}s,
-which we will need to share with the live program.
+which we need to share with the live program.
 The textbook solution is to supply the variables through a \mintinline{haskell}{Reader} environment,
 \begin{comment}
 We have to generalise the definition of live programs once more,

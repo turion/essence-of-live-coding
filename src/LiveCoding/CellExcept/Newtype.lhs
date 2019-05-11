@@ -60,7 +60,7 @@ safe cell = CellExcept $ liftCell cell
 
 \paragraph{The return of the monad}
 Our new hope is to give \mintinline{haskell}{Functor}, \mintinline{haskell}{Applicative} and \mintinline{haskell}{Monad} instances to \mintinline{haskell}{CellExcept}.
-We will explore in the following how these typeclasses allow for rich control flow.
+We will explore now how this allows for rich control flow.
 
 The \mintinline{haskell}{Functor} instance is not too hard.
 When an exception is raised,
@@ -89,7 +89,7 @@ can be defined from the bind operator \mintinline{haskell}{>>=},
 it can also be defined from the \emph{live bind} operator \mintinline{haskell}{>>>=} introduced previously.
 As a technical tour-de-force,
 even a \mintinline{haskell}{Monad} instance for \mintinline{haskell}{CellExcept} can be derived with some modifications.
-This is shown at length in the separate appendix.
+This is shown at length in the appendix.
 
 But how can \mintinline{haskell}{Applicative} and \mintinline{haskell}{Monad} be put to use?
 The foreground value of \mintinline{haskell}{CellExcept} is the thrown exception.

@@ -38,7 +38,7 @@ sinesWaitAndTry = do
   try $   arr (const "Waiting...")
       >>> wait 1
   try $   sine 5
-      >>> arr simpleASCIIArt
+      >>> arr asciiArt
       >>> wait 5
 \end{code}
 \fxwarning{wait is an unintuitive name. Sounds blocking. "forwardFor"?}
@@ -90,7 +90,6 @@ foreverE e (Cell state step) = Cell { .. }
         Right (b, state') -> return (b, f { currentState = state' })
 \end{code}
 \end{comment}
-
 Again, it is instructive to look at the internal state of the looped cell:
 \begin{code}
 data ForeverE e s = ForeverE
@@ -100,9 +99,11 @@ data ForeverE e s = ForeverE
   }
   deriving Data
 \end{code}
-\mintinline{haskell}{foreverE e cell} is initialised with the initial state of \mintinline{haskell}{cell},
-and the initial exception \mintinline{haskell}{e}.
-Then \mintinline{haskell}{cell} is stepped until it encounters an exception.
+\mintinline{haskell}{foreverE e cell} starts with the initial state of \mintinline{haskell}{cell},
+and a given value \mintinline{haskell}{e}.
+Then \mintinline{haskell}{cell} is stepped,
+mutating \mintinline{haskell}{currentState},
+until it encounters an exception.
 This new exception is stored,
 and the cell is restarted with the original initial state.
 The cell may use the additional input \mintinline{haskell}{e}

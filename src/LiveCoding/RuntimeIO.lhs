@@ -50,8 +50,9 @@ foreground liveProgram
   =   stepProgram liveProgram
   >>= foreground
 \end{code}
-But this would then become the main loop,
-and leave no control to exchange the program with a new one.
+But this would leave no possibility to exchange the program with a new one.
+%But this would then become the main loop,
+%and leave no control to exchange the program with a new one.
 Instead, we can store the program in an \mintinline{haskell}{MVar}
 and call \mintinline{haskell}{stepProgramMVar} on it.
 Now that we can migrate any \mintinline{haskell}{Data},

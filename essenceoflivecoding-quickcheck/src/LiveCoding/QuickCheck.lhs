@@ -24,28 +24,27 @@ import LiveCoding.Cell
 
 \subsection{Testing with \texttt{QuickCheck}}
 
-Often, a live program, or some of its components,
+Often, some cells in a live program
 should satisfy certain correctness properties.
 It is good practice in Haskell to build up a program from functions,
 and ensure their correctness with property-based testing.
-\texttt{QuickCheck} \fxerror{Cite}
+\texttt{QuickCheck} \cite{quickcheck}
 is the primeval framework for this.
-It generates, type-driven, arbitrary input for a function,
+It generates
+%, type-driven,
+arbitrary input for a function,
 and checks whether given assertions are valid.
 
 In our livecoding approach, programs are not composed of mere functions, but of cells,
-and of course we wish to test them in a similar way.
+and of course we wish to test them in a similar way before reloading.
 \fxwarning{Say that it's really good to know that your cells do what you expect before you just reload into them. We could need some tooling to call quickcheck before reloading.}
-
 As a simple example,
 we wish to assure that \mintinline{haskell}{sumC} will never output negative numbers if only positive numbers are fed into it.
 Our test cell is thus defined as:
 \begin{code}
 testCell :: Cell IO (Positive Int) Bool
 testCell
-  =   arr getPositive
-  >>> sumC
-  >>> arr (>= 0)
+  = arr getPositive >>> sumC  >>> arr (>= 0)
 \end{code}
 (The \mintinline{haskell}{IO} monad only occurs here for monomorphization.
 But let it be remarked that we will be able to test cells with actual side effects in the same way as pure ones.)
@@ -87,10 +86,9 @@ Let us execute our test:
  > quickCheck testCell
 +++ OK, passed 100 tests.
 \end{verbatim}
-Any property that can be expressed as a cell can tested.
-This includes a large class of properties.
-If we want to ensure that the output of some complex cell \mintinline{haskell}{cell1} satisfies a property depending on the current input and internal state,
-we can remodel the relevant portions of its state in a simplified cell and check the property:
+A large class of properties can be tested this way.
+If we want to ensure that the output of some complex \mintinline{haskell}{cell1} satisfies a property depending on the current input and internal state,
+we can remodel the relevant portions of its state in a simplified \mintinline{haskell}{cell2} and check the property:
 \begin{code}
 agreesWith
   :: (Arbitrary a, Show a, Testable prop)
