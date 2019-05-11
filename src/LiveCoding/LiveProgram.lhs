@@ -94,7 +94,8 @@ hotCodeSwap
 \end{spec}
 It is the same type signature as in Figure \ref{fig:hot code swap},
 but with the first argument, the manual migration function, removed.
-The new program (including its initial state!)
+The new program,
+including its initial state,
 has just been compiled,
 and the old program is still stored in a concurrent variable.
 Can we possibly derive the new state by simply looking at the initial state of the new program and the old state?
@@ -268,7 +269,7 @@ The only necessary information is that it is an instance of \mintinline{haskell}
 \fxwarning{Consider redoing this as a GHCi session where we call the server from within Haskell, e.g. with the curl or a HTTP package}
 
 To show that live coding can be applied to domains outside audio and video applications,
-let us realise the example from the previous section and create a tiny webserver using the WAI/Warp framework \fxfatal{Cite}.
+let us realise the example from the previous section and create a tiny webserver using the WAI/Warp framework \cite{Warp}.
 It is supposed to count the number of visitors,
 and keep this state in memory when we change the implementation.
 
@@ -287,10 +288,9 @@ to arbitrary monads.
 The final version is given in Figure \ref{fig:LiveProgram}.
 \end{comment}
 which needs to supplied to the live program before execution.
-This can be done by transporting the program it along the \mintinline{haskell}{runReaderT} monad morphism.
-For this, the library supplies the utility \mintinline{haskell}{hoistLiveProgram}
-(borrowing nomenclature from the \texttt{mmorph} package).
-\fxrerror{Citation or link}
+This can be done by transporting the program along the \mintinline{haskell}{runReaderT} monad morphism.
+The utility \mintinline{haskell}{hoistLiveProgram} is supplied for this
+(borrowing nomenclature from the \texttt{mmorph} \cite{mmorph} package).
 \begin{comment}
 Abstracting this operation, we need a utility that applies a monad morphism to a live program.
 (Borrowing nomenclature from the \texttt{mmorph} package,

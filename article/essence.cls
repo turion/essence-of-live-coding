@@ -1,12 +1,13 @@
-\Providesclass{essence}
+\ProvidesClass{essence}
 
-\LoadClass[sigplan,10pt,screen]{acmart}
+\LoadClass[sigplan,10pt,screen,review=true]{acmart}
 
 \RequirePackage[utf8]{inputenc}
 \RequirePackage{minted}
 \RequirePackage[final, nomargin,inline]{fixme}
 \RequirePackage{hyperref}
 \RequirePackage{verbatim}
+\RequirePackage{microtype}
 
 \bibliographystyle{ACM-Reference-Format}
 

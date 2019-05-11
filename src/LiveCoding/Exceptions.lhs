@@ -27,7 +27,8 @@ import LiveCoding.Cell
 \end{comment}
 
 \paragraph{Throwing exceptions}
-For simply throwing exceptions, no new concepts are needed:
+No new concepts beyond the function \mintinline{haskell}{throwE :: Monad m => e -> ExceptT e m a}
+from the package \texttt{transformers} \cite{jones1995functional, transformers} are needed:
 \begin{code}
 throwC
   :: Monad m
@@ -122,7 +123,7 @@ we can ``live bind'' it to further cells as an extra input:
   eb <- liftCell $ runExceptC cell1 -< a
   case eb of
     Right b -> returnA -< b
-    Left e -> cell2 -< (e, a)
+    Left e  -> cell2   -< (e, a)
 \end{code}
 \fxwarning{If we don't do reader here, why do it with foreverE?}
 We run the exception effect of the first cell.

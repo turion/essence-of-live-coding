@@ -16,13 +16,11 @@ import LiveCoding.Cell
 \end{code}
 \end{comment}
 
-\subsection{Monadic stream functions and final coalgebras}
-
-\fxwarning{It's unclear how much benefit this subsection brings. It explores how restrictive the Data thing is in comparison with Dunai. But if people don't know Dunai, this is maybe unclear. Possibly move to appendix?}
+\section{Monadic stream functions and final coalgebras}
 
 \label{sec:msfs and final coalgebras}
 
-As mentioned earlier, our \mintinline{haskell}{Cell}s follow Dunai's monadic stream functions (\mintinline{haskell}{MSF}s) closely.
+\mintinline{haskell}{Cell}s mimick Dunai's \cite{Dunai} monadic stream functions (\mintinline{haskell}{MSF}s) closely.
 But can they fill their footsteps completely in terms of expressiveness?
 If not, which programs exactly can be represented as \mintinline{haskell}{MSF}s and which can't?
 To find the answer to these questions,

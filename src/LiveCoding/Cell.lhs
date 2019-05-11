@@ -42,7 +42,7 @@ The main connective could be that Cells build up their state automatically in a 
 }
 In ordinary functional programming, the smallest building blocks are functions.
 It stands to reason that in live coding, they should also be some flavour of functions,
-in fact, \mintinline{haskell}{Arrow}s \fxfatal{Cite}.
+in fact, \mintinline{haskell}{Arrow}s \cite{Arrows}.
 We will see that it is possible to define bigger live programs from reusable components.
 Crucially, the library user is disburdened from separating state and step function.
 The state type is built up behind the scenes,
@@ -63,8 +63,7 @@ and promoting it to an arbitrary monad will turn out shortly to be a very useful
 
 We collect these insights in a definition,
 \end{comment}
-Live programs are thus generalised to \emph{effectful Mealy machines}.
-\fxerror{I haven't cited any state automaton literature yet.}
+Live programs are thus generalised to effectful \emph{Mealy machines} \cite{Mealy}.
 Let us call them cells, the building blocks of everything live:
 \begin{comment}
 \begin{code}
@@ -103,14 +102,13 @@ sumC = Cell { .. }
     cellStep accum a = return (accum, accum + a)
 \end{code}
 
-\fxerror{Possibly put IO later because here we can't explain yet how we'll end up with () input/output}
 We recover live programs as the special case of trivial input and output:
 \begin{code}
 liveCell
   :: Functor     m
   => Cell        m () ()
   -> LiveProgram m
-liveCell Cell {..} = LiveProgram
+liveCell Cell { .. } = LiveProgram
   { liveState = cellState
   , liveStep  = fmap snd . flip cellStep ()
   }
@@ -122,42 +120,14 @@ liveCell Cell {..} = LiveProgram
 Effectful Mealy machines, here cells,
 offer a wide variety of applications in FRP.
 The essential parts of the API,
-which is heavily inspired by the FRP library \verb|dunai|
+which is heavily inspired by the FRP library \texttt{dunai}
 \cite{Dunai},
 is shown here.
-
-\medskip
-
-\paragraph{Monads and their morphisms}
-In case our \mintinline{haskell}{Cell} is in another monad than \mintinline{haskell}{IO},
-it is easy to define a function that transports a cell along a monad morphism:
-\begin{code}
-hoistCell
-  :: (forall x . m1 x   ->      m2 x)
-  ->        Cell m1 a b -> Cell m2 a b
-\end{code}
-For example, we may eliminate a \mintinline{haskell}{ReaderT r} context by supplying the environment,
-or lift into a monad transformer:
-\begin{code}
-runReaderC
-  ::               r
-  -> Cell (ReaderT r m) a b
-  -> Cell            m  a b
-runReaderC r = hoistCell $ flip runReaderT r
-\end{code}
-\begin{code}
-liftCell
-  :: (Monad m, MonadTrans t)
-  => Cell         m  a b
-  -> Cell      (t m) a b
-liftCell = hoistCell lift
-\end{code}
-\fxerror{I haven't commented on liftCell anywhere?}
-This way, we can successively handle effects
-(such as global state, read-only variables, logging, exceptions, and others)
-until we arrive at \mintinline{haskell}{IO},
-at which point we can execute the live program in the same fashion as in the last section.
-\fxerror{Expand on this, possibly elsewhere. At least cite the relevant sections in the Dunai paper.}
+%\mintinline{haskell}{Cell}s can be composed in three directions:
+%Sequentially and parallely in the data flow sense,
+%and sequentially in the control flow sense.
+We will address the data flow aspects in this section,
+investigating control flow later in Section \ref{sec:control flow}.
 
 \begin{comment}
 \begin{code}
@@ -168,17 +138,10 @@ hoistCell morph Cell { .. } = Cell
 \end{code}
 \end{comment}
 
-\mintinline{haskell}{Cell}s can be composed in three directions:
-Sequentially and parallely in the data flow sense,
-and sequentially in the control flow sense.
-We will address the data flow aspects in this section,
-investigating control flow later in Section \ref{sec:control flow}.
-
 \paragraph{Composition}
-By virtue of being an instance of the type class \mintinline{haskell}{Category}
-for any fixed monad \mintinline{haskell}{m},
-they implement sequential composition:
-
+By being an instance of the type class \mintinline{haskell}{Category}
+for any monad \mintinline{haskell}{m},
+cells implement sequential composition:
 \begin{spec}
 (>>>)
   :: Monad m
@@ -229,6 +192,7 @@ The step function executes the steps of both cells after each other.
 They only touch their individual state variable,
 the state stays encapsulated.
 
+\fxwarning{Reuse Sensor, SF and Actuator later?}
 Composing \mintinline{haskell}{Cell}s sequentially allows us to form live programs out of \emph{sensors}, pure signal functions and \emph{actuators}:
 \begin{code}
 type Sensor   a   = Cell   IO         () a
@@ -244,10 +208,9 @@ buildLiveProg
 buildLiveProg sensor sf actuator = liveCell
   $ sensor >>> sf >>> actuator
 \end{code}
-\fxwarning{If this breaks, the alignment is pointless}
 This will conveniently allow us to build a whole live program from smaller components.
 It is never necessary to specify a big state type manually,
-it will be composed from basic building blocks like \mintinline{haskell}{Composition}
+it will be composed from basic building blocks like \mintinline{haskell}{Composition}.
 
 \paragraph{Arrowized FRP}
 \mintinline{haskell}{Cell}s can be made an instance of the \mintinline{haskell}{Arrow} type class,
@@ -258,15 +221,16 @@ arr
   ->         (a -> b)
   -> Cell  m  a    b
 \end{spec}
-\fxerror{Cite arrows here or earlier}
+\fxerror{We need at least ***!}
 Together with the \mintinline{haskell}{ArrowChoice} and \mintinline{haskell}{ArrowLoop} classes,
 which are readily implemented,
-cells can be used in \emph{arrow notation} with \mintinline{haskell}{case}-expressions, \mintinline{haskell}{if then else} constructs and recursion.
+cells can be used in \emph{arrow notation} \cite{ArrowNotation} with \mintinline{haskell}{case}-expressions,
+\mintinline{haskell}{if then else} constructs and recursion.
 The next subsection gives some examples.
 
 An essential aspect of an FRP framework is some notion of \emph{time}.
 \fxwarning{Citation?}
-As this approach essentially uses the \verb|dunai| API,
+As this approach essentially uses the \texttt{dunai} API,
 a detailed treatment of time domains and clocks as in \cite{Rhine} can be readily applied here.
 But let us, for simplicity and explicitness,
 assume that we will execute all \mintinline{haskell}{Cell}s at a certain fixed step rate,
@@ -282,7 +246,7 @@ integrate
   => Cell m a a
 integrate = arr (/ stepRate) >>> sumC
 \end{code}
-The time since start of the program is then famously \cite[Section 2.4]{Yampa} defined as:
+The time since activation of a cell is then famously \cite[Section 2.4]{Yampa} defined as:
 \begin{code}
 localTime
   :: (Data a, Fractional a, Monad m)
@@ -342,7 +306,7 @@ loop
 \end{spec}
 \end{comment}
 
-\paragraph{Effects}
+\paragraph{Monads and their morphisms}
 Beyond standard arrows, a \mintinline{haskell}{Cell} can encode effects in a monad,
 so it is not surprising that Kleisli arrows can be lifted:
 \begin{spec}
@@ -360,6 +324,38 @@ constM
   -> Cell  m a b
 \end{spec}
 \end{comment}
+
+In case our \mintinline{haskell}{Cell} is in another monad than \mintinline{haskell}{IO},
+one can define a function that transports a cell along a monad morphism:
+\begin{code}
+hoistCell
+  :: (forall x . m1 x   ->      m2 x)
+  ->        Cell m1 a b -> Cell m2 a b
+\end{code}
+For example, we may eliminate a \mintinline{haskell}{ReaderT r} context by supplying the environment through the \mintinline{haskell}{runReaderT} monad morphism,
+or lift into a monad transformer:
+\begin{comment}
+\begin{code}
+runReaderC
+  ::               r
+  -> Cell (ReaderT r m) a b
+  -> Cell            m  a b
+runReaderC r = hoistCell $ flip runReaderT r
+\end{code}
+\end{comment}
+\begin{code}
+liftCell
+  :: (Monad m, MonadTrans t)
+  => Cell         m  a b
+  -> Cell      (t m) a b
+liftCell = hoistCell lift
+\end{code}
+As described in \cite[Section 4]{Dunai},
+we can successively handle effects
+(such as global state, read-only variables, logging, exceptions, and others)
+until we arrive at \mintinline{haskell}{IO}.
+Then we can execute the live program in the same way as before.
+
 \begin{comment}
 \begin{code}
 --data Parallel s1 s2 = Parallel s1 s2
@@ -442,7 +438,6 @@ instance ArrowLoop (Cell Identity) where
 \end{comment}
 \fxwarning{It's probably a performance penalty to have fixIO. Can we tweak the Identity thing in?}
 \fxerror{Choose: Either need to rewrite stuff somehow without fixIO (e.g. Arrowloop only for polymorphic stuff or Identity monad), or spaceleaks, or different integral}
-\fxwarning{Say that ArrowLoop exists and isn't the same as feedback}
 \begin{comment}
 It enables us to write delays:
 \begin{code}
@@ -500,32 +495,34 @@ printEverySecond = proc string -> do
     then arrM putStrLn -< string
     else returnA       -< ()
 \end{code}
-\fxerror{Bring ArrowChoice earlier and give it "print every 100th" as example}
-Our first complete live program,
-written in FRP, is ready:
+Our first live program
+written in FRP is ready:
 \begin{code}
 printSine :: Double -> LiveProgram IO
 printSine t = liveCell
   $   sine t
-  >>> arr simpleASCIIArt
+  >>> arr asciiArt
   >>> printEverySecond
 \end{code}
 \fxwarning{At least ASCII art. Maybe mention that we could use this in gloss, audio or whatever?}
 
 What if we would run it,
 and change the period in mid-execution?
-This is exactly what the framework was designed for.
+%This is exactly what the framework was designed for.
 \fxerror{Show Demo.hs as soon as I've explained the runtime in the previous section}
 We execute the program such that after a certain time,
 the live environment inserts \mintinline{haskell}{printSine} with a different period.
 \fxerror{Actually, now that we have those fancy GHCi commands,
 We can insert them instead of manually printing stuff.
-Increases the immersion.}
+Increases the immersion.
+But it's actually cheating.
+}
 Let us execute it:\footnote{%
 From now on, the GHCi commands will be suppressed.
 }
 \verbatiminput{../DemoSine.txt}
 It is clearly visible how the period of the oscillator changed,
+\fxwarning{Only if this doesn't break. Maybe make figures?}
 while its position (or, in terms of signal processing, its phase)
 did not jump.
 If we use the oscillator in an audio application,
@@ -535,23 +532,23 @@ the widget will smoothly change its oscillating velocity without a jolt.
 
 \section{Control flow}
 \label{sec:control flow}
-\fxerror{Idea: Let's cut liveBind, or at least the failed monad instance to the appendix as well. Problem: We can't show an example of how the migration keeps the control state. But we have to cut something if we want to show such an example.}
 \fxerror{Show only stuff where I can show most of the implementation. Reimplement, in a separate file, the API for the newtype, show its code and explain it.}
 Although we now have the tools to build big signal pathways from single cells,
 we have no way yet to let the incoming data decide which of several offered pathways to take for the rest of the execution.
 While we can (due to \mintinline{haskell}{ArrowChoice}) temporarily branch between two cells using \mintinline{haskell}{if then else},
 the branching is reevaluated (and the previous choice forgotten) every step.
-\fxwarning{We have ArrowChoice.}
 We are lacking permanent \emph{control flow}.
 
 The primeval arrowized FRP framework Yampa \cite{Yampa} caters for this requirement by means of switching from a signal function to another if an event occurs.
 \fxwarning{Possibly I've mentioned both earlier}
-Dunai \cite{Dunai}, taking the monadic aspect seriously,
+Dunai \cite[Section 5.3]{Dunai}, taking the monadic aspect seriously,
+\fxwarning{Dunai, Yampa -> \texttt{Dunai} etc.?}
 rediscovers switching as effect handling in the \mintinline{haskell}{Either} monad.
+\begin{comment}
 We shall see that,
 although the state of a \mintinline{haskell}{Cell} is strongly restricted by the \mintinline{haskell}{Data} type class,
 we can get very close to this powerful approach to control flow.
-
+\end{comment}
 
 \begin{comment}
 \begin{code}

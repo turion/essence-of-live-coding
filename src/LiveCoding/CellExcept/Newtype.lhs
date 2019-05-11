@@ -18,7 +18,9 @@ import LiveCoding.Exceptions
 \subsection{Control flow context}
 \label{sec:control flow context}
 %\paragraph{Wrapping exceptions}
-To create our own control flow context,
+Inspired by \cite[Section 2, "Control Flow through Exceptions"]{Rhine},
+%we create our own control flow context,
+%by introducing a newtype:
 we introduce a newtype:
 
 \begin{code}
@@ -82,7 +84,7 @@ pure
 pure e = CellExcept $ arr (const e) >>> throwC
 \end{code}
 
-Like the sequential application operator \mintinline{haskell}{<*>} of the \mintinline{haskell}{Applicative} class
+Like the sequential application operator \mintinline{haskell}{<*>} from the \mintinline{haskell}{Applicative} class
 can be defined from the bind operator \mintinline{haskell}{>>=},
 it can also be defined from the \emph{live bind} operator \mintinline{haskell}{>>>=} introduced previously.
 As a technical tour-de-force,

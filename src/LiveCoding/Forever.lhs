@@ -28,7 +28,7 @@ import LiveCoding.LiveProgram
 \subsection{Exceptions forever}
 
 \fxwarning{Opportunity to call this an SF here (and elsewhere)}
-But what if we want to change between the oscillator and a waiting period indefinitely?
+What if we want to change between the oscillator and a waiting period indefinitely?
 In other words, how do we repeatedly execute this action:
 \begin{code}
 sinesWaitAndTry
@@ -41,6 +41,7 @@ sinesWaitAndTry = do
       >>> arr simpleASCIIArt
       >>> wait 5
 \end{code}
+\fxwarning{wait is an unintuitive name. Sounds blocking. "forwardFor"?}
 The one temptation we have to resist is to recurse in the \mintinline{haskell}{CellExcept} context to prove the absence of exceptions:
 \begin{code}
 sinesForever'
@@ -104,13 +105,13 @@ and the initial exception \mintinline{haskell}{e}.
 Then \mintinline{haskell}{cell} is stepped until it encounters an exception.
 This new exception is stored,
 and the cell is restarted with the original initial state.
-The cell may use the \mintinline{haskell}{ReaderT e} effect
+The cell may use the additional input \mintinline{haskell}{e}
 to ask for the last thrown exception
-(or the initial exception, if none was thrown yet).
-The exception is thus the only method of passing on data to the next loop iteration.
+(or the initial value, if none was thrown yet).
+The exception is thus the only method of passing on data to the next loop iteration.\footnote{%
 It is the user's responsibility to ensure that it does not introduce a space leak,
 for example through a lazy calculation that builds up bigger and bigger thunks.
-
+}
 In our example, we need not pass on any data,
 so a simpler version of the loop operator is defined:
 \begin{code}
@@ -122,6 +123,7 @@ foreverC = foreverE () . liftCell
   . hoistCell (withExceptT $ const ())
 \end{code}
 Now we can finally implement our cell:
+\fxwarning{Not an SF. Add MonadFix to SF defintiion?}
 \begin{code}
 sinesForever :: MonadFix m => Cell m () String
 sinesForever = foreverC
@@ -137,6 +139,7 @@ printSinesForever = liveCell
 Let us run it:
 \verbatiminput{../DemoSinesForever.txt}
 \fxwarning{Is the [...] good or not? (Here and elsewhere)}
+\fxerror{What's the advantage of forever? How to livecode with it?}
 
 \fxerror{``Forever and ever?'' Show graceful shutdown with ExceptT. Have to change the runtime slightly for this.}
 \fxnote{Awesome idea: Electrical circuits simulation where we can change the circuits live!}
