@@ -130,12 +130,13 @@ launch liveProg = do
   forkIO $ background var
   return var
 
-launchWithDebugger :: LiveProgram IO -> Debugger -> IO (MVar (LiveProgram IO))
-launchWithDebugger liveProg debugger = do
+launchWithDebugger :: LiveProgram IO -> Debugger' IO -> IO (MVar (LiveProgram IO))
+launchWithDebugger liveProg debugger = launch $ liveProg `withDebugger` debugger
+{-
   var <- newMVar liveProg
   forkIO $ backgroundWithDebugger var debugger
   return var
-
+-}
 debug :: Debugger -> LiveProgram IO -> IO (LiveProgram IO)
 debug Debugger { .. } LiveProgram { .. } = do
   liveState' <- debugState liveState

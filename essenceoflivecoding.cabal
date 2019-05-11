@@ -23,6 +23,7 @@ library
     , LiveCoding.Commutable
     , LiveCoding.Coalgebra
     , LiveCoding.Debugger
+--    , LiveCoding.Debugger.Migrate
     , LiveCoding.Debugger.StatePrint
     , LiveCoding.Exceptions
     , LiveCoding.Forever

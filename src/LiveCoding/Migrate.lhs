@@ -1,5 +1,7 @@
 \begin{comment}
 \begin{code}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE RankNTypes #-}
 module LiveCoding.Migrate where
 
 -- base
@@ -24,9 +26,31 @@ import Data.Generics.Twins
 \end{comment}
 
 \begin{code}
+newtype Migration a b = Migration { unMigration :: a -> b -> a }
+
 migrate :: (Data a, Data b) => a -> b -> a
 migrate = userMigrate (\() -> ())
 
+{-
+extendMigration
+  :: (Data a, Data b)
+  => (a -> b -> a)
+  -> (forall c d . (Data c, Data d) => c -> d -> c)
+  ->  a -> b -> a
+extendMigration oldMigration newMigration = unMigration $ Migration oldMigration `extendMigration'` Migration newMigration
+extendMigration'
+  :: (Data a, Data b)
+  => Migration a b
+  -> (forall c d . (Data c, Data d) => Migration c d)
+  ->  Migration a b
+extendMigration' def ext = maybe def id (dataCast2 ext)
+
+ext2 :: (Data a, Typeable t)
+     => c a
+     -> (forall d1 d2. (Data d1, Data d2) => c (t d1 d2))
+     -> c a
+ext2 def ext = maybe def id (dataCast2 ext)
+-}
 userMigrate
   :: (Data a, Data b, Typeable c, Typeable d)
   => (c -> d)
