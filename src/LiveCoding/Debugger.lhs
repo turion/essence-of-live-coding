@@ -28,9 +28,9 @@ import LiveCoding.Cell
 
 \subsection{Debugging the live state}
 Having the complete state of the program in one place allows us to inspect and debug it in a central place.
-We might want to display the state, or aspects of it,
-interact with the user and possibly even change it in place,
-if necessary.
+We might want to interact with the user,
+display aspects of the state
+and possibly even change it in place.
 \begin{comment}
 These patterns are abstracted in a simple definition:
 \fxerror{Could make Debuggers Cells as well,
@@ -110,8 +110,8 @@ and is fed the current \mintinline{haskell}{state} of the main program.
 Depending on \mintinline{haskell}{dbgState},
 it may execute some side effects or mutate the \mintinline{haskell}{state},
 or do nothing at all\footnote{%
-This option is important performance: E.g. for an audio application,
-performing side effects on every sample would be an unbearable slow down.}.
+This option is important for performance: E.g. for an audio application,
+a side effect on every sample can slow down unbearably.}.
 \begin{comment}
 We can start them alongside with the live program:
 \fxwarning{Move appropriately, e.g. a separate file RuntimeDebugger}

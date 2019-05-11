@@ -170,13 +170,15 @@ and type-driven, in that it is derived generically from the datatype definition.
 By parametrizing the cells over arbitrary monads,
 and leveraging the exception monad,
 we can reason about effects and separate data flow aspects from control flow.
+The approach is extensible as debugging and testing methods can be added easily.
 
 \fxerror{Speedtest: Nearly double as fast as dunai. Could use Data to optimize the state even more? Or rather we'd use GADTs for that, I guess. We still have to speed up 3-4 times to reach Yampa.}
 
 \paragraph{Further directions}
 To use the framework in any setting beyond a toy application,
 wrappers have to be written that explicitly integrate it in the external loops of existing frameworks,
-such as OpenGL, Gloss \cite{Gloss}, or audio libraries.
+such as web frontends and backends, OpenGL, \texttt{gloss} \cite{Gloss}, or audio libraries.
+As a start, the multi-clock FRP library \texttt{rhine} \cite{Rhine} could be adapted to this approach.
 \fxerror{And web front- and backends! Reflex is FRPish, so why not this here as well?}
 \fxerror{Implement some example apps in these to show that it works in principle}
 
@@ -186,7 +188,7 @@ such as OpenGL, Gloss \cite{Gloss}, or audio libraries.
 \fxerror{Say somewhere why we used syb instead of Generics?}
 
 The automatic migration only guarantees that the new state will typecheck.
-However, if further invariants beyond the reach of Haskell's type system are expected to hold for the old state,
+However, if further properties beyond the reach of Haskell's type system are expected to hold for the old state,
 those are not guaranteed for the new state.
 Within Haskell, quickchecking is our only hope.
 An extension such as refinement types
