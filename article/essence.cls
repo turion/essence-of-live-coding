@@ -4,7 +4,7 @@
 
 \RequirePackage[utf8]{inputenc}
 \RequirePackage{minted}
-\RequirePackage[final, nomargin,inline]{fixme}
+\RequirePackage[nomargin,inline]{fixme}
 \RequirePackage{hyperref}
 \RequirePackage{verbatim}
 \RequirePackage{microtype}
