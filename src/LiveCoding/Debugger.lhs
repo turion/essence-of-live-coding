@@ -97,7 +97,7 @@ withDebugger
       return $ uncurry Debugging s
 \end{code}
 \end{comment}
-Again, let us understand the function through the resulting state type:
+Again, let us understand the function through its state type:
 \begin{code}
 data Debugging dbgState state = Debugging
   { dbgState :: dbgState
@@ -128,6 +128,7 @@ The optional parameter of type \mintinline{haskell}{Maybe Int} specifies between
 \end{comment}
 
 Live programs with debuggers are started just as usual.
+\begin{comment}
 \fxwarning{Automatise this and the next output}
 Inspecting the state of the example \mintinline{haskell}{printSineWait} from Section \ref{sec:control flow context} is daunting, though:
 \begin{verbatim}
@@ -144,6 +145,11 @@ Luckily, it is a simple, albeit lengthy exercise in generic programming to prune
 resulting in a tidy output%\footnote{%
 %Line breaks were added to fit the columns.}
  like:
+\end{comment}
+Let us inspect the state of the example \mintinline{haskell}{printSineWait} from Section \ref{sec:control flow context}.
+It is a simple, albeit lengthy exercise in generic programming to prune all irrelevant parts of the state when printing it,
+resulting in a tidy output like:
+\fxwarning{Automatise this}
 \begin{verbatim}
 Waiting...
 NotThrown: (1.0e-3)
@@ -165,13 +171,13 @@ Exception:
  (3.947841760435744e-6)+
  >>> (2003)
 \end{comment}
-First, the cell is initialised in a state where the exception hasn't been thrown yet,
-and the local time has progressed to \mintinline{haskell}{1.0e-3} seconds.
+The cell is initialised in a state where the exception hasn't been thrown yet,
+and the \mintinline{haskell}{localTime} is \mintinline{haskell}{1.0e-3} seconds.
 The next line corresponds to the initial state (position and velocity) of the sine generator which will be activated after the exception has been thrown,
 followed by the internal counter of \mintinline{haskell}{printEverySecond}.
 In the next step, local time and counter have progressed.
 Two thousand steps later, the exception is finally thrown,
-and the sine generator springs into action.
+and the sine wave starts.
 
 \begin{comment}
 \begin{code}
