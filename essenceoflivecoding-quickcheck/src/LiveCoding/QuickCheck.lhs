@@ -46,7 +46,7 @@ Our test cell is thus defined as:
 \begin{code}
 testCell :: Monad m => Cell m (Positive Int) Bool
 testCell
-  = arr getPositive >>> sumC  >>> arr (>= 0)
+  = arr getPositive >>> sumC >>> arr (>= 0)
 \end{code}
 \begin{comment}
 (The \mintinline{haskell}{IO} monad only occurs here for monomorphization.
