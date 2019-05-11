@@ -219,9 +219,9 @@ arr
   ->         (a -> b)
   -> Cell  m  a    b
 \end{spec}
-\fxerror{We need at least ***!}
-Together with the \mintinline{haskell}{ArrowChoice} and \mintinline{haskell}{ArrowLoop} classes,
-which are readily implemented,
+\fxwarning{Would be nice to have ***!}
+Together with the \mintinline{haskell}{ArrowChoice} and \mintinline{haskell}{ArrowLoop} classes
+(discussed in the appendix),
 cells can be used in \emph{arrow notation} \cite{ArrowNotation} with \mintinline{haskell}{case}-expressions,
 \mintinline{haskell}{if then else} constructs and recursion.
 The next subsection gives some examples.
@@ -253,56 +253,6 @@ localTime = arr (const 1) >>> integrate
 \end{code}
 
 \fxwarning{I cut a more detailed discussion about ArrowChoice and ArrowLoop here. Put in the appendix?}
-\begin{comment}
-\fxwarning{Move before the time discussion?}
-\fxerror{Just type signatures aren't so helpful. Maybe cut this to a very short paragraph that says that we have all the classes for arrow notation, if then else and recursion.}
-The \mintinline{haskell}{Arrow} type class also allows for data-parallel composition:
-\begin{spec}
-(***)
-  :: Monad m
-  => Cell  m  a      b
-  -> Cell  m     c      d
-  -> Cell  m (a, c) (b, d)
-\end{spec}
-Again, the state type of the composed cell is the product type of the constituent states.
-
-%The arrow operator \mintinline{haskell}{(***)} for parallel composition
-This operator
-has a dual,
-supplied by the \mintinline{haskell}{ArrowChoice} type class,
-\fxwarning{Cite something? For example, we fulfil the noninterference (?) law from "Settable and Non-Interfering Signal Functions for FRP - How a First-Order Switch is More Than Enough"}
-which \mintinline{haskell}{Cell}s implement:
-\begin{spec}
-(+++)
-  :: Monad m
-  => Cell m         a            b
-  -> Cell m           c            d
-  -> Cell m (Either a c) (Either b d)
-\end{spec}
-Like \mintinline{haskell}{cell1 *** cell2},
-its dual \mintinline{haskell}{cell1 +++ cell2} holds the state of both cells.
-But while the former executes both cells,
-and consumes input and produces output for both of them,
-the latter steps only one of them forward each time,
-depending on which input was provided.
-This enables basic control flow in arrow expressions,
-such as \mintinline{haskell}{if}- and \mintinline{haskell}{case}-statements.
-We can momentarily switch from one cell to another,
-depending on live input.
-
-The \mintinline{haskell}{ArrowLoop} class exists to enable recursive definitions in arrow expressions,
-and once again \mintinline{haskell}{Cell}s implement it:\footnote{%
-A word of caution has to be issued here:
-The instance is implemented using the monadic fixed point operator \mintinline{haskell}{mfix} \cite{MonadFix},
-and can thus crash at runtime if the current output of the intermediate value \mintinline{haskell}{s} is calculated strictly from the current input \mintinline{haskell}{s}.
-}
-\begin{spec}
-loop
-  :: MonadFix m
-  => Cell     m (a, s) (b, s)
-  -> Cell     m  a      b
-\end{spec}
-\end{comment}
 
 \paragraph{Monads and their morphisms}
 Beyond standard arrows, a \mintinline{haskell}{Cell} can encode effects in a monad,
@@ -386,35 +336,7 @@ constM = arrM . const
 \end{comment}
 
 \begin{comment}
-\fxwarning{Do we really need feedback? It's never used again! Possibly comment or move to appendix, with other library stuff.}
-We would like to have all basic primitives needed to develop standard synchronous signal processing components,
-without touching the \mintinline{haskell}{Cell} constructor anymore.
-One crucial bit is missing:
-Encapsulating state.
-\fxerror{This is unclear. Either have to stress that it's maybe not so nice to encapsulate state by explicitly building the Cell, like we have done with the sum, or move feedback at the beginning of the section.}
-The most general such construction is the feedback loop:
-\fxerror{I say the type here without comment}
 \begin{code}
--- data Feedback s s' = Feedback s s'
-newtype Feedback s s' = Feedback (s, s')
-  deriving Data
-
-feedback
-  :: (Data s, Monad m)
-  => s
-  -> Cell m (a, s) (b, s)
-  -> Cell m  a      b
-\end{code}
-\end{comment}
-\begin{comment}
-\begin{code}
-feedback s (Cell state step) = Cell { .. }
-  where
-    cellState = Feedback (state, s)
-    cellStep (Feedback (state, s)) a = do
-      ((b, s'), state') <- step state (a, s)
-      return (b, Feedback (state', s'))
-
 instance MonadFix m => ArrowLoop (Cell m) where
   loop (Cell state step) = Cell { .. }
     where
