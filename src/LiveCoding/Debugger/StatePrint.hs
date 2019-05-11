@@ -13,6 +13,10 @@ import Data.Proxy
 import Data.Typeable
 import Unsafe.Coerce
 
+-- transformers
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.State
+
 -- syb
 import Data.Generics.Aliases
 import Data.Generics.Text (gshow)
@@ -23,8 +27,10 @@ import LiveCoding.Debugger
 import LiveCoding.Forever
 import LiveCoding.Exceptions
 
-statePrint :: Debugger
-statePrint = Debugger $ \s -> putStrLn (stateShow s) >> return s
+statePrint :: Debugger' IO
+statePrint = Debugger' $ liveCell $ arrM $ const $ do
+  s <- get
+  lift $ putStrLn $ stateShow s
 
 stateShow :: Data s => s -> String
 stateShow

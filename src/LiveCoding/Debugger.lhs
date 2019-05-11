@@ -1,5 +1,6 @@
 \begin{comment}
 \begin{code}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -11,8 +12,16 @@ import Control.Monad (void)
 import Data.Data
 import Data.IORef
 
+-- transformers
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.State
+
 -- syb
 import Data.Generics.Text
+
+-- essenceoflivecoding
+import LiveCoding.LiveProgram
+import LiveCoding.Cell
 
 \end{code}
 \end{comment}
@@ -22,6 +31,7 @@ Having the complete state of the program in one place allows us to inspect and d
 We might want to display the state, or aspects of it,
 interact with the user and possibly even change it in place,
 if necessary.
+\begin{comment}
 These patterns are abstracted in a simple definition:
 \fxerror{Could make Debuggers Cells as well,
 or rather \mintinline{haskell}{type Debugger = LiveProgram (ReaderT (Data s => s)) IO}.
@@ -34,23 +44,75 @@ newtype Debugger = Debugger
       :: forall s . Data s => s -> IO s
   }
 \end{code}
-A simple debugger does not modify the state and prints it to the console:
+\end{comment}
+In short, a debugger is a program that can read and modify,
+as an additional effect,
+the state of an arbitrary live program:
 \begin{code}
-gshowDebugger = Debugger $ \state -> do
-  putStrLn $ gshow state
-  return state
+data Debugger' m = Debugger'
+  { getDebugger :: forall s .
+      Data s => LiveProgram (StateT s m)
+  }
+\end{code}
+A simple debugger prints the unmodified state to the console:
+\begin{code}
+gshowDebugger :: Debugger' IO
+gshowDebugger = Debugger'
+  $ liveCell $ arrM $ const $ do
+    state <- get
+    lift $ putStrLn $ gshow state
 \end{code}
 Thanks to the \mintinline{haskell}{Data} typeclass,
-the state does not need to be an instance of \mintinline{haskell}{Show} for this to work.
+the state does not need to be an instance of \mintinline{haskell}{Show} for this to work:
+\texttt{syb} offers a generic \mintinline{haskell}{gshow} function.
 A more sophisticated debugger could connect to a GUI and display the state there,
 even offering the user to pause the execution and edit the state live.
 \fxwarning{Should I explain countDebugger? What for?}
 \begin{comment}
+\fxerror{To make this work or show this,
+should make them Cell IO () (), then they are endos in the Cell IO category.}
 Debuggers are endomorphisms in the Kleisli category of \mintinline{haskell}{IO},
 and thus \mintinline{haskell}{Monoid}s:
 A pair of them can be chained by executing them sequentially,
 and the trivial debugger purely \mintinline{haskell}{return}s the state unchanged.
 \end{comment}
+We can bake a debugger into a live program:
+\begin{code}
+withDebugger
+  :: Monad       m
+  => LiveProgram m
+  -> Debugger'   m
+  -> LiveProgram m
+\end{code}
+\begin{comment}
+\begin{code}
+withDebugger
+  (LiveProgram    state    step)
+  (Debugger' (LiveProgram dbgState dbgStep))
+  = LiveProgram { .. } where
+    liveState = Debugging { .. }
+    liveStep  = \Debugging { .. } -> do
+      state' <- step state
+      s <- runStateT (dbgStep dbgState) state'
+      return $ uncurry Debugging s
+\end{code}
+\end{comment}
+Again, let us understand the function through the resulting state type:
+\begin{code}
+data Debugging dbgState state = Debugging
+  { dbgState :: dbgState
+  , state    :: state
+  } deriving Data
+\end{code}
+On every step, the debugger becomes active after the cell steps,
+and is fed the current \mintinline{haskell}{state} of the main program.
+\fxerror{We need to make sure migration doesn't fail when we add them!}
+Depending on \mintinline{haskell}{dbgState},
+it may execute some side effects or mutate the \mintinline{haskell}{state},
+or do nothing at all\footnote{%
+This option is important performance: E.g. for an audio application,
+performing side effects on every sample would be an unbearable slow down.}.
+\begin{comment}
 We can start them alongside with the live program:
 \fxwarning{Move appropriately, e.g. a separate file RuntimeDebugger}
 \begin{spec}
@@ -63,7 +125,9 @@ launchWithDebugger
 \fxerror{Implement the Maybe Int parameter!}
 The optional parameter of type \mintinline{haskell}{Maybe Int} specifies between how many execution steps the debugger should be called.
 (For an audio application, calling it on every sample would be an unbearable performance penalty.)
+\end{comment}
 
+Live programs with debuggers are started just as usual.
 \fxwarning{Automatise this and the next output}
 Inspecting the state of the example \mintinline{haskell}{printSineWait} from Section \ref{sec:control flow context} is daunting, though:
 \begin{verbatim}
@@ -122,17 +186,16 @@ noDebugger = Debugger $ return
 
 newtype CountObserver = CountObserver { observe :: IO Integer }
 
-countDebugger :: IO (Debugger, CountObserver)
+countDebugger :: IO (Debugger' IO, CountObserver)
 countDebugger = do
   countRef <- newIORef 0
   observeVar <- newEmptyMVar
-  let debugger = Debugger $ \s -> do
+  let debugger = Debugger' $ liveCell $ arrM $ const $ lift $ do
         n <- readIORef countRef
         putMVar observeVar n
         yield
         void $ takeMVar observeVar
         writeIORef countRef $ n + 1
-        return s
       observer = CountObserver $ yield >> readMVar observeVar
   return (debugger, observer)
 
