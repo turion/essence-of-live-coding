@@ -114,8 +114,7 @@ liveCell Cell { .. } = LiveProgram
 \end{code}
 \fxwarning{Also say "we just need to elide the units"?}
 
-\subsection{An FRP API}
-\fxerror{This is called "Automata-based programming". What we put on top is composability of automata in FRP idioms}
+\subsection{FRP for automata-based programming}
 Effectful Mealy machines, here cells,
 offer a wide variety of applications in FRP.
 The essential parts of the API,

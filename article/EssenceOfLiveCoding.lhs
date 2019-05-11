@@ -28,8 +28,6 @@
 
 \maketitle
 
-\fxerror{What's this blank page doing? Might be from my class definition.}
-
 \section{Introduction}
 
 Livecoding has come to denote various concepts,
@@ -66,16 +64,14 @@ Any domain- or library-specific effect can be incorporated effortlessly,
 and handled with standard Haskell functions.
 The framework follows the tradition of monadic arrowized Functional Reactive Programming (FRP) as developed in \cite{Dunai} and \cite{Yampa}.
 To run live programs created in it,
-a runtime environment \fxerror{is this the right term?}
+a runtime environment \fxwarning{is this the right term?}
 in the \mintinline{haskell}{IO} monad is supplied,
 but since the framework does not hide \mintinline{haskell}{IO} in its abstraction
 (such as many other FRP frameworks do),
 it is an easy exercise to execute the live programs in e.g. the \mintinline{haskell}{STM} monad \cite{composable-memory-transactions}
-\fxerror{Then do it}
+\fxwarning{Then do it}
 or any other concurrency context such as an external main loop.
 The state of the live program can be inspected and debugged safely during the execution.
-\fxerror{Consider talking about testing? We don't have anything implemented but it's easily possible}
-\fxerror{Something something plants}
 
 There is no subtly clever trick.
 We simply follow, dutifully and without compromise,
@@ -89,7 +85,6 @@ and
 similar views are expressed about live coding in Elm\footnote{%
 Compare \href{https://elm-lang.org/blog/interactive-programming}{https://elm-lang.org/blog/interactive-programming}.}
 (a domain specific web frontend language inspired by Haskell).
-\fxerror{Reference to blog entry}
 What is new about this approach is the consequential application of this motto to create a general purpose, type-safe FRP framework\footnote{%
 It shall be remarked that FRP is long past niche applications in the video and audio domains.
 It is possible to write web servers and frontends, simulations and games in it.
@@ -184,8 +179,6 @@ wrappers have to be written that explicitly integrate it in the external loops o
 such as OpenGL, Gloss \cite{Gloss}, or audio libraries.
 \fxerror{And web front- and backends! Reflex is FRPish, so why not this here as well?}
 \fxerror{Implement some example apps in these to show that it works in principle}
-
-\fxwarning{How to generalise Debuggers?}
 
 \fxerror{FRP was originally about the passage of time. Can recover that and much more by reimplementing Rhine in this framework (should now be possible)}
 

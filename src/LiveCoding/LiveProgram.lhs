@@ -57,8 +57,7 @@ to guarantee the safety of this operation.
 
 But let us return to Haskell,
 where we have such a typechecker.
-Now we encounter a problem at an earlier stage:
-\fxwarning{Or instead of the last sentence: ``It immediately manifests the problem/unsafelty'' or so. ``It will immediately point out the unsafetye of the migration.''}
+It immediately points out the unsafety of the migration:
 There is no guarantee that the new transition function will typecheck with the old state!
 In fact, in many situations, the state type needs to be extended or modified.
 
@@ -116,13 +115,11 @@ But in the following, we are going to see how to tweak the live program definiti
 and arrive at an effective migration function.
 
 \subsection{Type-driven migrations}
-\fxerror{This is the essence of the article. Show explicitly what the migration function would do.}
 In many cases, knowing the old state and the new initial state is sufficient to derive the new, migrated state safely.
 As an example, imagine the internal state of a simple webserver that counts the number of visitors to a page.
 \fxwarning{Later show how migrate behaves on these examples}
-\fxwarning{In general: All examples should be in a separate directory, not in src. We should only have the final library in src.}
+\fxwarning{Lib: All examples should be in a separate directory, not in src. We should only have the final library in src.}
 \fxwarning{Typecheck the example somehow? Put it in different files and make figures?}
-\fxwarning{Possible example for user migration: Start with Int and upgrade to Integer}
 \begin{spec}
 data State = State { nVisitors :: Int }
 \end{spec}
@@ -134,10 +131,11 @@ the reader is asked to patiently wait until the next section.)
 server = LiveProgram (State 0) $ \State { .. }
   -> State $ return $ nVisitors + 1
 \end{spec}
-\fxerror{Show the different definitions of State as different modules by directly quoting different files as figures.
-Use same files like the wai demo. Maybe rename them in order not to say Wai before we've introduced it.}
+\fxwarning{Show the different definitions of State as different modules by directly quoting different files as figures?
+Would like to use same files like the wai demo (but hard because of Data).
+Maybe rename them in order not to say Wai before we've introduced it.}
 We extend the state by the name of the last user agent to access the server (initially not present):
-\fxwarning{What if we add another constructor Bar here? 
+\fxwarning{What if we add another constructor Bar here?
 Could it still find out that there is a State constructor in the type?}
 \begin{spec}
 data State = State Int (Maybe ByteString)
@@ -275,7 +273,8 @@ It is supposed to count the number of visitors,
 and keep this state in memory when we change the implementation.
 
 The boiler plate code, which is suppressed here,
-initialises the Warp server, launches our live program in a separate thread
+initialises the Warp server,
+uses \mintinline{haskell}{launch} to start our live program in a separate thread
 \fxwarning{"using launch"}
 and waits for user input to update it.
 
