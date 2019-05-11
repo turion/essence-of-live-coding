@@ -53,9 +53,11 @@ testCell
 But let it be remarked that we will be able to test cells with actual side effects in the same way as pure ones.)
 \end{comment}
 \fxwarning{Test in IO}
-Given a faulty cell, it is impossible to predict how often it must be stepped until it returns an invalid value.
-The number of successive inputs has to be variable in a test.
-We therefore begin by running a cell repeatedly against a list of inputs, collecting its outputs:
+%Given a faulty cell, it is impossible to predict how often it must be stepped until it returns an invalid value.
+%The number of successive inputs has to be variable in a test.
+%We therefore 
+We
+begin by running a cell repeatedly against a list of inputs, collecting its outputs:
 \fxerror{Shortening candidate}
 \begin{code}
 embed
