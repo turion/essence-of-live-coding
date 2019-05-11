@@ -23,19 +23,18 @@ Finally, the updated state (the incremented number of visitors)
 is returned,
 and passed to the next step.
 
-We then modify the server logic as in Figure \ref{fig:DemoWai2}.
-Additionally to the number of visitors,
-we also store the last user agent name
-in the state, if it was sent.
-For this, one more record field is added to the state type.
-(The functions \mintinline{haskell}{fromStrict} and \mintinline{haskell}{pack} might be unfamiliar.
+We then modify\footnote{%
+The functions \mintinline{haskell}{fromStrict} and \mintinline{haskell}{pack} might be unfamiliar.
 They are from the \texttt{bytestring} package and convert between different kinds of strings.
 \mintinline{haskell}{requestHeaders} from the \texttt{wai} package extracts the HTTP headers,
 such as the user agent name,
 from a request,
-as a list of tuples.)
-
-\fxwarning{Test reloading with a single file at least once.}
+as a list of tuples.}
+the server logic as in Figure \ref{fig:DemoWai2}.
+Additionally to the number of visitors,
+we also store the last user agent name
+in the state, if it was sent.
+For this, one more record field is added to the state type.
 
 \begin{figure}
 \begin{code}
@@ -49,8 +48,8 @@ data Env = Env
 \end{figure}
 
 Let us run the old server,
-and switch to the new server during execution.
-From the console, we access the running server:
+and switch to the new one during execution.
+From a console, we access the running server:
 \begin{verbatim}
 $ curl localhost:8080
 This is Ye Olde Server.
