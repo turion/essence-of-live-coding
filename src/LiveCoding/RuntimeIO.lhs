@@ -130,19 +130,19 @@ launch liveProg = do
   forkIO $ background var
   return var
 
-launchWithDebugger :: LiveProgram IO -> Debugger' IO -> IO (MVar (LiveProgram IO))
+launchWithDebugger :: LiveProgram IO -> Debugger IO -> IO (MVar (LiveProgram IO))
 launchWithDebugger liveProg debugger = launch $ liveProg `withDebugger` debugger
 {-
   var <- newMVar liveProg
   forkIO $ backgroundWithDebugger var debugger
   return var
 -}
-debug :: Debugger -> LiveProgram IO -> IO (LiveProgram IO)
-debug Debugger { .. } LiveProgram { .. } = do
+debug :: Debugger_ -> LiveProgram IO -> IO (LiveProgram IO)
+debug Debugger_ { .. } LiveProgram { .. } = do
   liveState' <- debugState liveState
   return LiveProgram { liveState = liveState', .. }
 
-backgroundWithDebugger :: MVar (LiveProgram IO) -> Debugger -> IO ()
+backgroundWithDebugger :: MVar (LiveProgram IO) -> Debugger_ -> IO ()
 backgroundWithDebugger var debugger = forever $ do
   liveProg   <- takeMVar var
   liveProg'  <- stepProgram liveProg

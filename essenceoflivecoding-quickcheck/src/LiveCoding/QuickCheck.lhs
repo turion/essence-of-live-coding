@@ -144,7 +144,7 @@ quickCheckDebugger
   => Cell IO a prop
   -> Debugger
 quickCheckDebugger testCell
-  = Debugger $ \s -> do
+  = Debugger_ $ \s -> do
     let Cell { .. } = 
     testCell <- 
 \end{code}

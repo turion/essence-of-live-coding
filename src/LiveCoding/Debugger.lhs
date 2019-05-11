@@ -34,12 +34,12 @@ if necessary.
 \begin{comment}
 These patterns are abstracted in a simple definition:
 \fxerror{Could make Debuggers Cells as well,
-or rather \mintinline{haskell}{type Debugger = LiveProgram (ReaderT (Data s => s)) IO}.
-Then have \mintinline{haskell}{withDebugger :: LiveProgram IO -> Debugger -> LiveProgram IO}.
+or rather \mintinline{haskell}{type Debugger_ = LiveProgram (ReaderT (Data s => s)) IO}.
+Then have \mintinline{haskell}{withDebugger :: LiveProgram IO -> Debugger_ -> LiveProgram IO}.
 Either the dbugger coul dbe synhronous,
 or even asynchronous and only rceive th estate through an IORef.}
 \begin{code}
-newtype Debugger = Debugger
+newtype Debugger_ = Debugger_
   { debugState
       :: forall s . Data s => s -> IO s
   }
@@ -49,15 +49,15 @@ In short, a debugger is a program that can read and modify,
 as an additional effect,
 the state of an arbitrary live program:
 \begin{code}
-data Debugger' m = Debugger'
+data Debugger m = Debugger
   { getDebugger :: forall s .
       Data s => LiveProgram (StateT s m)
   }
 \end{code}
 A simple debugger prints the unmodified state to the console:
 \begin{code}
-gshowDebugger :: Debugger' IO
-gshowDebugger = Debugger'
+gshowDebugger :: Debugger IO
+gshowDebugger = Debugger
   $ liveCell $ arrM $ const $ do
     state <- get
     lift $ putStrLn $ gshow state
@@ -81,14 +81,14 @@ We can bake a debugger into a live program:
 withDebugger
   :: Monad       m
   => LiveProgram m
-  -> Debugger'   m
+  -> Debugger   m
   -> LiveProgram m
 \end{code}
 \begin{comment}
 \begin{code}
 withDebugger
   (LiveProgram    state    step)
-  (Debugger' (LiveProgram dbgState dbgStep))
+  (Debugger (LiveProgram dbgState dbgStep))
   = LiveProgram { .. } where
     liveState = Debugging { .. }
     liveStep  = \Debugging { .. } -> do
@@ -175,22 +175,22 @@ and the sine generator springs into action.
 
 \begin{comment}
 \begin{code}
-instance Semigroup Debugger where
-  debugger1 <> debugger2 = Debugger $ \s -> debugState debugger1 s >>= debugState debugger2
+instance Semigroup Debugger_ where
+  debugger1 <> debugger2 = Debugger_ $ \s -> debugState debugger1 s >>= debugState debugger2
 
-instance Monoid Debugger where
+instance Monoid Debugger_ where
   mempty = noDebugger
 
-noDebugger :: Debugger
-noDebugger = Debugger $ return
+noDebugger :: Debugger_
+noDebugger = Debugger_ $ return
 
 newtype CountObserver = CountObserver { observe :: IO Integer }
 
-countDebugger :: IO (Debugger' IO, CountObserver)
+countDebugger :: IO (Debugger IO, CountObserver)
 countDebugger = do
   countRef <- newIORef 0
   observeVar <- newEmptyMVar
-  let debugger = Debugger' $ liveCell $ arrM $ const $ lift $ do
+  let debugger = Debugger $ liveCell $ arrM $ const $ lift $ do
         n <- readIORef countRef
         putMVar observeVar n
         yield

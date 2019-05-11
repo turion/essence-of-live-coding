@@ -27,8 +27,8 @@ import LiveCoding.Debugger
 import LiveCoding.Forever
 import LiveCoding.Exceptions
 
-statePrint :: Debugger' IO
-statePrint = Debugger' $ liveCell $ arrM $ const $ do
+statePrint :: Debugger IO
+statePrint = Debugger $ liveCell $ arrM $ const $ do
   s <- get
   lift $ putStrLn $ stateShow s
 
