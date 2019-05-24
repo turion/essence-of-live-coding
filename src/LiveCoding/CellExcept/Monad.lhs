@@ -125,7 +125,7 @@ try
 \end{spec}
 In practice however, this is rarely a severe limitation since in the monad context,
 calculations with all types are allowed again.
-\fxwarning{Hahahahahahaaaa no. I wanted to throw Doubles and Ints already and couldn't.}
+\fxerror{I'm not so sure about that actually. It's still not possible to throw builtin types like Doubles and Ints.}
 
 \fxerror{Wow! This means that the control state of such live programs is always finite! This means e.g. that we can completely analyse CTL on it!}
 

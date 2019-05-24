@@ -110,6 +110,7 @@ This article is written in literate Haskell and supplies the library presented h
 The source code will be made openly available upon publication.\fxerror{Do it, or at least post a preview link for the reviewers here.}
 
 \input{../src/LiveCoding/LiveProgram.lhs}
+\fxerror{I believe this is even easier with Servant because it has simple functions!}
 \input{../app/DemoWai/Env.lhs}
 \input{../app/DemoWai/DemoWai1.lhs}
 \input{../app/DemoWai/DemoWai2.lhs}
@@ -159,6 +160,9 @@ but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 \label{sec:tooling}
 \input{../src/LiveCoding/Debugger.lhs}
 \input{../essenceoflivecoding-quickcheck/src/LiveCoding/QuickCheck.lhs}
+
+\subsection{External main loops}
+\fxfatal{Can integrate into external main loops using \mintinline{haskell}{step} for cells or an equivalent \mintinline{haskell}{stepMVar}.}
 
 \section{Conclusion}
 

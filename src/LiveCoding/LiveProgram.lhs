@@ -120,6 +120,7 @@ As an example, imagine the internal state of a simple webserver that counts the 
 \fxwarning{Later show how migrate behaves on these examples}
 \fxwarning{Lib: All examples should be in a separate directory, not in src. We should only have the final library in src.}
 \fxwarning{Typecheck the example somehow? Put it in different files and make figures?}
+\fxerror{Extend the example to start from Int and migrate into the newtype?}
 \begin{spec}
 data State = State { nVisitors :: Int }
 \end{spec}
