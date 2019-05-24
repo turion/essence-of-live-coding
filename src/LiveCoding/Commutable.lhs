@@ -61,7 +61,6 @@ instance GCommutable U1 where
   gcommute handler = liftCell $ handler U1
 
 instance Commutable () where
-  -- commute handler = liftCell $ handler ()
 
 instance Commutable Bool where
   commute handler = proc a -> do
@@ -83,37 +82,12 @@ instance (GCommutable eL, GCommutable eR) => GCommutable (eL :+: eR) where
         liftCell (cellLeft ||| cellRight) -< gdistribute either12 a
 
 instance (Commutable e1, Commutable e2) => Commutable (Either e1 e2) where
-{-
-  commute handler
-    = let
-          cellLeft = runReaderC' $ commute $ handler . Left
-          cellRight = runReaderC' $ commute $ handler . Right
-    in
-      proc a -> do
-        either12 <- constM ask -< ()
-        liftCell (cellLeft ||| cellRight) -< distribute either12 a
--}
-{-
-distribute :: Either b c -> a -> Either (b, a) (c, a)
-distribute (Left b) a = Left (b, a)
-distribute (Right c) a = Right (c, a)
--}
 
 instance (GCommutable e1, GCommutable e2) => GCommutable (e1 :*: e2) where
   gcommute handler = hoistCell guncurryReader $ gcommute $ gcommute . gcurry handler
     where
       gcurry f e1 e2 = f (e1 :*: e2)
       guncurryReader a = ReaderT $ \(r1 :*: r2) -> runReaderT (runReaderT a r1) r2
-
-instance (Commutable e1, Commutable e2) => Commutable (e1, e2) where
-  --commute handler = hoistCell uncurryReader $ commute $ commute . curry handler
-
-curryReader :: ReaderT (r1, r2) m a -> ReaderT r1 (ReaderT r2 m) a
-curryReader a = ReaderT $ \r1 -> ReaderT $ \r2 -> runReaderT a (r1, r2)
-
-uncurryReader :: ReaderT r1 (ReaderT r2 m) a -> ReaderT (r1, r2) m a
-uncurryReader a = ReaderT $ \(r1, r2) -> runReaderT (runReaderT a r1) r2
-
 
 data CellExceptReader m a b e1 e2 = forall e . (Data e, ECommutable e) => CellExceptReader
   { newFmap :: (e -> e2)
@@ -140,10 +114,6 @@ class ECommutable e1 where
 
   default ecommute :: (Generic e1, GECommutable (Rep e1), Monad m) => (e1 -> CellExcept m a b e2) -> CellExceptReader m a b e1 e2
   ecommute handler = mapCellExceptReader from $ gecommute $ handler . to
-  {-CellExceptReader newFmap (hoistCell (withReaderT from) $ newCell)
-    where
-      CellExceptReader newFmap newCell = gecommute $ handler . to-}
-
 
 class GECommutable f where
   gecommute :: Monad m => (f e1 -> CellExcept m a b e2) -> CellExceptReader m a b (f e1) e2
@@ -175,8 +145,7 @@ instance ECommutable Bool where
   ecommute handler = go (handler True) (handler False)
     where
       go (CellExcept fmapTrue cellTrue) (CellExcept fmapFalse cellFalse) = CellExceptReader
-        { -- newFmap = \(b, e) -> if b then fmapTrue e else fmapFalse e
-          newFmap = \bla -> case bla of
+        { newFmap = \bla -> case bla of
             Left eL -> fmapTrue eL
             Right eR -> fmapFalse eR
         , newCell = proc a -> do
@@ -189,32 +158,20 @@ instance ECommutable Bool where
 instance (GECommutable eL, GECommutable eR) => GECommutable (eL :+: eR) where
   gecommute handler = go (gecommute $ handler . L1) (gecommute $ handler . R1)
     where
-      go (CellExceptReader fmapL cellL) (CellExceptReader fmapR cellR) = CellExceptReader
-        { newFmap = \bla -> case bla of
-            Left eL -> fmapL eL
-            Right eR -> fmapR eR
-        , newCell = proc a -> do
-            either12 <- constM ask -< ()
-            liftCell (hoistCell (withExceptT Left) (runReaderC' cellL) ||| hoistCell (withExceptT Right) (runReaderC' cellR)) -< gdistribute either12 a
-        }
+      go (CellExceptReader fmapL cellL) (CellExceptReader fmapR cellR) =
+        let
+          cellLeft  = hoistCell (withExceptT Left ) $ runReaderC' cellL
+          cellRight = hoistCell (withExceptT Right) $ runReaderC' cellR
+        in CellExceptReader
+          { newFmap = \bla -> case bla of
+              Left eL -> fmapL eL
+              Right eR -> fmapR eR
+          , newCell = proc a -> do
+              either12 <- constM ask -< ()
+              liftCell (cellLeft ||| cellRight) -< gdistribute either12 a
+          }
       gdistribute (L1 eR) a = Left  (eR, a)
       gdistribute (R1 eL) a = Right (eL, a)
-  {-
-    = let
-          cellLeft  = runReaderCE $ gecommute $ handler . L1
-          cellRight = runReaderCE $ gecommute $ handler . R1
-          gdistribute (L1 eR) a = Left  (eR, a)
-          gdistribute (R1 eL) a = Right (eL, a)
-    in
-      proc a -> do
-        either12 <- constM ask -< ()
-        liftCell (cellLeft ||| cellRight) -< gdistribute either12 a
-runReaderCE :: Cell (ReaderT r m) a b -> Cell m (r, a) b
-runReaderCE Cell { .. } = Cell
-  { cellStep = \state (r, a) -> runReaderT (cellStep state a) r
-  , ..
-  }
--}
 
 instance (ECommutable e1, ECommutable e2) => ECommutable (Either e1 e2) where
 
@@ -228,11 +185,5 @@ instance (GECommutable e1, GECommutable e2) => GECommutable (e1 :*: e2) where
       gcurry f e1 e2 = f (e1 :*: e2)
       guncurryReader a = ReaderT $ \(r1 :*: r2) -> ExceptT $ runReaderT (runExceptT $ runReaderT a r1) r2
 
-  {-
-  hoistCell guncurryReader $ gecommute $ gecommute . gcurry handler
-    where
-      gcurry f e1 e2 = f (e1 :*: e2)
-      guncurryReader a = ReaderT $ \(r1 :*: r2) -> runReaderT (runReaderT a r1) r2
--}
 instance (ECommutable e1, ECommutable e2) => ECommutable (e1, e2) where
 \end{code}
