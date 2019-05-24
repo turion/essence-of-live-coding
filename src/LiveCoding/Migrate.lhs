@@ -5,13 +5,16 @@
 module LiveCoding.Migrate where
 
 -- base
+import Control.Monad (guard)
 import Data.Data
+import Data.Foldable (asum)
 import Data.Functor ((<&>))
 import Data.Maybe
 import Prelude hiding (GT)
 
 -- syb
 import Data.Generics.Aliases
+import Data.Generics.Schemes (glength)
 import Data.Generics.Twins
 
 -- TODO Add special cases for:
@@ -51,6 +54,7 @@ ext2 :: (Data a, Typeable t)
      -> c a
 ext2 def ext = maybe def id (dataCast2 ext)
 -}
+-- TODO Port all cases to asum?
 userMigrate
   :: (Data a, Data b, Typeable c, Typeable d)
   => (c -> d)
@@ -79,9 +83,17 @@ userMigrate specific a b
       \field -> fromMaybe (GT id)
         $ lookup field settersB
 
---userMigrate specific a b = fromMaybe a $ listToMaybe $ catMaybes $ fromMaybe a <$> ($ a) <$> [cast . specific, cast]
-userMigrate specific a b = fromMaybe a $ (cast `extQ` (cast . specific)) b
---userMigrate specific a b = (fromMaybe a . cast . specific) `extQ` (fromMaybe a . cast) $ a
+userMigrate specific a b = fromMaybe a $ asum
+  -- Migration to newtype
+  [ do
+      -- Is it an algebraic datatype with a single constructor?
+      AlgRep [_constr] <- return $ dataTypeRep $ dataTypeOf a
+      -- Does the constructor have a single argument?
+      guard $ glength a == 1
+      -- Try to cast the single child to b
+      gmapM (const $ cast b) a
+  , (cast `extQ` (cast . specific)) b -- TODO Can I split this into two cases in the list?
+  ]
 
 getChildrenSetters :: (Data a, Typeable c, Typeable d) => (c -> d) -> a -> [GenericT']
 getChildrenSetters specific = gmapQ $ \child -> GT $ flip (userMigrate specific) child

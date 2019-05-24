@@ -23,6 +23,7 @@ main = do
   print $ Foo2.bar' == migrate Foo2.bar Foo1.bar
   print $ Foo2.baz' == migrate Foo2.baz Foo1.baz
   print $ Foo2.frob' == userMigrate intToInteger Foo2.frob Foo1.frob
+  print $ Foo2.Frob 23 == migrate Foo2.frob (23 :: Integer)
 -- TODO
 -- * Make test suite assertions out of this
 -- * Record tests
