@@ -194,7 +194,7 @@ Still, what we are actually interested in is whether the state after a migration
 We can apply our insights from the last section:
 This is a job for a debugger.
 Given our current test cell implementation,
-\begin{code}
+\begin{spec}
 quickCheckDebugger
   :: (Arbitrary a, Show a, Testable prop)
   => Cell IO a prop
@@ -203,7 +203,7 @@ quickCheckDebugger testCell
   = Debugger_ $ \s -> do
     let Cell { .. } = 
     testCell <- 
-\end{code}
+\end{spec}
 \end{comment}
 \fxwarning{Could use quickcheck `counterexamples` on `gshow cellState` somehow}
 
