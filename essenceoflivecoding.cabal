@@ -17,6 +17,7 @@ library
       LiveCoding
     , LiveCoding.Bind
     , LiveCoding.Cell
+    , LiveCoding.Cell.Feedback
     , LiveCoding.CellExcept
     , LiveCoding.CellExcept.Applicative
     , LiveCoding.CellExcept.Monad

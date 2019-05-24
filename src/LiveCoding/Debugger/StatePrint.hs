@@ -23,6 +23,7 @@ import Data.Generics.Text (gshow)
 
 -- essenceoflivecoding
 import LiveCoding.Cell
+import LiveCoding.Cell.Feedback
 import LiveCoding.Debugger
 import LiveCoding.Forever
 import LiveCoding.Exceptions

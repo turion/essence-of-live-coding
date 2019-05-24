@@ -75,51 +75,7 @@ A word of caution has to be issued here:
 The instance is implemented using the monadic fixed point operator \mintinline{haskell}{mfix} \cite{MonadFix},
 and can thus crash at runtime if the current output of the intermediate value \mintinline{haskell}{s} is calculated strictly from the current input \mintinline{haskell}{s}.
 
-We would like to have all basic primitives needed to develop standard synchronous signal processing components,
-without touching the \mintinline{haskell}{Cell} constructor anymore.
-One crucial bit is missing to achieve this goal:
-Encapsulating state.
-\fxerror{This is unclear. Either have to stress that it's maybe not so nice to encapsulate state by explicitly building the Cell, like we have done with the sum, or move feedback at the beginning of the section.}
-The most general such construction is the feedback loop:
-\begin{code}
-feedback
-  :: (Monad m, Data s)
-  =>                s
-  -> Cell   m   (a, s) (b, s)
-  -> Cell   m    a      b
-\end{code}
-Let us have a look at its internal state:
-\begin{spec}
-data Feedback sPrevious sAdditional = Feedback
-  { sPrevious   :: sPrevious
-  , sAdditional :: sAdditional
-  }
-\end{spec}
-In \mintinline{haskell}{feedback sAdditional cell},
-the \mintinline{haskell}{cell} has state \mintinline{haskell}{sPrevious},
-and to this state we add \mintinline{haskell}{sAdditional}.
-The additional state is received by \mintinline{haskell}{cell} as explicit input,
-and \mintinline{haskell}{feedback} hides it.
-
-Note that \mintinline{haskell}{feedback} and \mintinline{haskell}{loop} are different.
-While \mintinline{haskell}{loop} provides immediate recursion, it doesn't add new state.
-\mintinline{haskell}{feedback} requires an initial state and delays it,
-but in turn it is always safe to use since it does not use \mintinline{haskell}{mfix}.
-
-\begin{comment}
-\begin{code}
-newtype Feedback s s' = Feedback (s, s')
-  deriving Data
-
-feedback s (Cell state step) = Cell { .. }
-  where
-    cellState = Feedback (state, s)
-    cellStep (Feedback (state, s)) a = do
-      ((b, s'), state') <- step state (a, s)
-      return (b, Feedback (state', s'))
-\end{code}
-\end{comment}
-
+\input{../src/LiveCoding/Cell/Feedback.lhs}
 \input{../src/LiveCoding/Coalgebra.lhs}
 \fxerror{We've now switched to using runExceptC, so liveBind is implemented in terms of it.}
 We would like to adopt this approach here,

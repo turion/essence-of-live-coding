@@ -358,25 +358,6 @@ instance ArrowLoop (Cell Identity) where
 \end{comment}
 \fxwarning{It's probably a performance penalty to have fixIO. Can we tweak the Identity thing in?}
 \fxerror{Choose: Either need to rewrite stuff somehow without fixIO (e.g. Arrowloop only for polymorphic stuff or Identity monad), or spaceleaks, or different integral}
-\begin{comment}
-It enables us to write delays:
-\begin{code}
-delay :: (Data s, Monad m) => s -> Cell m s s
-delay s = feedback s $ arr swap
-  where
-    swap (sNew, sOld) = (sOld, sNew)
-\end{code}
-\mintinline{haskell}{feedback} can be used for accumulation of data.
-For example, \mintinline{haskell}{sumC} now becomes:
-\begin{code}
-sumFeedback
-  :: (Monad m, Num a, Data a)
-  => Cell m a a
-sumFeedback = feedback 0 $ arr
-  $ \(a, accum) -> (accum, a + accum)
-\end{code}
-\fxwarning{Possibly remark on Data instance of s?}
-\end{comment}
 
 \subsection{A sine generator}
 Making use of the \mintinline{haskell}{Arrows} syntax extension,
@@ -496,17 +477,5 @@ instance Monad m => ArrowChoice (Cell m) where
       cellStep (Choice stateL stateR) (Right c) = do
         (d, stateR') <- stepR stateR c
         return (Right d, (Choice stateL stateR'))
-\end{code}
-
-\fxerror{Do we need to talk about this?}
-\begin{code}
-keepJust
-  :: (Monad m, Data a)
-  => Cell m (Maybe a) (Maybe a)
-keepJust = feedback Nothing $ arr keep
-  where
-    keep (Nothing, Nothing) = (Nothing, Nothing)
-    keep (_, Just a) = (Just a, Just a)
-    keep (Just a, Nothing) = (Just a, Just a)
 \end{code}
 \end{comment}
