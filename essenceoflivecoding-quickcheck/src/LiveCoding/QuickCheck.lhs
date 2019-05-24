@@ -206,4 +206,34 @@ quickCheckDebugger testCell
 \end{spec}
 \end{comment}
 \fxwarning{Could use quickcheck `counterexamples` on `gshow cellState` somehow}
+\fxerror{Should test properties of the state by putting state in a newtype and specify a property that is added to a generic query}
+\fxfatal{New code here}
+\begin{code}
+testState
+  :: GenericQ Property
+  -> LiveProgram m
+  -> Property
+testState LiveProgram { .. } query = conjoin
+  $ gmapQ query liveState
 
+mkGenericProperty
+  :: Typeable b
+  =>         (b -> Property)
+  -> GenericQ      Property
+mkGenericProperty = mkQ $ property True
+
+conjoinGeneric
+  :: [GenericQ Property]
+  ->  GenericQ Property
+conjoinGeneric = fmap conjoin . sequence
+
+posSumC :: (Monad m, Num a, Data a) => Cell m a a
+posSumC = Cell { .. }
+  where
+    cellState = Positive 0
+    cellStep accum a = return
+      ( getPositive accum
+      , Positive $ getPositive accum + a
+      )
+\end{code}
+\fxerror{A test case. E.g. sum and internal accum must be }
