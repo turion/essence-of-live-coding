@@ -16,8 +16,7 @@ import Network.Wai
 import Network.Wai.Handler.Warp (run)
 
 -- essenceoflivecoding
-import LiveCoding.LiveProgram
-import LiveCoding.RuntimeIO
+import LiveCoding
 
 import DemoWai.Env
 import DemoWai.DemoWai1 (oldServer)

@@ -23,7 +23,8 @@ import Control.Monad.Trans.Except
 import Control.Monad.Trans.Reader
 
 -- essenceoflivecoding
-import LiveCoding.Cell hiding (runReaderC)
+import LiveCoding.Cell
+import LiveCoding.Exceptions (runReaderC')
 -- import LiveCoding.CellExcept
 \end{code}
 \end{comment}
@@ -72,8 +73,8 @@ instance Commutable Bool where
 instance (GCommutable eL, GCommutable eR) => GCommutable (eL :+: eR) where
   gcommute handler
     = let
-          cellLeft  = runReaderC $ gcommute $ handler . L1
-          cellRight = runReaderC $ gcommute $ handler . R1
+          cellLeft  = runReaderC' $ gcommute $ handler . L1
+          cellRight = runReaderC' $ gcommute $ handler . R1
           gdistribute (L1 eR) a = Left  (eR, a)
           gdistribute (R1 eL) a = Right (eL, a)
     in
@@ -81,18 +82,12 @@ instance (GCommutable eL, GCommutable eR) => GCommutable (eL :+: eR) where
         either12 <- constM ask -< ()
         liftCell (cellLeft ||| cellRight) -< gdistribute either12 a
 
-runReaderC :: Cell (ReaderT r m) a b -> Cell m (r, a) b
-runReaderC Cell { .. } = Cell
-  { cellStep = \state (r, a) -> runReaderT (cellStep state a) r
-  , ..
-  }
-
 instance (Commutable e1, Commutable e2) => Commutable (Either e1 e2) where
 {-
   commute handler
     = let
-          cellLeft = runReaderC $ commute $ handler . Left
-          cellRight = runReaderC $ commute $ handler . Right
+          cellLeft = runReaderC' $ commute $ handler . Left
+          cellRight = runReaderC' $ commute $ handler . Right
     in
       proc a -> do
         either12 <- constM ask -< ()
@@ -200,7 +195,7 @@ instance (GECommutable eL, GECommutable eR) => GECommutable (eL :+: eR) where
             Right eR -> fmapR eR
         , newCell = proc a -> do
             either12 <- constM ask -< ()
-            liftCell (hoistCell (withExceptT Left) (runReaderC cellL) ||| hoistCell (withExceptT Right) (runReaderC cellR)) -< gdistribute either12 a
+            liftCell (hoistCell (withExceptT Left) (runReaderC' cellL) ||| hoistCell (withExceptT Right) (runReaderC' cellR)) -< gdistribute either12 a
         }
       gdistribute (L1 eR) a = Left  (eR, a)
       gdistribute (R1 eL) a = Right (eL, a)

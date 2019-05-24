@@ -1,10 +1,5 @@
--- TODO Fix imports to a single one
 -- essenceoflivecoding
-import LiveCoding.Debugger
-import LiveCoding.Debugger.StatePrint
-import LiveCoding.Cell
-import LiveCoding.Bind (printSineWait)
-import LiveCoding.RuntimeIO
+import LiveCoding
 
 main = do
   (debugger, observer) <- countDebugger

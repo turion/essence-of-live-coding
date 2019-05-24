@@ -1,9 +1,5 @@
--- TODO Fix imports to a single one
 -- essenceoflivecoding
-import LiveCoding.Debugger
-import LiveCoding.Debugger.StatePrint
-import LiveCoding.Cell
-import LiveCoding.RuntimeIO
+import LiveCoding
 
 t1 :: Num a => a
 t1 = 6

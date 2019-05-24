@@ -9,7 +9,6 @@ import Data.Generics.Twins
 
 -- essenceoflivecoding
 import LiveCoding
-import LiveCoding.Migrate
 import qualified TestData.Foo1 as Foo1
 import qualified TestData.Foo2 as Foo2
 

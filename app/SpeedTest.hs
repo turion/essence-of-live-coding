@@ -14,10 +14,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (runExceptT)
 
 -- essenceoflivecoding
-import LiveCoding.Bind
-import LiveCoding.Exceptions
-import LiveCoding.Cell
-import LiveCoding.RuntimeIO
+import LiveCoding
 
 accum :: (Monad m, Semigroup w, Data w) => w -> Cell m w w
 accum w0 = feedback w0 $ arr $ \(w, state) -> (state, w <> state)

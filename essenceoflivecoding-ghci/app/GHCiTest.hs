@@ -2,8 +2,7 @@
 --   and make sure the file `.ghci` is in the directory you're calling from.
 
 -- essenceoflivecoding
-import LiveCoding.LiveProgram
-import LiveCoding.RuntimeIO
+import LiveCoding
 
 liveProgram = LiveProgram
   { liveState = 0 :: Int

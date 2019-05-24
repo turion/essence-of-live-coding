@@ -23,7 +23,7 @@ import Control.Monad.Trans.Reader
 import Network.Wai
 
 -- essenceoflivecoding
-import LiveCoding.LiveProgram
+import LiveCoding
 
 import DemoWai.Env
 \end{code}

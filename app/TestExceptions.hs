@@ -7,12 +7,7 @@ import Control.Arrow
 import Control.Monad.Trans.Class
 
 -- essenceoflivecoding
-import LiveCoding.Cell
-import LiveCoding.Exceptions
-import LiveCoding.Bind
-import LiveCoding.Debugger
-import LiveCoding.Debugger.StatePrint
-import LiveCoding.RuntimeIO
+import LiveCoding
 
 liveProgram = liveCell
   $ safely $ do
