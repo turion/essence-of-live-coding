@@ -18,22 +18,24 @@ library
     , LiveCoding.Bind
     , LiveCoding.Cell
     , LiveCoding.Cell.Feedback
-    , LiveCoding.CellExcept
-    , LiveCoding.CellExcept.Applicative
-    , LiveCoding.CellExcept.Monad
     , LiveCoding.Commutable
     , LiveCoding.Coalgebra
     , LiveCoding.Debugger
---    , LiveCoding.Debugger.Migrate
+    -- , LiveCoding.Migrate.Debugger
+    , LiveCoding.Migrate.Migration
     , LiveCoding.Debugger.StatePrint
     , LiveCoding.Exceptions
     , LiveCoding.Forever
     , LiveCoding.LiveProgram
+    , LiveCoding.LiveProgram.HotCodeSwap
     , LiveCoding.Migrate
     , LiveCoding.RuntimeIO
 
   other-modules:
       LiveCoding.CellExcept.Newtype
+    , LiveCoding.CellExcept
+    , LiveCoding.CellExcept.Applicative
+    , LiveCoding.CellExcept.Monad
     , LiveCoding.LiveProgram.Preliminary.HotCodeSwap
     , LiveCoding.LiveProgram.Preliminary.LiveProgram2
     , LiveCoding.LiveProgram.Preliminary.LiveProgramPreliminary

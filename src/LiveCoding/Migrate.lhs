@@ -17,20 +17,21 @@ import Data.Generics.Aliases
 import Data.Generics.Schemes (glength)
 import Data.Generics.Twins
 
+-- essenceoflivecoding
+-- import LiveCoding.Migrate.Debugger
+import LiveCoding.Migrate.Migration
+
 -- TODO Add special cases for:
 -- * data Foo = Foo -> data Foo = Foo | Bar!
--- * Adding custom user cases first (example Int -> Integer)
 -- * Adding custom user renames
--- * Exception handling! Make my own Either type
--- * a -> (a, b) and back (for feedback)
+-- * Exception handling!
+-- * a -> Feedback a b and back
 -- * a -> Maybe a and back
--- * a >>> b to a or b and back
+-- * a >>> b and a *** b to a or b and back
 \end{code}
 \end{comment}
 
 \begin{code}
-newtype Migration a b = Migration { unMigration :: a -> b -> a }
-
 migrate :: (Data a, Data b) => a -> b -> a
 migrate = userMigrate (\() -> ())
 

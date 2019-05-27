@@ -26,7 +26,7 @@ hotCodeSwap migrate newProgram oldProgram
     , liveStep  = liveStep newProgram
     }
 \end{code}
-\caption{\texttt{HotCodeSwap.lhs}}
+\caption{\texttt{Preliminary/HotCodeSwap.lhs}}
 \label{fig:hot code swap}
 \end{figure}
 \fxwarning{The thing with the MVar doesn't work on the spot anymore. But it can still work with a "typed" handle. Every time you swap, you get a new handle that carries the currently saved type. Worth commenting upon?

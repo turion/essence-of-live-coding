@@ -31,20 +31,6 @@ Having the complete state of the program in one place allows us to inspect and d
 We might want to interact with the user,
 display aspects of the state
 and possibly even change it in place.
-\begin{comment}
-These patterns are abstracted in a simple definition:
-\fxerror{Could make Debuggers Cells as well,
-or rather \mintinline{haskell}{type Debugger_ = LiveProgram (ReaderT (Data s => s)) IO}.
-Then have \mintinline{haskell}{withDebugger :: LiveProgram IO -> Debugger_ -> LiveProgram IO}.
-Either the dbugger coul dbe synhronous,
-or even asynchronous and only rceive th estate through an IORef.}
-\begin{code}
-newtype Debugger_ = Debugger_
-  { debugState
-      :: forall s . Data s => s -> IO s
-  }
-\end{code}
-\end{comment}
 In short, a debugger is a program that can read and modify,
 as an additional effect,
 the state of an arbitrary live program:
@@ -68,9 +54,8 @@ the state does not need to be an instance of \mintinline{haskell}{Show} for this
 A more sophisticated debugger could connect to a GUI and display the state there,
 even offering the user to pause the execution and edit the state live.
 \fxwarning{Should I explain countDebugger? What for?}
+\fxerror{Should make them Cell IO () (), then they are endos in the Cell IO category.}
 \begin{comment}
-\fxerror{To make this work or show this,
-should make them Cell IO () (), then they are endos in the Cell IO category.}
 Debuggers are endomorphisms in the Kleisli category of \mintinline{haskell}{IO},
 and thus \mintinline{haskell}{Monoid}s:
 A pair of them can be chained by executing them sequentially,
@@ -112,20 +97,6 @@ it may execute some side effects or mutate the \mintinline{haskell}{state},
 or do nothing at all\footnote{%
 This option is important for performance: E.g. for an audio application,
 a side effect on every sample can slow down unbearably.}.
-\begin{comment}
-We can start them alongside with the live program:
-\fxwarning{Move appropriately, e.g. a separate file RuntimeDebugger}
-\begin{spec}
-launchWithDebugger
-  :: LiveProgram IO
-  -> Maybe Int
-  -> Debugger
-  -> IO (MVar (LiveProgram IO))
-\end{spec}
-\fxerror{Implement the Maybe Int parameter!}
-The optional parameter of type \mintinline{haskell}{Maybe Int} specifies between how many execution steps the debugger should be called.
-(For an audio application, calling it on every sample would be an unbearable performance penalty.)
-\end{comment}
 
 Live programs with debuggers are started just as usual.
 \begin{comment}
