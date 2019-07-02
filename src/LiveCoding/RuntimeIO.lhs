@@ -137,6 +137,8 @@ launchWithDebugger liveProg debugger = launch $ liveProg `withDebugger` debugger
   forkIO $ backgroundWithDebugger var debugger
   return var
 -}
+
+{-
 debug :: Debugger_ -> LiveProgram IO -> IO (LiveProgram IO)
 debug Debugger_ { .. } LiveProgram { .. } = do
   liveState' <- debugState liveState
@@ -148,9 +150,13 @@ backgroundWithDebugger var debugger = forever $ do
   liveProg'  <- stepProgram liveProg
   liveProg'' <- debug debugger liveProg'
   putMVar var liveProg''
+-}
 
 background :: MVar (LiveProgram IO) -> IO ()
-background var = backgroundWithDebugger var noDebugger
+background var = forever $ do
+  liveProg   <- takeMVar var
+  liveProg'  <- stepProgram liveProg
+  putMVar var liveProg'
 
 {-
 -- Old version where combine was called from background

@@ -1,8 +1,10 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module LiveCoding.Debugger where
 
@@ -35,11 +37,21 @@ In short, a debugger is a program that can read and modify,
 as an additional effect,
 the state of an arbitrary live program:
 \begin{code}
-data Debugger m = Debugger
+newtype Debugger m = Debugger
   { getDebugger :: forall s .
       Data s => LiveProgram (StateT s m)
   }
 \end{code}
+\begin{comment}
+\begin{code}
+-- Standalone deriving isn't clever enough to handle the existential type
+instance Monad m => Semigroup (Debugger m) where
+  debugger1 <> debugger2 = Debugger $ getDebugger debugger1 <> getDebugger debugger2
+
+instance Monad m => Monoid (Debugger m) where
+  mempty = Debugger mempty
+\end{code}
+\end{comment}
 A simple debugger prints the unmodified state to the console:
 \begin{code}
 gshowDebugger :: Debugger IO
@@ -71,15 +83,20 @@ withDebugger
 \end{code}
 \begin{comment}
 \begin{code}
-withDebugger
-  (LiveProgram    state    step)
-  (Debugger (LiveProgram dbgState dbgStep))
-  = LiveProgram { .. } where
-    liveState = Debugging { .. }
-    liveStep  = \Debugging { .. } -> do
-      state' <- step state
-      s <- runStateT (dbgStep dbgState) state'
-      return $ uncurry Debugging s
+withDebugger = (liveCell .) . withDebuggerC . toLiveCell
+
+withDebuggerC
+  :: Monad    m
+  => Cell     m a b
+  -> Debugger m
+  -> Cell     m a b
+withDebuggerC (Cell state step) (Debugger (LiveProgram dbgState dbgStep)) = Cell { .. }
+  where
+    cellState = Debugging { .. }
+    cellStep Debugging { .. } a = do
+      (b, state') <- step state a
+      states <- runStateT (dbgStep dbgState) state'
+      return (b, uncurry Debugging states)
 \end{code}
 \end{comment}
 Again, let us understand the function through its state type:
@@ -152,15 +169,6 @@ and the sine wave starts.
 
 \begin{comment}
 \begin{code}
-instance Semigroup Debugger_ where
-  debugger1 <> debugger2 = Debugger_ $ \s -> debugState debugger1 s >>= debugState debugger2
-
-instance Monoid Debugger_ where
-  mempty = noDebugger
-
-noDebugger :: Debugger_
-noDebugger = Debugger_ $ return
-
 newtype CountObserver = CountObserver { observe :: IO Integer }
 
 countDebugger :: IO (Debugger IO, CountObserver)

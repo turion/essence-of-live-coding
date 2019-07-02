@@ -113,6 +113,18 @@ liveCell Cell { .. } = LiveProgram
   }
 \end{code}
 \fxwarning{Also say "we just need to elide the units"?}
+\begin{comment}
+\begin{code}
+toLiveCell
+  :: Functor     m
+  => LiveProgram m
+  -> Cell        m () ()
+toLiveCell LiveProgram { .. } = Cell
+  { cellState = liveState
+  , cellStep  = \s () -> ((), ) <$> liveStep s
+  }
+\end{code}
+\end{comment}
 
 \subsection{FRP for automata-based programming}
 Effectful Mealy machines, here cells,
