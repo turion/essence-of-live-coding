@@ -103,59 +103,23 @@ instance Monad m => Applicative (CellExcept m a b) where
   (<*>) = ap
 
 instance Monad m => Monad (CellExcept m a b) where
-  -- return :: Monad m => e -> CellExcept m a b e
-  -- return = pure
-  return e = CellExcept
-    { fmapExcept = const e
-    , cellExcept = constM $ throwE ()
-    }
+  return = Return
+  (>>=) = Bind
 
-  -- Can I make an operation monad?
-  --(>>=)
-  --  :: Monad m
-  --  => CellExcept m a b e1
-  --  -> (e1 -> CellExcept m a b e2)
-  --  -> CellExcept m a b e2
-  CellExcept fmap1 cell1 >>= handler = go fmap1 cell1 $ ecommute (handler . fmap1)
-    where
-      go fmap1 cell1 CellExceptReader { .. } = CellExcept
-        { cellExcept = cell1 >>>== newCell
-        , fmapExcept = newFmap
-        }
-{-
-CellExcept fmap1 cell1 >>= handler =
-  let
-    Thing newfmap newCell = handlerToThing handler
-    cellExcept = cell1 >>>= liveHandler
-    -- liveHandler :: Cell (ReaderT e1' (ExceptT ? m)) a b
-    liveHandler = commute somehandler
-    -- somehandler :: e1' -> Cell (ExceptT ? m) a b
-    somehandler = commute $ handler . fmap1
-    -- fmapExcept :: ? -> e2
-    fmapExcept = _
-    -- Data ?, Commutable ?
-  in CellExcept { .. }
-    --cell1 >>>= commute (runCellExcept . handler . fmap1)
--}
---(>>)
---  :: (Monad m, Commutable e1, Data e2, Commutable e2)
---  => CellExcept m a b e1 -> CellExcept m a b e2 -> CellExcept m a b e2
---cellExcept1 >> cellExcept2 = cellExcept1 >>= const cellExcept2
-
---ifThenElse True a _ = a
---ifThenElse False _ a = a
-
+-- Rewrite with Operational
 -- TODO Actually want to import
 runCellExcept
   :: Monad           m
   => CellExcept      m  a b e
   -> Cell (ExceptT e m) a b
-runCellExcept CellExcept { .. }
-  = hoistCell (withExceptT fmapExcept)
-    cellExcept
+runCellExcept (Return e) = constM $ throwE e
+runCellExcept (Try cell) = cell
+runCellExcept (Bind (Try cell) g) = cell >>>== commute (runCellExcept . g)
+runCellExcept (Bind (Return e) f) = runCellExcept $ f e
+runCellExcept (Bind (Bind ce f) g) = runCellExcept $ Bind ce $ \e -> Bind (f e) g
 
-try :: (Data e, ECommutable e) => Cell (ExceptT e m) a b -> CellExcept m a b e
-try = CellExcept id
+try :: (Data e, Commutable e) => Cell (ExceptT e m) a b -> CellExcept m a b e
+try = Try
 safely
   :: Monad      m
   => CellExcept m a b Void
@@ -167,10 +131,7 @@ discardVoid
   ->              m a
 discardVoid
   = fmap (either absurd id) . runExceptT
-safe :: Monad m => Cell m a b -> CellExcept m a b void
-safe cell = CellExcept
-  { fmapExcept = absurd
-  , cellExcept = liftCell cell
-  }
+safe :: Monad m => Cell m a b -> CellExcept m a b Void
+safe cell = try $ liftCell cell
 \end{code}
 \end{comment}
