@@ -14,6 +14,7 @@ import Data.Data
 
 -- essenceoflivecoding
 import LiveCoding.LiveProgram
+import LiveCoding.LiveProgram.HotCodeSwap
 import LiveCoding.Debugger
 import LiveCoding.Migrate
 
