@@ -50,6 +50,12 @@ instance Monad m => Semigroup (Debugger m) where
 
 instance Monad m => Monoid (Debugger m) where
   mempty = Debugger mempty
+
+getC :: Monad m => Cell (StateT s m) a s
+getC = constM get
+
+putC :: Monad m => Cell (StateT s m) s ()
+putC = arrM put
 \end{code}
 \end{comment}
 A simple debugger prints the unmodified state to the console:
@@ -66,7 +72,7 @@ the state does not need to be an instance of \mintinline{haskell}{Show} for this
 A more sophisticated debugger could connect to a GUI and display the state there,
 even offering the user to pause the execution and edit the state live.
 \fxwarning{Should I explain countDebugger? What for?}
-\fxerror{Should make them Cell IO () (), then they are endos in the Cell IO category.}
+\fxerror{Following a comment on cat theory. Add to appendix?}
 \begin{comment}
 Debuggers are endomorphisms in the Kleisli category of \mintinline{haskell}{IO},
 and thus \mintinline{haskell}{Monoid}s:

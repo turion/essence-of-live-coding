@@ -1,5 +1,6 @@
 \begin{comment}
 \begin{code}
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -8,6 +9,7 @@ module LiveCoding.Cell.Feedback where
 -- base
 import Control.Arrow
 import Data.Data
+import Data.Maybe (fromMaybe)
 
 -- essenceoflivecoding
 import LiveCoding.Cell
@@ -87,4 +89,12 @@ keepJust = feedback Nothing $ arr keep
     keep (Nothing, Nothing) = (Nothing, Nothing)
     keep (_, Just a) = (Just a, Just a)
     keep (Just a, Nothing) = (Just a, Just a)
+
+-- | Initialise with a value 'a'.
+--   If the input is 'Nothing', @keep a@ will output the stored indefinitely.
+--   A new value can be stored by inputting 'Maybe a'.
+keep :: (Data a, Monad m) => a -> Cell m (Maybe a) a
+keep a = feedback a $ proc (ma, aOld) -> do
+  let aNew = fromMaybe aOld ma
+  returnA -< (aNew, aNew)
 \end{code}
