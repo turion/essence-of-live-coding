@@ -2,7 +2,7 @@
 
 \begin{document}
 \title{The essence of live coding: Change the program, keep the state!}
-\subtitle{Functional pearl}
+%\subtitle{Functional pearl}
 
 %\author{Manuel Bärenz}
 %\orcid{0000-0003-1843-0773}             %% \orcid is optional

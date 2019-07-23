@@ -1,6 +1,7 @@
 *.tex
 *.txt
 *.pdf
+*.html
 dist/*
 dist-newstyle/*
 acmart*
