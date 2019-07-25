@@ -26,7 +26,7 @@ import LiveCoding.Gloss.PictureM as X
 type GlossCellWorldForeground = (GlossCell, [Event], Picture)
 
 playCellForeground :: GlossCell -> IO ()
-playCellForeground cell = playIO (InWindow "Bla" (600, 800) (20, 20)) black stepRate (initialWorld cell) toPicture handleEvent playStep
+playCellForeground cell = playIO (InWindow "Gears" (600, 800) (20, 20)) black stepRate (initialWorld cell) toPicture handleEvent playStep
 
 type GlossCellWorld = (MVar GlossCell, [Event], Picture)
 
@@ -34,7 +34,7 @@ type GlossCellWorld = (MVar GlossCell, [Event], Picture)
 playCell :: GlossCell -> IO (MVar GlossCell)
 playCell cell = do
   var <- newMVar cell
-  forkIO $ playIO (InWindow "Bla" (600, 800) (20, 20)) black stepRate (initialWorld var) toPicture handleEvent playStepMVar
+  forkIO $ playIO (InWindow "Gears" (600, 800) (20, 20)) black stepRate (initialWorld var) toPicture handleEvent playStepMVar
   return var
 
 -- TODO Of course these are general for cells
@@ -76,7 +76,7 @@ glossWrap cell = do
     getPicture () = takeMVar pictureVar
     putEvent event () = modifyIORef eventRef $ (event :)
     putStep _ () = putMVar stepVar $ 1 / stepRate
-  forkIO $ playIO (InWindow "Bla" (600, 800) (20, 20)) black stepRate () getPicture putEvent putStep
+  forkIO $ playIO (InWindow "Gears" (600, 800) (20, 20)) black stepRate () getPicture putEvent putStep
   let
     putPicture = putMVar pictureVar
     getEvents = atomicModifyIORef eventRef $ \events -> ([], events)

@@ -23,10 +23,10 @@ import LiveCoding
 import LiveCoding.Gloss.PictureM
 
 statePicture :: Data s => s -> Picture
-statePicture = translate (-100) 100 . scale 0.1 0.1 . color red . text . stateShow
+statePicture = translate (-100) 200 . scale 0.2 0.2 . color red . text . stateShow
 
 statePlay :: Debugger PictureM
-statePlay = Debugger $ liveCell $ every 100 >>> keep blank >>> arrM (lift . tell)
+statePlay = Debugger $ liveCell $ every 2 >>> keep blank >>> arrM (lift . tell)
 
 every :: Data s => Integer -> Cell (StateT s PictureM) () (Maybe Picture)
 every maxN = proc () -> do
