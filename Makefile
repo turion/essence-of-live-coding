@@ -31,3 +31,17 @@ latex-appendix:
 
 bibtex:
 	cd article && bibtex EssenceOfLiveCoding && bibtex EssenceOfLiveCodingAppendix
+
+presentation:
+	cd article && pandoc -s EssenceOfLiveCodingPresentation.md -t revealjs -V theme=serif -i -o EssenceOfLiveCodingPresentation.html
+
+symlinks: essenceoflivecoding-gloss-example/.ghci
+
+essenceoflivecoding-gloss-example/.ghci:
+	ln -s essenceoflivecoding-gloss/.ghci essenceoflivecoding-gloss-example/.ghci
+
+gloss-example: symlinks
+	cd essenceoflivecoding-gloss-example && stack ghci
+
+gears: symlinks
+	cd essenceoflivecoding-gloss-example && stack ghci essenceoflivecoding-gloss-example:exe:gears
