@@ -29,18 +29,27 @@ incremental: true
 * State transition function
 * Side effects
 
+##
+
 ``` {.haskell .literate .fragment .fade-in}
 data LiveProgram m = forall s .
   LiveProgram
   { liveState :: s
   , liveStep  :: s -> m s
   }
+```
 
+``` {.haskell .literate .fragment .fade-in}
 runLiveProgram :: LiveProgram m -> m ()
 runLiveProgram LiveProgram { .. } = do
   liveState' <- liveStep liveState
   runLiveProgram LiveProgram { liveState = liveState', .. }
 ```
+
+[Polymorphic in `m`:]{.fragment .fade-in}
+
+* Determinism (no hidden `IO`)
+* Arbitrary effects: Bind to any backend
 
 ## Example
 
@@ -151,8 +160,12 @@ data LiveProgram m = forall s .
 
 * Want to combine new live programs from existing building blocks.
 * _"Functional"_
+
 [⇒ Add inputs and outputs to live programs!]{.fragment .fade-in}
-* Syntactic sugar: Arrows
+
+[Syntactic sugar: Arrows]{.fragment .fade-in}
+![Sequential composition](Sequential.png){.fragment .fade-in}
+![Parallel composition](Parallel.png){.fragment .fade-in}
 
 ## Cells
 
@@ -166,7 +179,6 @@ data Cell m a b = forall s . Data s => Cell
 * `Category`: (Identity cell and) compose sequentially
 * `Arrow`: (Lift functions and) compose parallely
 * `ArrowChoice`: (Transient) control flow
-* Polymorphic in `m`: Determinism & arbitrary effects
 
 [`liveCell:: Cell m () () -> LiveProgram m`]{.fragment .fade-in}
 
@@ -210,7 +222,7 @@ glossCell = proc _events -> do
 ``` {.haskell .literate .fragment .fade-in}
 wait :: Monad m => Double -> Cell (ExceptT () m) a a
 wait tMax = proc a -> do
-  t <- integrate 1 -< ()
+  t <- integrate -< 1
   if t >= tMax
     then throwC  -< ()
     else returnA -< a
