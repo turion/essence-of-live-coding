@@ -44,15 +44,25 @@ updateGloss var newGlossCell = do
   putMVar var $ hotCodeSwapCell newGlossCell oldGlossCell
 
 initialWorld cell = (cell, [], blank)
-toPicture (_, _, picture) = return picture
-handleEvent event (cell, events, picture) = return (cell, event : events, picture)
+toPicture (_, _, picture) = do
+  --putStrLn "toPicture"
+  threadDelay 10000
+  return picture
+handleEvent event (cell, events, picture) = do
+  --putStrLn "handleEvent"
+  threadDelay 10000
+  return (cell, event : events, picture)
 playStep _ (cell, events, _) = do
   (picture, cell') <- fmap massageWriterOutput $ runWriterT $ step cell events
+  threadDelay 10000
+  --putStrLn "playStep"
   return (cell', [], picture)
 playStepMVar _ (var, events, _) = do
   cell <- takeMVar var
   (picture, cell') <- fmap massageWriterOutput $ runWriterT $ step cell events
   putMVar var cell'
+  threadDelay 10000
+  --putStrLn "playStepMVar"
   return (var, [], picture)
 
 glossWrap :: GlossCell -> IO (LiveProgram IO)

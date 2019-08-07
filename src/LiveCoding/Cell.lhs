@@ -267,7 +267,7 @@ say a thousand steps per second.
 Then an Euler integration cell can be defined:
 \begin{code}
 stepRate :: Num a => a
-stepRate = 1000
+stepRate = 25
 \end{code}
 \begin{code}
 integrate

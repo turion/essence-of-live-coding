@@ -51,7 +51,9 @@ tones = [C, E, G]
 pulseCell :: IORef Float -> PulseCell
 pulseCell ref = proc _ -> do
   angle <- getAngleEvery 1024 ref -< ()
-  let frequency = f $ (tones !!) $ (`mod` length tones) $ angle `div` (360 `div` length tones)
+  let frequency = f $ (tones !!)
+        $ (`mod` length tones)
+        $ angle `div` (360 `div` length tones)
   osc' -< frequency
 
 getAngleEvery :: Int -> IORef Float -> Cell IO () Int
