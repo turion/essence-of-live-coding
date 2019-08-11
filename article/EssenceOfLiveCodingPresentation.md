@@ -226,6 +226,13 @@ glossCell = proc _events -> do
 
 ## Monadic control flow
 
+::: notes
+
+* Exception just another monad
+* Exception in the state => state migration preserves control flow state (e.g. to where we currently switched) out of the box
+
+:::
+
 [Throwing and catching exceptions]{.fragment .fade-in}
 
 ``` {.haskell .literate .fragment .fade-in}

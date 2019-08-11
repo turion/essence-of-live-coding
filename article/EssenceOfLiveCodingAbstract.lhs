@@ -1,5 +1,14 @@
 \documentclass{essence}
 
+\setcopyright{rightsretained}
+\acmPrice{}
+\acmDOI{}
+\acmYear{2019}
+\copyrightyear{2019}
+\acmISBN{}
+\acmConference[Haskell '19]{Proceedings of the 12th ACM SIGPLAN International Haskell Symposium}{August 22-23, 2019}{Berlin, Germany}
+\acmBooktitle{Proceedings of the 12th ACM SIGPLAN International Haskell Symposium (Haskell '19), August 22-23, 2019, Berlin, Germany}
+
 \begin{document}
 \title{The essence of live coding}
 \subtitle{Change the program, keep the state!}
@@ -47,15 +56,29 @@ From an API perspective, Essence Of Livecoding follows the arrowized Functional 
 in particular Dunai \cite{Dunai} and Rhine \cite{Rhine}.
 For the library user, this is essential in order to build programs modularly from reusable components,
 and to separate data flow from control flow.
-From an implementation perspective, it is essential for two mirroring purposes:
+It is also essential from an implementation perspective,
+for two corresponding purposes:
 To build up state types modularly which greatly facilitates automatic and generic state migration,
 and to be able to migrate the control state\footnote{%
 A hard problem according to \href{https://elm-lang.org/blog/interactive-programming}{https://elm-lang.org/blog/interactive-programming}.
-}.
+}
+(the information which branch of the program is currently active).
+
+\begin{figure}
+\includegraphics[width=\linewidth]{gears.png}
+\caption{Example with Gloss and PulseAudio}
+\end{figure}
+In the demonstration, I show in more detail how to live code a \texttt{gloss} program,
+and add or remove certain features from it.
+This program is then linked to a simple sound synthesizer using the PulseAudio backend.
+
+The talk slides and a full article version are available at \href{https://www.manuelbaerenz.de/}{https://www.manuelbaerenz.de/}.
+The source repository containing the library and examples
+(console, audio, video, web servers) is available at \href{https://github.com/turion/essence-of-live-coding}{https://github.com/turion/essence-of-live-coding}.
 
 \section{Change the program. Keep the state (as far as possible).}
 
-Our model of a live program consists of a state and an effectful state transition ("`step"') function,
+Our model of a live program consists of a state and an effectful state transition (``step'') function,
 shown in Figure \ref{fig:LiveProgram}.
 \begin{figure}
 \begin{code}
@@ -95,9 +118,9 @@ data State = State
   { nVisitors  :: Int
   , lastAccess :: UTCTime }
 \end{spec}
-It is clear that when migrating the old state to the new datatype,
+Clearly, when migrating the old state to the new datatype,
 we want to preserve the \mintinline{haskell}{nVisitors} field.
-On the other hand, we cannot compute any sensible value for \mintinline{haskell}{lastAccess},
+For \mintinline{haskell}{lastAccess} on the other hand, we cannot compute any sensible value.
 and thus have to initialise this field from the initial state of the new program.
 By reasoning about record fields and their types,
 we were able to find the best state migration.
@@ -115,12 +138,11 @@ it is possible to extend by a special case provided by the user.
 
 \section{Live coding as arrowized FRP}
 
-
 Writing out the complete state of the live program explicitly and separating its state from the step function is tedious.
 Instead, we want to develop modularly,
 and an arrowized FRP interface will allow us to do so.
-The live program definition is generalized to ``cells'',
-the building blocks of everything live:
+The live program definition is generalized to ``cells''\footnote{
+Cells are the building blocks of everything live.}:
 \begin{code}
 data Cell m a b = forall s . Data s => Cell
   { cellState :: s
@@ -134,31 +156,34 @@ by feeding the output of one cell as input into another cell.
 By being instances of the \mintinline{haskell}{Arrow} type class,
 they can also be composed in parallel,
 giving rise to clear data flow declarations through the arrow syntax extension.
+The migration function has special cases for the state types of composed cells,
+making FRP cells suitable for live coding.
 
 As a simple example, consider the following \mintinline{haskell}{Cell} which adds all input and returns the delayed sum each step:
 \begin{code}
 sumC :: (Monad m, Num a, Data a) => Cell m a a
-sumC = Cell { .. }
-  where
-    cellState = 0
-    cellStep accum a = return (accum, accum + a)
+sumC = Cell { .. } where
+  cellState = 0
+  cellStep accum a = return (accum, accum + a)
 \end{code}
 Cells may also create side effects in a monad.
-After producing data through effects,
-processing it,
-and consuming through further effects,
+Composing effectful data producers with data processing cells,
+and finally with effectful consumers,
 we recover live programs as the special case of trivial input and output.
 
-We also provide a monadic control flow interface based on type-safe exceptions.
+Using the \mintinline{haskell}{ExceptT} monad transformer,
+we also provide a monadic control flow interface based on type-safe exceptions.
 It enables the library user to permanently switch from one cell to another,
 triggered by events thrown anywhere within the cell.
-For brevity, further details are deferred to the presentation.
+The crucial advantage of embedding control flow into cell states as an effect is that the migration function preserves the current control flow state
+(e.g., the information to which cell we currently switched)
+out of the box.
 
-\fxerror{Comment quickly that building up the state like this happens automatically and in a way that is good for the framework?}
+\fxerror{Comment quickly that building up the state like this happens automatically and in a way that is good for the framework?
+I have a short comment, but I feel like it doesn't tell enough}
 
 \section{Tooling}
 
-\fxfatal{Issue about pulse reload, then update here}
 For ease of use, custom GHCi commands are supplied that start a live program in a separate thread and allow reload it when it is edited.
 These cover ordinary live programs in \mintinline{haskell}{IO},
 but also video and audio backends.
@@ -175,11 +200,6 @@ forall s . Data s => LiveProgram (StateT s m)
 As examples, there are debuggers printing the current state to the console,
 displaying it graphically via \texttt{gloss} \cite{Gloss},
 or pausing the execution upon user interaction.
-
-\section{Example}
-
-\fxfatal{Advertise the multidisciplinary example containing audio, video and a server, with a screenshot?}
-\fxfatal{Link to open sourced repo? To website with presentation?}
 
 \clearpage
 \bibliography{EssenceOfLiveCoding.bib}
