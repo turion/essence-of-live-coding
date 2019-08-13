@@ -26,6 +26,7 @@ library
     , LiveCoding.Migrate.Migration
     , LiveCoding.Debugger.StatePrint
     , LiveCoding.Exceptions
+    , LiveCoding.External
     , LiveCoding.Forever
     , LiveCoding.LiveProgram
     , LiveCoding.LiveProgram.HotCodeSwap
