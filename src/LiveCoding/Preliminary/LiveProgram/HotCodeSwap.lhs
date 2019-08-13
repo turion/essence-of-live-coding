@@ -2,14 +2,14 @@
 \begin{code}
 {-# LANGUAGE RecordWildCards #-}
 
-module LiveCoding.LiveProgram.Preliminary.HotCodeSwap where
+module LiveCoding.Preliminary.LiveProgram.HotCodeSwap where
 
 -- base
 import Control.Concurrent
 import Control.Monad (forever)
 
 -- essenceoflivecoding
-import LiveCoding.LiveProgram.Preliminary.LiveProgramPreliminary
+import LiveCoding.Preliminary.LiveProgram.LiveProgramPreliminary
 \end{code}
 \end{comment}
 

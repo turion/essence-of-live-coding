@@ -3,7 +3,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module LiveCoding.CellExcept where
+module LiveCoding.Preliminary.CellExcept where
 
 -- base
 import Control.Arrow
@@ -17,7 +17,7 @@ import Control.Monad.Trans.Except
 
 -- essenceoflivecoding
 import LiveCoding.Cell
-import LiveCoding.CellExcept.Applicative
+import LiveCoding.Preliminary.CellExcept.Applicative
 import LiveCoding.Exceptions
 \end{code}
 \end{comment}

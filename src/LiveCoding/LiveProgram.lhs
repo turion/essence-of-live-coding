@@ -20,7 +20,7 @@ import Data.Data
 
 Our model of a live program will consist of a state and an effectful state transition function.
 A preliminary version is shown in Figure \ref{fig:LiveProgramPreliminary}.
-\input{../src/LiveCoding/LiveProgram/Preliminary/LiveProgramPreliminary.lhs}
+\input{../src/LiveCoding/Preliminary/LiveProgram/LiveProgramPreliminary.lhs}
 The program is initialised at a certain state,
 and from there its behaviour is defined by repeatedly applying the function \mintinline{haskell}{liveStep} to advance the state and produce effects.
 This is implemented in \mintinline{haskell}{stepProgram}.
@@ -77,7 +77,7 @@ Its schema is the type \mintinline{haskell}{s}.
 Given a \emph{type migration} function,
 we can perform hot code swap,
 as shown in Figure \ref{fig:hot code swap}.
-\input{../src/LiveCoding/LiveProgram/Preliminary/HotCodeSwap.lhs}
+\input{../src/LiveCoding/Preliminary/LiveProgram/HotCodeSwap.lhs}
 This may be an acceptable solution to perform a planned, well-prepared intervention,
 but it does spoil the fun in a musical live coding performance if the programmer has to write a migration function after every single edit.
 What a live performer actually needs,

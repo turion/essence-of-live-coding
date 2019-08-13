@@ -4,7 +4,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
-module LiveCoding.CellExcept.Applicative where
+module LiveCoding.Preliminary.CellExcept.Applicative where
 
 -- base
 import Data.Data

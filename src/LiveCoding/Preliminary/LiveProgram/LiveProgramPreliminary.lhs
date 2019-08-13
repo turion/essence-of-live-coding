@@ -3,7 +3,7 @@
 \begin{code}
 {-# LANGUAGE RecordWildCards #-}
 
-module LiveCoding.LiveProgram.Preliminary.LiveProgramPreliminary where
+module LiveCoding.Preliminary.LiveProgram.LiveProgramPreliminary where
 
 -- base
 import Control.Concurrent

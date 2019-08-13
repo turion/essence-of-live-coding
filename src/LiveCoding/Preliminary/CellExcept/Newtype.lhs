@@ -1,6 +1,6 @@
 \begin{comment}
 \begin{code}
-module LiveCoding.CellExcept.Newtype where
+module LiveCoding.Preliminary.CellExcept.Newtype where
 
 -- base
 import Control.Arrow

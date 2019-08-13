@@ -150,5 +150,5 @@ runReaderC' Cell { .. } = Cell
 \end{code}
 \end{comment}
 
-\input{../src/LiveCoding/CellExcept/Newtype.lhs}
+\input{../src/LiveCoding/Preliminary/CellExcept/Newtype.lhs}
 

@@ -2,7 +2,7 @@
 \begin{code}
 {-# LANGUAGE Arrows #-}
 
-module LiveCoding.CellExcept.Monad where
+module LiveCoding.Preliminary.CellExcept.Monad where
 
 -- transformers
 import Control.Monad.Trans.Except

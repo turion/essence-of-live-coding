@@ -34,13 +34,13 @@ library
     , LiveCoding.RuntimeIO
 
   other-modules:
-      LiveCoding.CellExcept.Newtype
-    , LiveCoding.CellExcept
-    , LiveCoding.CellExcept.Applicative
-    , LiveCoding.CellExcept.Monad
-    , LiveCoding.LiveProgram.Preliminary.HotCodeSwap
-    , LiveCoding.LiveProgram.Preliminary.LiveProgram2
-    , LiveCoding.LiveProgram.Preliminary.LiveProgramPreliminary
+      LiveCoding.Preliminary.CellExcept
+    , LiveCoding.Preliminary.CellExcept.Applicative
+    , LiveCoding.Preliminary.CellExcept.Monad
+    , LiveCoding.Preliminary.CellExcept.Newtype
+    , LiveCoding.Preliminary.LiveProgram.HotCodeSwap
+    , LiveCoding.Preliminary.LiveProgram.LiveProgram2
+    , LiveCoding.Preliminary.LiveProgram.LiveProgramPreliminary
 
   other-extensions:    DeriveDataTypeable
   build-depends:

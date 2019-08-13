@@ -3,7 +3,7 @@
 \begin{code}
 {-# LANGUAGE ExistentialQuantification #-}
 
-module LiveCoding.LiveProgram.Preliminary.LiveProgram2 where
+module LiveCoding.Preliminary.LiveProgram.LiveProgram2 where
 
 -- base
 import Data.Data

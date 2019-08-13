@@ -84,8 +84,8 @@ but we are forewarned:
 due to the \mintinline{haskell}{Data} constraint on the internal state.
 \section{Monads for control flow}
 \input{../src/LiveCoding/LiveBind.lhs}
-\input{../src/LiveCoding/CellExcept/Applicative.lhs}
-\input{../src/LiveCoding/CellExcept/Monad.lhs}
+\input{../src/LiveCoding/Preliminary/CellExcept/Applicative.lhs}
+\input{../src/LiveCoding/Preliminary/CellExcept/Monad.lhs}
 
 \bibliography{EssenceOfLiveCoding.bib}
 \end{document}
