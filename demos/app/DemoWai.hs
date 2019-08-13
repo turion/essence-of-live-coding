@@ -15,7 +15,7 @@ import Network.HTTP.Types
 import Network.Wai
 import Network.Wai.Handler.Warp (run)
 
--- essenceoflivecoding
+-- essence-of-live-coding
 import LiveCoding
 
 import DemoWai.Env

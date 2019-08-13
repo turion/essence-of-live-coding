@@ -1,6 +1,0 @@
-resolver: lts-13.19
-nix:
-  enable: true
-  packages: [blas liblapack]
-extra-deps:
-  - ../

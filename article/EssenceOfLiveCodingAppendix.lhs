@@ -75,17 +75,18 @@ A word of caution has to be issued here:
 The instance is implemented using the monadic fixed point operator \mintinline{haskell}{mfix} \cite{MonadFix},
 and can thus crash at runtime if the current output of the intermediate value \mintinline{haskell}{s} is calculated strictly from the current input \mintinline{haskell}{s}.
 
-\input{../src/LiveCoding/Cell/Feedback.lhs}
-\input{../src/LiveCoding/Coalgebra.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/Cell/Feedback.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/Coalgebra.lhs}
+\fxerror{The transition from coalgebras is a bit rough?}
 \fxerror{We've now switched to using runExceptC, so liveBind is implemented in terms of it.}
 We would like to adopt this approach here,
 but we are forewarned:
 \mintinline{haskell}{Cell}s are slightly less expressive than Dunai's stream functions,
 due to the \mintinline{haskell}{Data} constraint on the internal state.
 \section{Monads for control flow}
-\input{../src/LiveCoding/LiveBind.lhs}
-\input{../src/LiveCoding/Preliminary/CellExcept/Applicative.lhs}
-\input{../src/LiveCoding/Preliminary/CellExcept/Monad.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/LiveBind.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/Preliminary/CellExcept/Applicative.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/Preliminary/CellExcept/Monad.lhs}
 
 \bibliography{EssenceOfLiveCoding.bib}
 \end{document}

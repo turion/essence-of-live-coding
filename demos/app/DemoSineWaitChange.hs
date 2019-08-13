@@ -1,7 +1,7 @@
 -- base
 import Control.Arrow
 
--- essenceoflivecoding
+-- essence-of-live-coding
 import LiveCoding
 
 t1 :: Num a => a

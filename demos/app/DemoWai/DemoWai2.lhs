@@ -22,7 +22,7 @@ import Control.Monad.Trans.Reader
 -- wai
 import Network.Wai
 
--- essenceoflivecoding
+-- essence-of-live-coding
 import LiveCoding
 
 import DemoWai.Env

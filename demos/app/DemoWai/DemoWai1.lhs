@@ -18,7 +18,7 @@ import Data.ByteString.Lazy.Char8
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
 
--- essenceoflivecoding
+-- essence-of-live-coding
 import LiveCoding
 
 import DemoWai.Env

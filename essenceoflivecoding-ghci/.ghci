@@ -1,5 +1,0 @@
-:set -package essenceoflivecoding-ghci
-:m + LiveCoding.GHCi Control.Concurrent
-:def liveinit liveinit
-:def livestep livestep
-:def livereload livereload

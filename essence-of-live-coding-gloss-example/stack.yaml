@@ -1,0 +1,10 @@
+resolver: lts-13.19
+extra-deps:
+  - ../essence-of-live-coding
+  - ../essence-of-live-coding-gloss
+  - ../essence-of-live-coding-pulse
+  - pulse-simple-0.1.14@sha256:cd2397c40feb8959cdc6e806987072ce91e388e41427c47ff09ec2a2cfb466f0,773
+nix:
+  enable: true
+  pure: false
+  packages: [libpulseaudio pulseaudio libGL libGLU freeglut]

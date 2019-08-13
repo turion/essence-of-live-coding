@@ -1,6 +1,6 @@
 resolver: lts-13.19
 extra-deps:
-  - ..
+  - ../essence-of-live-coding
 nix:
   enable: true
   packages: [zlib]

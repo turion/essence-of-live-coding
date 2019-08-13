@@ -4,10 +4,10 @@ demos/%.txt:
 	cd demos && stack build --exec $* > $*.txt
 
 speedtest: build
-	cd essenceoflivecoding-speedtest-yampa && stack build && time stack exec SpeedTest
+	cd essence-of-live-coding-speedtest-yampa && stack build && time stack exec SpeedTest
 
 build:
-	stack build
+	cd essence-of-live-coding && stack build
 
 article: demos latex
 
@@ -38,13 +38,13 @@ revealjs: git-submodule
 presentation: revealjs pictures
 	cd article && pandoc -s EssenceOfLiveCodingPresentation.md -t revealjs -V theme=serif -i -o EssenceOfLiveCodingPresentation.html
 
-symlinks: essenceoflivecoding-gloss-example/.ghci
+symlinks: essence-of-live-coding-gloss-example/.ghci
 
-essenceoflivecoding-gloss-example/.ghci:
-	echo "Won't copy symlink, file exists" #ln -s ../essenceoflivecoding-gloss/.ghci essenceoflivecoding-gloss-example/.ghci
+essence-of-live-coding-gloss-example/.ghci:
+	echo "Won't copy symlink, file exists" #ln -s ../essence-of-live-coding-gloss/.ghci essence-of-live-coding-gloss-example/.ghci
 
 gloss-example: symlinks
-	cd essenceoflivecoding-gloss-example && stack ghci
+	cd essence-of-live-coding-gloss-example && stack ghci
 
 gears: symlinks
-	cd essenceoflivecoding-gloss-example && stack ghci essenceoflivecoding-gloss-example:exe:gears
+	cd essence-of-live-coding-gloss-example && stack ghci essence-of-live-coding-gloss-example:exe:gears

@@ -1,8 +1,0 @@
-resolver: lts-12.21
-nix:
-  pure: false
-  enable: true
-  packages: [libpulseaudio pulseaudio]
-extra-deps:
-  - pulse-simple-0.1.14@sha256:cd2397c40feb8959cdc6e806987072ce91e388e41427c47ff09ec2a2cfb466f0
-  - ../

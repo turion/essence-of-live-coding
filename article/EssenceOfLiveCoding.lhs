@@ -109,7 +109,7 @@ In Section \ref{sec:tooling}, several useful tools such as debuggers and quickch
 This article is written in literate Haskell and supplies the library presented here.
 The source code will be made openly available upon publication.\fxerror{Do it, or at least post a preview link for the reviewers here.}
 
-\input{../src/LiveCoding/LiveProgram.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/LiveProgram.lhs}
 \fxerror{I believe this is even easier with Servant because it has simple functions!}
 \input{../demos/app/DemoWai/Env.lhs}
 \input{../demos/app/DemoWai/DemoWai1.lhs}
@@ -128,7 +128,7 @@ The purpose of this section is to show that we can develop live programs modular
 
 %\subsection{Arrowized FRP with effects}
 
-\input{../src/LiveCoding/Cell.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/Cell.lhs}
 
 \subsection{Exceptions}
 
@@ -150,16 +150,16 @@ It will turn out that we can implement a \mintinline{haskell}{Functor} instance 
 and an \mintinline{haskell}{Applicative} instance with a little work,
 but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 
-\input{../src/LiveCoding/Exceptions.lhs}
-%\input{../src/LiveCoding/CellExcept.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/Exceptions.lhs}
+%\input{../essence-of-live-coding/src/LiveCoding/CellExcept.lhs}
 
-\input{../src/LiveCoding/Bind.lhs}
-\input{../src/LiveCoding/Forever.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/Bind.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/Forever.lhs}
 
 \section{Tooling}
 \label{sec:tooling}
-\input{../src/LiveCoding/Debugger.lhs}
-\input{../essenceoflivecoding-quickcheck/src/LiveCoding/QuickCheck.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/Debugger.lhs}
+\input{../essence-of-live-coding-quickcheck/src/LiveCoding/QuickCheck.lhs}
 
 \subsection{External main loops}
 \fxfatal{Can integrate into external main loops using \mintinline{haskell}{step} for cells or an equivalent \mintinline{haskell}{stepMVar}.}

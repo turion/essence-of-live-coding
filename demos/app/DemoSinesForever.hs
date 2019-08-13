@@ -1,4 +1,4 @@
--- essenceoflivecoding
+-- essence-of-live-coding
 import LiveCoding
 
 main = do

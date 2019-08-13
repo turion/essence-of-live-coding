@@ -5,7 +5,7 @@ module Examples where
 import Control.Arrow
 import Control.Concurrent
 
--- essenceoflivecoding
+-- essence-of-live-coding
 import LiveCoding
 
 -- TODO Should go into various utils files

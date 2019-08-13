@@ -19,7 +19,7 @@ executable DemoSine
   hs-source-dirs: app
   build-depends:
       base >=4.11 && <4.13
-    , essenceoflivecoding
+    , essence-of-live-coding
 
 executable DemoSineWait
   main-is: DemoSineWait.hs
@@ -28,7 +28,7 @@ executable DemoSineWait
   hs-source-dirs: app
   build-depends:
       base >=4.11 && <4.13
-    , essenceoflivecoding
+    , essence-of-live-coding
 
 executable DemoSineWaitChange
   main-is: DemoSineWaitChange.hs
@@ -37,7 +37,7 @@ executable DemoSineWaitChange
   hs-source-dirs: app
   build-depends:
       base >=4.11 && <4.13
-    , essenceoflivecoding
+    , essence-of-live-coding
 
 executable DemoSinesForever
   main-is: DemoSinesForever.hs
@@ -46,7 +46,7 @@ executable DemoSinesForever
   hs-source-dirs: app
   build-depends:
       base >=4.11 && <4.13
-    , essenceoflivecoding
+    , essence-of-live-coding
 
 executable DemoWai
   main-is: DemoWai.hs
@@ -57,7 +57,7 @@ executable DemoWai
   hs-source-dirs: app
   build-depends:
       base >=4.11 && <4.13
-    , essenceoflivecoding
+    , essence-of-live-coding
     , transformers == 0.5.*
     , wai  == 3.2.*
     , warp == 3.2.*

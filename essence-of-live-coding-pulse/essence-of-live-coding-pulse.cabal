@@ -1,0 +1,28 @@
+name:                essence-of-live-coding-pulse
+version:             0.1.0.0
+-- synopsis:
+-- description:
+license:             BSD3
+license-file:        LICENSE
+author:              Manuel Bärenz
+maintainer:          programming@manuelbaerenz.de
+-- copyright:
+category:            Sound
+build-type:          Simple
+extra-source-files:  CHANGELOG.md
+cabal-version:       >=1.10
+
+library
+  exposed-modules:
+    LiveCoding.Pulse
+    LiveCoding.Pulse.GHCi
+  -- other-modules:
+  -- other-extensions:
+  build-depends:
+      base >=4.11
+    , essence-of-live-coding
+    , transformers
+    , pulse-simple == 0.1.*
+    , foreign-store
+  hs-source-dirs:      src
+  default-language:    Haskell2010
