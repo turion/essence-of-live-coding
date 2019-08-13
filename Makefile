@@ -38,13 +38,5 @@ revealjs: git-submodule
 presentation: revealjs pictures
 	cd article && pandoc -s EssenceOfLiveCodingPresentation.md -t revealjs -V theme=serif -i -o EssenceOfLiveCodingPresentation.html
 
-symlinks: essence-of-live-coding-gloss-example/.ghci
-
-essence-of-live-coding-gloss-example/.ghci:
-	echo "Won't copy symlink, file exists" #ln -s ../essence-of-live-coding-gloss/.ghci essence-of-live-coding-gloss-example/.ghci
-
-gloss-example: symlinks
-	cd essence-of-live-coding-gloss-example && stack ghci
-
-gears: symlinks
-	cd essence-of-live-coding-gloss-example && stack ghci essence-of-live-coding-gloss-example:exe:gears
+gears:
+	cd gears && stack ghci gears:exe:gears

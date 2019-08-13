@@ -1,4 +1,4 @@
 :set -package essence-of-live-coding-gloss
-:m + LiveCoding.Gloss.GHCi Control.Concurrent
+:m + LiveCoding.Gloss LiveCoding.Gloss.GHCi Control.Concurrent
 :def livegloss livegloss
-:def livereload livereload
+:def livereloadgloss livereloadgloss
