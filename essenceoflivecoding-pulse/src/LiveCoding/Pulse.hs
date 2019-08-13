@@ -32,7 +32,7 @@ playPulseCell pulseCell = do
     Nothing
   forkIO $ forever $ do
     cell <- takeMVar var
-    (samples, cell') <- steps cell $ replicate 64 ()
+    (samples, cell') <- steps cell $ replicate 1024 ()
     simpleWrite pulseClient samples
     putMVar var cell'
   return var
