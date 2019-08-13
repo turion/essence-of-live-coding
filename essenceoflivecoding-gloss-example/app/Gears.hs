@@ -14,10 +14,10 @@ import LiveCoding.Gloss
 -- essenceoflivecoding-pulse
 import LiveCoding.Pulse
 
-glossCell :: IORef Float -> GlossCell
+glossCell :: IORef Float -> Cell PictureM [Event] ()
 glossCell ref = withDebuggerC (glossCell' ref) statePlay
 
-glossCell' :: IORef Float -> GlossCell
+glossCell' :: IORef Float -> Cell PictureM [Event] ()
 glossCell' ref = proc _events -> do
   gearAngle <- integrate         -< 30
   addPicture                     -< gear gearAngle
