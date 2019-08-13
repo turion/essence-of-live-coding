@@ -1,10 +1,10 @@
-demos: DemoSine.txt DemoSinesForever.txt DemoSineWait.txt DemoSineWaitChange.txt
+demos: demos/DemoSine.txt demos/DemoSinesForever.txt demos/DemoSineWait.txt demos/DemoSineWaitChange.txt
 
-%.txt:
-	stack build --exec $< > $<.txt
+demos/%.txt:
+	cd demos && stack build --exec $* > $*.txt
 
 speedtest: build
-	time stack exec SpeedTest
+	cd essenceoflivecoding-speedtest-yampa && stack build && time stack exec SpeedTest
 
 build:
 	stack build
@@ -26,7 +26,7 @@ bibtex:
 	cd article && bibtex EssenceOfLiveCoding && bibtex EssenceOfLiveCodingAppendix && bibtex EssenceOfLiveCodingAbstract
 
 article/%.png: article/%.tex
-	cd article && pdflatex -shell-escape ../$<
+	cd article && pdflatex -shell-escape $*
 
 pictures: article/CategoryId.png article/CategoryCompose.png article/ArrowArr.png article/ArrowCompose.png
 

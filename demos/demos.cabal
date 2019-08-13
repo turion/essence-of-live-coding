@@ -1,0 +1,65 @@
+name:                demos
+version:             0.1.0.0
+-- synopsis:
+-- description:
+license:             BSD3
+license-file:        LICENSE
+author:              Manuel Bärenz
+maintainer:          programming@manuelbaerenz.de
+-- copyright:
+-- category:
+build-type:          Simple
+extra-source-files:  CHANGELOG.md
+cabal-version:       >=1.10
+
+executable DemoSine
+  main-is: DemoSine.hs
+  other-modules:
+      Examples
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+
+executable DemoSineWait
+  main-is: DemoSineWait.hs
+  other-modules:
+      Examples
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+
+executable DemoSineWaitChange
+  main-is: DemoSineWaitChange.hs
+  other-modules:
+      Examples
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+
+executable DemoSinesForever
+  main-is: DemoSinesForever.hs
+  other-modules:
+      Examples
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+
+executable DemoWai
+  main-is: DemoWai.hs
+  other-modules:
+      DemoWai.Env
+      DemoWai.DemoWai1
+      DemoWai.DemoWai2
+  hs-source-dirs: app
+  build-depends:
+      base >=4.11 && <4.13
+    , essenceoflivecoding
+    , transformers == 0.5.*
+    , wai  == 3.2.*
+    , warp == 3.2.*
+    , http-types == 0.12.*
+    , bytestring == 0.10.*

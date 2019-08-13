@@ -138,7 +138,7 @@ printSinesForever = liveCell
   >>> printEverySecond
 \end{code}
 Let us run it:
-\verbatiminput{../DemoSinesForever.txt}
+\verbatiminput{../demos/DemoSinesForever.txt}
 \fxwarning{Is the [...] good or not? (Here and elsewhere)}
 \fxerror{What's the advantage of forever? How to livecode with it?}
 

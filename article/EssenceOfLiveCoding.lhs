@@ -111,9 +111,9 @@ The source code will be made openly available upon publication.\fxerror{Do it, o
 
 \input{../src/LiveCoding/LiveProgram.lhs}
 \fxerror{I believe this is even easier with Servant because it has simple functions!}
-\input{../app/DemoWai/Env.lhs}
-\input{../app/DemoWai/DemoWai1.lhs}
-\input{../app/DemoWai/DemoWai2.lhs}
+\input{../demos/app/DemoWai/Env.lhs}
+\input{../demos/app/DemoWai/DemoWai1.lhs}
+\input{../demos/app/DemoWai/DemoWai2.lhs}
 
 \section{Live coding as arrowized FRP}
 \label{sec:FRP}

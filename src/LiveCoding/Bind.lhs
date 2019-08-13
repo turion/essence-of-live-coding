@@ -73,7 +73,7 @@ printSineWait = liveCell
   $   safely (sineWait 10)
   >>> printEverySecond
 \end{code}
-\verbatiminput{../DemoSineWait.txt}
+\verbatiminput{../demos/DemoSineWait.txt}
 The crucial advantage of handling control flow this way
 is that the \emph{control state}
 -- that is, the information which exceptions have been thrown and which cell is currently active --
@@ -82,7 +82,7 @@ and can thus be migrated automatically.
 Let us rerun the above example,
 but after the first \mintinline{haskell}{try} statement has already passed control to the sine generator
 we shorten the period length of the sine wave and reload:
-\verbatiminput{../DemoSineWaitChange.txt}
+\verbatiminput{../demos/DemoSineWaitChange.txt}
 The migrated program did not restart and wait again,
 but remembered to immediately continue executing the sine generator from the same phase as before.
 This is in contrast to simplistic approaches to live coding in which the control flow state is forgotten upon reload,

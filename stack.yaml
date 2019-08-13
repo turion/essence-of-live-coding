@@ -1,7 +1,1 @@
 resolver: lts-13.19
-nix:
-  enable: true
-  packages: [zlib]
-extra-deps:
-  - Yampa-0.13@sha256:0778b6e92adb62cc6fd83f1121a9d9bd1a6f7dac72baa41120b472addc7ec94f
-  - simple-affine-space-0.1@sha256:09e582f2e12ce9feb251cbdacec57fa1f4a838ec63928026d98b758e89f9abd7

@@ -464,7 +464,7 @@ But it's actually cheating.
 Let us execute it:\footnote{%
 From now on, the GHCi commands will be suppressed.
 }
-\verbatiminput{../DemoSine.txt}
+\verbatiminput{../demos/DemoSine.txt}
 It is clearly visible how the period of the oscillator changed,
 \fxwarning{Only if this doesn't break. Maybe make figures?}
 while its position (or, in terms of signal processing, its phase)

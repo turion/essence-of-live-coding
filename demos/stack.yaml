@@ -3,4 +3,4 @@ extra-deps:
   - ..
 nix:
   enable: true
-  packages: [libGL libGLU freeglut]
+  packages: [zlib]
