@@ -28,19 +28,11 @@ We can enter the \mintinline{haskell}{CellExcept} context from an exception-thro
 trying to execute it until the exception occurs:
 \fxerror{This doesn't work here anymore because we haven't explained how it's a newtype.
 Also we already know that try needs an extra type class. Take this from the monad section.}
-\begin{spec}
+\begin{code}
 try
   :: Data          e
   => Cell (ExceptT e m) a b
   -> CellExcept      m  a b e
-\end{spec}
-\begin{comment}
-\begin{code}
--- try :: (Data e, Commutable e) => Cell (ExceptT e m) a b -> CellExcept m a b e
-try :: Data e => Cell (ExceptT e m) a b -> CellExcept m a b e
-\end{code}
-\end{comment}
-\begin{code}
 try = CellExcept id
 \end{code}
 And we can leave it safely once we have proven that there are no exceptions left to throw,

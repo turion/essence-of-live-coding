@@ -46,7 +46,7 @@ bindBool cell handler
 \begin{code}
 {-
 bindBool'
-  :: (Monad m, Data e, Commutable e)
+  :: (Monad m, Data e, Finite e)
   => CellExcept m a b Bool
   -> (Bool -> CellExcept m a b e)
   -> CellExcept m a b e
@@ -90,6 +90,7 @@ for every possible exception value,
 \emph{at compile time}.
 All that is needed is a little help to spell out all the possible cases,
 as has been done for \mintinline{haskell}{Bool}.
+\fxerror{Wow! This means that the control state of such live programs is always finite! This means e.g. that we can completely analyse CTL on it!}
 
 But certainly, we don't want to write out all possible values of a type before we can bind it.
 Again, the Haskellers' aversion to boilerplate has created a solution that can be tailored to our needs:
@@ -103,8 +104,7 @@ Any user-contributed or standard type can be an instance this type class,
 given that it is not recursive.
 \fxerror{We omitted functions!!!}
 
-Again by the power of the Coyoneda embedding,
-we can restrict the \mintinline{haskell}{CellExcept} definition by the typeclass:
+It is possible to restrict the previous \mintinline{haskell}{CellExcept} definition by the typeclass:
 \begin{spec}
 data CellExcept m a b e = forall e' .
   (Data e', Finite e') => CellExcept
@@ -112,23 +112,6 @@ data CellExcept m a b e = forall e' .
   , cellExcept :: Cell (ExceptT e' m) a b
   }
 \end{spec}
-\fxwarning{At the end rename ECommutable etc}
 Implementing the individual bind functions for sums and products,
 and finally writing down the complete \mintinline{haskell}{Monad} instance is a tedious exercise in Generic deriving.
-As a slight restriction of the framework,
-throwing exceptions is now only allowed for finite types:
-\begin{spec}
-try
-  :: (Data e, Finite e)
-  => Cell (ExceptT e m) a b
-  -> CellExcept m a b e
-\end{spec}
-In practice however, this is rarely a severe limitation since in the monad context,
-calculations with all types are allowed again.
-\fxerror{I'm not so sure about that actually. It's still not possible to throw builtin types like Doubles and Ints.}
-
-\fxerror{Wow! This means that the control state of such live programs is always finite! This means e.g. that we can completely analyse CTL on it!}
-
-\fxerror{Not sure whether I want to say it like that. Maybe first talk about commuting Reader, and then go on.}
-\fxerror{Wouldhave to call it Finite here now because there is no justification yet to call it Commutable, because we didn't explain the commuting thing.
-One way to explain the commuting stuff would be to completely forget about Applicative and straight go from live bind to finite bind.}
+\input{../src/CellExcept.lhs}

@@ -1,7 +1,6 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE Arrows #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -10,7 +9,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeOperators #-}
 
-module LiveCoding.Commutable where
+module LiveCoding.Exceptions.Finite where
 
 -- base
 import Control.Arrow
@@ -30,51 +29,40 @@ import LiveCoding.Exceptions (runReaderC')
 \end{comment}
 
 \begin{code}
-data CellExcept m a b e where
-  Return :: e -> CellExcept m a b e
-  Bind
-    :: CellExcept m a b e1
-    -> (e1 -> CellExcept m a b e2)
-    -> CellExcept m a b e2
-  Try
-    :: (Data e, Commutable e)
-    => Cell (ExceptT e m) a b
-    -> CellExcept m a b e
-
-class Commutable e where
+class Finite e where
   commute :: Monad m => (e -> Cell m a b) -> Cell (ReaderT e m) a b
 
-  default commute :: (Generic e, GCommutable (Rep e), Monad m) => (e -> Cell m a b) -> Cell (ReaderT e m) a b
+  default commute :: (Generic e, GFinite (Rep e), Monad m) => (e -> Cell m a b) -> Cell (ReaderT e m) a b
   commute handler = hoistCell (withReaderT from) $ gcommute $ handler . to
 
-class GCommutable f where
+class GFinite f where
   gcommute :: Monad m => (f e -> Cell m a b) -> Cell (ReaderT (f e) m) a b
 
-instance GCommutable f => GCommutable (M1 a b f) where
+instance GFinite f => GFinite (M1 a b f) where
   gcommute handler = hoistCell (withReaderT unM1) $ gcommute $ handler . M1
 
-instance Commutable e => GCommutable (K1 a e) where
+instance Finite e => GFinite (K1 a e) where
   gcommute handler = hoistCell (withReaderT unK1) $ commute $ handler . K1
 
-instance GCommutable V1 where
+instance GFinite V1 where
   gcommute _ = error "gcommute: Can't commute with an empty type"
 
-instance Commutable Void where
+instance Finite Void where
   commute _ = error "Nope"
 
-instance GCommutable U1 where
+instance GFinite U1 where
   gcommute handler = liftCell $ handler U1
 
-instance Commutable () where
+instance Finite () where
 
-instance Commutable Bool where
+instance Finite Bool where
   commute handler = proc a -> do
     bool <- constM ask -< ()
     if bool
     then liftCell $ handler True  -< a
     else liftCell $ handler False -< a
 
-instance (GCommutable eL, GCommutable eR) => GCommutable (eL :+: eR) where
+instance (GFinite eL, GFinite eR) => GFinite (eL :+: eR) where
   gcommute handler
     = let
           cellLeft  = runReaderC' $ gcommute $ handler . L1
@@ -86,9 +74,9 @@ instance (GCommutable eL, GCommutable eR) => GCommutable (eL :+: eR) where
         either12 <- constM ask -< ()
         liftCell (cellLeft ||| cellRight) -< gdistribute either12 a
 
-instance (Commutable e1, Commutable e2) => Commutable (Either e1 e2) where
+instance (Finite e1, Finite e2) => Finite (Either e1 e2) where
 
-instance (GCommutable e1, GCommutable e2) => GCommutable (e1 :*: e2) where
+instance (GFinite e1, GFinite e2) => GFinite (e1 :*: e2) where
   gcommute handler = hoistCell guncurryReader $ gcommute $ gcommute . gcurry handler
     where
       gcurry f e1 e2 = f (e1 :*: e2)

@@ -19,7 +19,7 @@ import Control.Monad.Trans.Reader
 import LiveCoding.Bind
 import LiveCoding.Cell
 import LiveCoding.Exceptions
-import LiveCoding.Commutable (CellExcept)
+import LiveCoding.CellExcept
 import LiveCoding.LiveProgram
 
 \end{code}

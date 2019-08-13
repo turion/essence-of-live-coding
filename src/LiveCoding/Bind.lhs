@@ -9,11 +9,9 @@ module LiveCoding.Bind where
 -- base
 import Control.Arrow
 import Control.Concurrent (threadDelay)
-import Control.Monad
 import Data.Data
 import Data.Either (fromRight)
 import Data.Void
--- import Prelude hiding ((>>=), return, (>>))
 
 -- transformers
 import Control.Monad.Trans.Class
@@ -21,9 +19,8 @@ import Control.Monad.Trans.Except
 import Control.Monad.Trans.Reader
 
 -- essenceoflivecoding
-import LiveCoding.Commutable
 import LiveCoding.Cell
--- import LiveCoding.CellExcept
+import LiveCoding.CellExcept
 import LiveCoding.Exceptions
 import LiveCoding.LiveProgram
 \end{code}
@@ -90,48 +87,3 @@ The migrated program did not restart and wait again,
 but remembered to immediately continue executing the sine generator from the same phase as before.
 This is in contrast to simplistic approaches to live coding in which the control flow state is forgotten upon reload,
 and restarted each time.
-
-\fxerror{Move the following commented code into appendix and show it instead of the specs there}
-\begin{comment}
-\begin{code}
-
-instance Monad m => Functor (CellExcept m a b) where
-  fmap = liftM
-
-instance Monad m => Applicative (CellExcept m a b) where
-  pure = return
-  (<*>) = ap
-
-instance Monad m => Monad (CellExcept m a b) where
-  return = Return
-  (>>=) = Bind
-
--- Rewrite with Operational
--- TODO Actually want to import
-runCellExcept
-  :: Monad           m
-  => CellExcept      m  a b e
-  -> Cell (ExceptT e m) a b
-runCellExcept (Return e) = constM $ throwE e
-runCellExcept (Try cell) = cell
-runCellExcept (Bind (Try cell) g) = cell >>>== commute (runCellExcept . g)
-runCellExcept (Bind (Return e) f) = runCellExcept $ f e
-runCellExcept (Bind (Bind ce f) g) = runCellExcept $ Bind ce $ \e -> Bind (f e) g
-
-try :: (Data e, Commutable e) => Cell (ExceptT e m) a b -> CellExcept m a b e
-try = Try
-safely
-  :: Monad      m
-  => CellExcept m a b Void
-  -> Cell       m a b
-safely = hoistCell discardVoid . runCellExcept
-discardVoid
-  :: Functor      m
-  => ExceptT Void m a
-  ->              m a
-discardVoid
-  = fmap (either absurd id) . runExceptT
-safe :: Monad m => Cell m a b -> CellExcept m a b Void
-safe cell = try $ liftCell cell
-\end{code}
-\end{comment}
