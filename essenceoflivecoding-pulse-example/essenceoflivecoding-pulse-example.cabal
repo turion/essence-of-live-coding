@@ -20,7 +20,6 @@ executable essenceoflivecoding-pulse-example
       base >=4.11
     , transformers
     , pulse-simple == 0.1.*
-    --, proteaaudio == 0.7.*
     , vector
     , essenceoflivecoding
     , essenceoflivecoding-pulse

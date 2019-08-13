@@ -22,11 +22,6 @@ import Data.Vector ((!))
 -- pulse-simple
 import Sound.Pulse.Simple
 
-{-
--- proteaaudio
-import Sound.ProteaAudio
--}
-
 -- essenceoflivecoding
 import LiveCoding
 
@@ -77,20 +72,3 @@ pulseCell = frequencies' >>> osc'
 
 main :: IO ()
 main = void $ playPulseCell pulseCell
-
-{-
-main :: IO ()
-main = do
-  let samples = pack $ [round $ (100 *) $ sin $ 2*pi*440*(t/44100)|t<-[1..44100*10]] :: ByteString
-  result <- initAudio 2 44100 1024
-  print result
-  sample <- sampleFromMemoryPcm samples 1 44100 8 1
-  soundPlay sample 2 1 0 1
-  threadDelay 10000000
-  finishAudio
--}
-
-iterateM_ :: (a -> IO a) -> a -> IO ()
-iterateM_ f a = do
-  a' <- f a
-  iterateM_ f a'
