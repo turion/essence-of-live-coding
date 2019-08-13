@@ -14,7 +14,7 @@ import Control.Monad.Trans.Writer
 
 -- gloss
 import Graphics.Gloss as X
-import Graphics.Gloss.Interface.IO.Game
+import Graphics.Gloss.Interface.IO.Game as X
 
 -- essence-of-live-coding
 import LiveCoding

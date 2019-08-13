@@ -28,7 +28,7 @@ import qualified Graphics.Gloss as Gloss
 import LiveCoding
 
 -- essence-of-live-coding-gloss
-import LiveCoding.Gloss hiding (statePicture, every)
+import LiveCoding.Gloss hiding (statePicture, every, translate)
 
 main :: IO ()
 main = playCellForeground glossCell
