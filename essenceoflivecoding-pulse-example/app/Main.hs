@@ -71,12 +71,12 @@ cycleThrough bs cycleLength = let vector = Vector.fromList (NonEmpty.toList bs) 
   n <- modSum (cycleLength * length bs) -< 1
   returnA -< vector ! (n `div` cycleLength)
 
-frequencies' = cycleThrough (NonEmpty.fromList $ f <$> [C, E, G]) 8000
+frequencies' = cycleThrough (NonEmpty.fromList $ [f D, f G, o $ f Bb]) 8000
 
-music = frequencies' >>> osc'
+pulseCell = frequencies' >>> osc'
 
 main :: IO ()
-main = void $ playPulseCell music
+main = void $ playPulseCell pulseCell
 
 {-
 main :: IO ()

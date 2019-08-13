@@ -1,4 +1,4 @@
-name:                essenceoflivecoding-pulse
+name:                essenceoflivecoding-pulse-example
 version:             0.1.0.0
 -- synopsis:
 -- description:
@@ -12,17 +12,17 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 cabal-version:       >=1.10
 
-library
-  exposed-modules:
-    LiveCoding.Pulse
-    LiveCoding.Pulse.GHCi
+executable essenceoflivecoding-pulse-example
+  main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
   build-depends:
       base >=4.11
-    , essenceoflivecoding
     , transformers
     , pulse-simple == 0.1.*
-    , foreign-store
-  hs-source-dirs:      src
+    --, proteaaudio == 0.7.*
+    , vector
+    , essenceoflivecoding
+    , essenceoflivecoding-pulse
+  hs-source-dirs:      app
   default-language:    Haskell2010
