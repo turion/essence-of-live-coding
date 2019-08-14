@@ -5,66 +5,59 @@
 module LiveCoding.Migrate where
 
 -- base
-import Control.Monad (guard)
 import Data.Data
-import Data.Foldable (asum)
 import Data.Functor ((<&>))
 import Data.Maybe
 import Prelude hiding (GT)
 
 -- syb
 import Data.Generics.Aliases
-import Data.Generics.Schemes (glength)
 import Data.Generics.Twins
 
 -- essence-of-live-coding
--- import LiveCoding.Migrate.Debugger
+import LiveCoding.Migrate.Debugger
 import LiveCoding.Migrate.Migration
-
--- TODO Add special cases for:
--- * data Foo = Foo -> data Foo = Foo | Bar!
--- * Adding custom user renames
--- * Exception handling!
--- * a -> Feedback a b and back
--- * a -> Maybe a and back
--- * a >>> b and a *** b to a or b and back
 \end{code}
 \end{comment}
 
 \begin{code}
+-- | The standard migration solution, recursing into the data structure and applying 'standardMigration'.
 migrate :: (Data a, Data b) => a -> b -> a
-migrate = userMigrate (\() -> ())
+migrate = migrateWith standardMigration
 
-{-
-extendMigration
-  :: (Data a, Data b)
-  => (a -> b -> a)
-  -> (forall c d . (Data c, Data d) => c -> d -> c)
-  ->  a -> b -> a
-extendMigration oldMigration newMigration = unMigration $ Migration oldMigration `extendMigration'` Migration newMigration
-extendMigration'
-  :: (Data a, Data b)
-  => Migration a b
-  -> (forall c d . (Data c, Data d) => Migration c d)
-  ->  Migration a b
-extendMigration' def ext = maybe def id (dataCast2 ext)
+-- | Still recurse into the data structure, but apply your own given migration.
+--   Often you will want to call @migrateWith (standardMigration <> yourMigration)@.
+migrateWith :: (Data a, Data b) => Migration -> a -> b -> a
+migrateWith specific = runSafeMigration $ treeMigration specific
 
-ext2 :: (Data a, Typeable t)
-     => c a
-     -> (forall d1 d2. (Data d1, Data d2) => c (t d1 d2))
-     -> c a
-ext2 def ext = maybe def id (dataCast2 ext)
--}
--- TODO Port all cases to asum?
-userMigrate
-  :: (Data a, Data b, Typeable c, Typeable d)
-  => (c -> d)
-  -> a -> b -> a
-userMigrate specific a b
+-- | Covers standard cases such as matching types, to and from debuggers, to newtypes.
+standardMigration :: Migration
+standardMigration = castMigration <> migrationDebugging <> newtypeMigration
+
+-- | Wrapping 'treeMigrateWith' in the newtype.
+treeMigration :: Migration -> Migration
+treeMigration migration = Migration $ treeMigrateWith migration
+
+-- | The standard migration working horse.
+--   Tries to apply the given migration,
+--   and if this fails, tries to recurse into the data structure.
+treeMigrateWith
+  :: (Data a, Data b)
+  => Migration
+  -> a -> b -> Maybe a
+
+-- Maybe the specified user migration works?
+treeMigrateWith specific a b
+  | Just a' <- runMigration specific a b
+  = Just a'
+
+-- Maybe it's an algebraic datatype.
+-- Let's try and match the structure as well as possible.
+treeMigrateWith specific a b
   |  isAlgType typeA  && isAlgType typeB
   && show typeA == show typeB
   && showConstr constrA == showConstr constrB
-  = migrateSameConstr
+  = Just migrateSameConstr
   where
     typeA = dataTypeOf a
     typeB = dataTypeOf b
@@ -84,20 +77,11 @@ userMigrate specific a b
       \field -> fromMaybe (GT id)
         $ lookup field settersB
 
-userMigrate specific a b = fromMaybe a $ asum
-  -- Migration to newtype
-  [ do
-      -- Is it an algebraic datatype with a single constructor?
-      AlgRep [_constr] <- return $ dataTypeRep $ dataTypeOf a
-      -- Does the constructor have a single argument?
-      guard $ glength a == 1
-      -- Try to cast the single child to b
-      gmapM (const $ cast b) a
-  , (cast `extQ` (cast . specific)) b -- TODO Can I split this into two cases in the list?
-  ]
+-- Defeat. No migration worked.
+treeMigrateWith _ _ _ = Nothing
 
-getChildrenSetters :: (Data a, Typeable c, Typeable d) => (c -> d) -> a -> [GenericT']
-getChildrenSetters specific = gmapQ $ \child -> GT $ flip (userMigrate specific) child
+getChildrenSetters :: Data a => Migration -> a -> [GenericT']
+getChildrenSetters specific = gmapQ $ \child -> GT $ flip (runSafeMigration $ treeMigration specific) child
 
 setChildren :: Data a => [GenericT'] -> a -> a
 setChildren updates a = snd $ gmapAccumT f updates a

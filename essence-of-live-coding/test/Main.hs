@@ -22,8 +22,10 @@ main = do
   print $ Foo2.foo' == migrate Foo2.foo Foo1.foo
   print $ Foo2.bar' == migrate Foo2.bar Foo1.bar
   print $ Foo2.baz' == migrate Foo2.baz Foo1.baz
-  print $ Foo2.frob' == userMigrate intToInteger Foo2.frob Foo1.frob
+  print $ Foo2.frob' == migrateWith (userMigration intToInteger) Foo2.frob Foo1.frob
   print $ Foo2.Frob 23 == migrate Foo2.frob (23 :: Integer)
+  print $ Debugging { dbgState = (42 :: Integer), state = (23 :: Integer) } == migrate Debugging { dbgState = (42 :: Integer), state = (42 :: Integer) } (23 :: Integer)
+  print $ (23 :: Integer) == migrate (5 :: Integer) Debugging { dbgState = (42 :: Integer), state = (23 :: Integer) }
 -- TODO
 -- * Make test suite assertions out of this
 -- * Record tests

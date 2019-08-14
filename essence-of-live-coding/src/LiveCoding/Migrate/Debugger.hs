@@ -1,28 +1,41 @@
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards #-}
 module LiveCoding.Migrate.Debugger where
+
+-- base
+import Control.Monad (guard)
+import Data.Data
+import Data.Maybe
 
 -- essence-of-live-coding
 import LiveCoding.Debugger
 import LiveCoding.Migrate.Migration
 
--- TODO Break import cycle so this module can be used
-
-
 migrateToDebugging
-  :: (Data dbgState, Data state)
-  => Debugging dbgState state
+  :: Debugging dbgState state
   ->                    state
   -> Debugging dbgState state
 migrateToDebugging Debugging { dbgState } state = Debugging { .. }
 
+-- | Tries to cast the current state into the joint state of debugger and program.
+--   Will cast to the program state if possible, or else try to cast to the debugger state.
+migrationToDebugging :: Migration
+migrationToDebugging = Migration $ \a b -> do
+  guard $ ("Debugging" ==) $ dataTypeName $ dataTypeOf a
+  gmapMo (const $ cast b) a
+
+-- | Try to extract a state from the current joint state of debugger and program.
+migrationFromDebugging :: Migration
+migrationFromDebugging = Migration $ \_ b -> do
+  guard $ ("Debugging" ==) $ dataTypeName $ dataTypeOf b
+  listToMaybe $ catMaybes $ (gmapQ cast) b
+
 migrateFromDebugging
-  :: (Data dbgState, Data state)
-  =>                    state
+  ::                    state
   -> Debugging dbgState state
   ->                    state
-migrateFromDebugging state Debugging { dbgState } = Debugging { .. }
+migrateFromDebugging _state Debugging { state } = state
 
-userMigrate
-  :: (Data a, Data b, Typeable c, Typeable d)
-  => (c -> d)
-  -> a -> b -> a
-userMigrate specific a = userMigrate' specific `extendMigration` migrateToDebugging `extendMigration` migrateFromDebugging
+-- | Combines 'migrationToDebugging' and 'migrationFromDebugging'.
+migrationDebugging :: Migration
+migrationDebugging = migrationToDebugging <> migrationFromDebugging

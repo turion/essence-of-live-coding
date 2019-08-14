@@ -102,15 +102,15 @@ withDebuggerC (Cell state step) (Debugger (LiveProgram dbgState dbgStep)) = Cell
     cellStep Debugging { .. } a = do
       (b, state') <- step state a
       states <- runStateT (dbgStep dbgState) state'
-      return (b, uncurry Debugging states)
+      return (b, uncurry (flip Debugging) states)
 \end{code}
 \end{comment}
 Again, let us understand the function through its state type:
 \begin{code}
 data Debugging dbgState state = Debugging
-  { dbgState :: dbgState
-  , state    :: state
-  } deriving Data
+  { state    :: state
+  , dbgState :: dbgState
+  } deriving (Data, Eq)
 \end{code}
 On every step, the debugger becomes active after the cell steps,
 and is fed the current \mintinline{haskell}{state} of the main program.
