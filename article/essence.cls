@@ -1,6 +1,6 @@
 \ProvidesClass{essence}
 
-\LoadClass[sigplan,10pt,screen]{acmart}
+\LoadClass[sigplan,10pt,screen,nonacm]{acmart}
 
 \RequirePackage[utf8]{inputenc}
 \RequirePackage{minted}

@@ -1,13 +1,7 @@
 \documentclass{essence}
+% Make sure to switch off ACM stuff
 
-\setcopyright{rightsretained}
-\acmPrice{}
-\acmDOI{}
-\acmYear{2019}
-\copyrightyear{2019}
-\acmISBN{}
-\acmConference[Haskell '19]{Proceedings of the 12th ACM SIGPLAN International Haskell Symposium}{August 22-23, 2019}{Berlin, Germany}
-\acmBooktitle{Proceedings of the 12th ACM SIGPLAN International Haskell Symposium (Haskell '19), August 22-23, 2019, Berlin, Germany}
+\setlength{\belowcaptionskip}{-2pt}
 
 \begin{document}
 \title{The essence of live coding}
@@ -116,7 +110,8 @@ a new record field was added:
 \begin{spec}
 data State = State
   { nVisitors  :: Int
-  , lastAccess :: UTCTime }
+  , lastAccess :: UTCTime
+  }
 \end{spec}
 Clearly, when migrating the old state to the new datatype,
 we want to preserve the \mintinline{haskell}{nVisitors} field.
@@ -142,12 +137,18 @@ Writing out the complete state of the live program explicitly and separating its
 Instead, we want to develop modularly,
 and an arrowized FRP interface will allow us to do so.
 The live program definition is generalized to ``cells''\footnote{
-Cells are the building blocks of everything live.}:
+Cells are the building blocks of everything live.},
+shown in Figure \ref{fig:cell}.
+\begin{figure}
 \begin{code}
 data Cell m a b = forall s . Data s => Cell
   { cellState :: s
-  , cellStep  :: s -> a -> m (b, s) }
+  , cellStep  :: s -> a -> m (b, s)
+  }
 \end{code}
+\caption{The definition of a live coding cell}
+\label{fig:cell}
+\end{figure}
 Additionally to a state and a step function,
 cells also have an input type \mintinline{haskell}{a}
 and an output type \mintinline{haskell}{b}.
@@ -167,6 +168,9 @@ sumC = Cell { .. } where
   cellStep accum a = return (accum, accum + a)
 \end{code}
 Cells may also create side effects in a monad.
+A cell of type \mintinline{haskell}{Cell IO () a} produces data,
+using the \mintinline{haskell}{IO} monad,
+while \mintinline{haskell}{Cell IO a ()} consumes data.
 Composing effectful data producers with data processing cells,
 and finally with effectful consumers,
 we recover live programs as the special case of trivial input and output.
@@ -200,6 +204,12 @@ forall s . Data s => LiveProgram (StateT s m)
 As examples, there are debuggers printing the current state to the console,
 displaying it graphically via \texttt{gloss} \cite{Gloss},
 or pausing the execution upon user interaction.
+
+Testing live programs or cells with arbitrary input using QuickCheck \cite{quickcheck} before reloading is often sensible.
+By collecting test results of components in a writer monad,
+we can modularly check properties of intermediate data.
+Thanks to the \mintinline{haskell}{Data} constraint,
+cells and live programs can be tested by generating arbitrary \emph{state}.
 
 \clearpage
 \bibliography{EssenceOfLiveCoding.bib}
