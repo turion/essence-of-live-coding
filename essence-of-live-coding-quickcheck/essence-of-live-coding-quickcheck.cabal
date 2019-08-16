@@ -23,6 +23,8 @@ library
   build-depends:
       base >= 4.11.0.0
     , essence-of-live-coding
+    , transformers == 0.5.*
+    , syb == 0.7.*
     , QuickCheck ^>=2.12
     , boltzmann-samplers ^>=0.1
   hs-source-dirs:      src

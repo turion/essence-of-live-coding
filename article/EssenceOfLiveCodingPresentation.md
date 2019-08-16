@@ -354,8 +354,8 @@ testCell = arr getPositive >>> sumC >>> arr (>= 0)
 ```
 
 ``` {.haskell .literate}
-logTest :: Cell m a prop -> Cell (WriterT [prop] m) a ()
-logTest cell = cell >>> arrM tell
+logTest :: Monad m => Cell m a prop -> Cell (WriterT [prop] m) a ()
+logTest cell = liftCell cell >>> arrM (return >>> tell)
 
 liveCheck :: Testable prop => Bool
   -> LiveProgram (WriterT [prop] IO)

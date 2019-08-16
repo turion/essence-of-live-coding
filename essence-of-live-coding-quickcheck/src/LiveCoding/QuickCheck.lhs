@@ -1,14 +1,25 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module LiveCoding.QuickCheck where
 
 -- base
 import Control.Arrow
-import Control.Monad (foldM)
+import Control.Monad (foldM, when)
+import Data.Data
+
+-- transformers
+import Control.Monad.Trans.Writer
+
+-- syb
+import Data.Generics.Aliases
 
 -- QuickCheck
 import Test.QuickCheck
@@ -18,7 +29,7 @@ import Test.QuickCheck.Monadic
 import Boltzmann.Data
 
 -- essence-of-live-coding
-import LiveCoding.Cell
+import LiveCoding
 \end{code}
 \end{comment}
 
@@ -113,9 +124,10 @@ Given some tests on intermediate values in the computation,
 we collect all test properties in a \mintinline{haskell}{Writer} effect:
 \begin{code}
 logTest
-  :: Cell m a prop
+  :: Monad m
+  => Cell m a prop
   -> Cell (WriterT [prop] m) a ()
-logTest cell = cell >>> arrM tell
+logTest cell = liftCell cell >>> arrM (return >>> tell)
 \end{code}
 Now the tests can be included in the definition of the whole live program without adding new outputs.
 \fxerror{Need some migration into and out of Writer if this is supposed to work}
@@ -124,14 +136,15 @@ we can optionally test the properties:
 \begin{code}
 liveCheck
   :: Testable prop
-  -> Bool
+  => Bool
   -> LiveProgram (WriterT [prop] IO)
   -> LiveProgram                 IO
 liveCheck test = hoistLiveProgram performTests
   where
     performTests action = do
-      ((), props) <- runWriterT action
+      (s, props) <- runWriterT action
       when test $ quickCheck $ conjoin props
+      return s
 \end{code}
 The function \mintinline{haskell}{liveCheck True} will run \mintinline{haskell}{quickCheck} on all properties,
 while \mintinline{haskell}{liveCheck False} gives the ``production'' version of our program,
@@ -214,7 +227,7 @@ testState
   :: GenericQ Property
   -> LiveProgram m
   -> Property
-testState LiveProgram { .. } query = conjoin
+testState query LiveProgram { .. } = conjoin
   $ gmapQ query liveState
 
 mkGenericProperty
@@ -222,11 +235,6 @@ mkGenericProperty
   =>         (b -> Property)
   -> GenericQ      Property
 mkGenericProperty = mkQ $ property True
-
-conjoinGeneric
-  :: [GenericQ Property]
-  ->  GenericQ Property
-conjoinGeneric = fmap conjoin . sequence
 
 posSumC :: (Monad m, Num a, Data a) => Cell m a a
 posSumC = Cell { .. }
@@ -236,6 +244,8 @@ posSumC = Cell { .. }
       ( getPositive accum
       , Positive $ getPositive accum + a
       )
+
+deriving instance Data a => Data (Positive a)
 \end{code}
 \end{comment}
 \fxerror{This is missing a test case. E.g. sum and internal accum must be positive.}
