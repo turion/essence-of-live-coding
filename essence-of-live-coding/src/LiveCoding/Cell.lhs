@@ -32,8 +32,9 @@ import LiveCoding.LiveProgram
 
 \end{code}
 \end{comment}
-\fxerror{The whole section, indeed FRP and Cells as a whole are overrepresented and too less motivated.
-Make clear that we do this FRP approach because of modularity.
+\fxerror{
+Is it clear that we do this FRP approach because of modularity,
+both in the program definitions and also in the state types?
 Maybe don't show the definitions of the primitives, but show the state types,
 and the custom migrations implemented so that FRP reloads correctly.
 Ideally, show the custom migrations as examples how users can add their own migrations.
@@ -131,7 +132,6 @@ liveCell Cell { .. } = LiveProgram
   , liveStep  = fmap snd . flip cellStep ()
   }
 \end{code}
-\fxwarning{Also say "we just need to elide the units"?}
 \begin{comment}
 \begin{code}
 toLiveCell
@@ -206,11 +206,10 @@ instance Monad m => Category (Cell m) where
 -- #-} -- Don't really need rules here because GHC will inline all that anyways
 \end{code}
 \end{comment}
-\fxwarning{Would be nice to understand the strictness and also the tuple story}
 For two cells \mintinline{haskell}{cell1} and \mintinline{haskell}{cell2}
 with state types \mintinline{haskell}{state1} and \mintinline{haskell}{state2},
 the composite \mintinline{haskell}{cell1 >>> cell2} holds a pair of both states:
-\fxwarning{Syntax highlighting is off}
+\fxwarning{Syntax highlighting is not very good here}
 \begin{spec}
 data Composition state1 state2 = Composition
   { state1 :: state1
@@ -250,7 +249,7 @@ arr
   ->         (a -> b)
   -> Cell  m  a    b
 \end{spec}
-\fxwarning{Would be nice to have ***!}
+\fxwarning{Would be nice to have the space to explain *** as well!}
 Together with the \mintinline{haskell}{ArrowChoice} and \mintinline{haskell}{ArrowLoop} classes
 (discussed in the appendix),
 cells can be used in \emph{arrow notation} \cite{ArrowNotation} with \mintinline{haskell}{case}-expressions,
@@ -398,8 +397,6 @@ instance ArrowLoop (Cell Identity) where
 -}
 \end{code}
 \end{comment}
-\fxwarning{It's probably a performance penalty to have fixIO. Can we tweak the Identity thing in?}
-\fxerror{Choose: Either need to rewrite stuff somehow without fixIO (e.g. Arrowloop only for polymorphic stuff or Identity monad), or spaceleaks, or different integral}
 
 \subsection{A sine generator}
 Making use of the \mintinline{haskell}{Arrows} syntax extension,
@@ -448,7 +445,7 @@ printSine t = liveCell
   >>> arr asciiArt
   >>> printEverySecond
 \end{code}
-\fxwarning{At least ASCII art. Maybe mention that we could use this in gloss, audio or whatever?}
+\fxwarning{Maybe mention that we could use this in gloss, audio or whatever?}
 
 What if we would run it,
 and change the period in mid-execution?

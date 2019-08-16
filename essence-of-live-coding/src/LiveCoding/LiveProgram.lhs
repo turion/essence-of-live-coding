@@ -282,7 +282,6 @@ and keep this state in memory when we change the implementation.
 The boiler plate code, which is suppressed here,
 initialises the Warp server,
 uses \mintinline{haskell}{launch} to start our live program in a separate thread
-\fxwarning{"using launch"}
 and waits for user input to update it.
 
 To save ourselves an introduction to Warp,
@@ -302,7 +301,7 @@ A function \mintinline{haskell}{hoistLiveProgram} does this
 Abstracting this operation, we need a utility that applies a monad morphism to a live program.
 (Borrowing nomenclature from the \texttt{mmorph} package,
 we call it \mintinline{haskell}{hoistLiveProgram}.)
-\fxwarning{Try to merge with the previous figure. Why not parametrise by monads straight away? (My hoist explanation is also very clunky)}
+\fxwarning{Try to merge with the previous figure. (My hoist explanation is also very clunky)}
 \begin{figure}
 \begin{spec}
 data LiveProgram m = forall s . Data s

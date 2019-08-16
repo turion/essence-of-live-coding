@@ -75,4 +75,3 @@ runCellExcept CellExcept { .. }
 This is especially useful for shutting down a live program gracefully,
 using \mintinline{haskell}{e} as the exit code.
 \fxerror{But we haven't implemented that yet. And also can only do that with a more general "reactimate"}
-\fxwarning{Thin out and remove only those that are actually needed in the main example}

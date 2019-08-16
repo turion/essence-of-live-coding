@@ -29,7 +29,6 @@ let us reexamine both types.
 With the help of a simple type synonym,
 the \mintinline{haskell}{MSF} definition can be recast in explicit fixpoint form:
 
-\fxwarning{Maybe a record for MSF}
 \begin{code}
 type StateTransition m a b s = a -> m (b, s)
 

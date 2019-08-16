@@ -67,7 +67,6 @@ update var newProg = do
   oldProg <- takeMVar var
   putMVar var $ hotCodeSwap newProg oldProg
 \end{code}
-\fxwarning{Why did I have forkIO here?}
 The old program is retrieved from the concurrent variable,
 migrated to the new state,
 and put back for further execution.

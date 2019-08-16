@@ -30,7 +30,7 @@ hotCodeSwap migrate newProgram oldProgram
 \label{fig:hot code swap}
 \end{figure}
 \fxwarning{The thing with the MVar doesn't work on the spot anymore. But it can still work with a "typed" handle. Every time you swap, you get a new handle that carries the currently saved type. Worth commenting upon?
-It's getting even more complicated: We have to kill the old MVar and create a new one every time we update. Then we also have to kill the old server, or update the ticking function}
+It's somewhat complicated: We have to kill the old MVar and create a new one every time we update. Then we also have to update the ticking function}
 \begin{comment}
 \begin{code}
 type LiveRef s = (MVar (LiveProgram IO s), MVar (IO ()))

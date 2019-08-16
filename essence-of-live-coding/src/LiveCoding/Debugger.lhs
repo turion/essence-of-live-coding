@@ -114,7 +114,6 @@ data Debugging dbgState state = Debugging
 \end{code}
 On every step, the debugger becomes active after the cell steps,
 and is fed the current \mintinline{haskell}{state} of the main program.
-\fxerror{We need to make sure migration doesn't fail when we add them!}
 Depending on \mintinline{haskell}{dbgState},
 it may execute some side effects or mutate the \mintinline{haskell}{state},
 or do nothing at all\footnote{%
@@ -132,7 +131,7 @@ Waiting...
 (Composition ((,) (()) (Composition ((,) 
 [...]
 \end{verbatim}
-\fxerror{I still hav the tuples here!}
+\fxerror{I still have the tuples here!}
 The arrow syntax desugaring introduces a lot of irrelevant overhead such as compositions with the trivial state type \mintinline{haskell}{()},
 hiding the parts of the state we are actually interested in.
 Luckily, it is a simple, albeit lengthy exercise in generic programming to prune all irrelevant parts of the state,

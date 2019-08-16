@@ -20,7 +20,6 @@ We would like to have all basic primitives needed to develop standard synchronou
 without touching the \mintinline{haskell}{Cell} constructor anymore.
 One crucial bit is missing to achieve this goal:
 Encapsulating state.
-\fxerror{This is unclear. Either have to stress that it's maybe not so nice to encapsulate state by explicitly building the Cell, like we have done with the sum, or move feedback at the beginning of the section.}
 The most general such construction is the feedback loop:
 \begin{code}
 feedback
@@ -47,6 +46,7 @@ While \mintinline{haskell}{loop} provides immediate recursion, it doesn't add ne
 \mintinline{haskell}{feedback} requires an initial state and delays it,
 but in turn it is always safe to use since it does not use \mintinline{haskell}{mfix}.
 
+\fxwarning{Possibly remark on Data instance of s?}
 \begin{comment}
 \begin{code}
 newtype Feedback s s' = Feedback (s, s')
@@ -76,9 +76,8 @@ sumFeedback
 sumFeedback = feedback 0 $ arr
   $ \(a, accum) -> (accum, a + accum)
 \end{code}
-\fxwarning{Possibly remark on Data instance of s?}
 
-\fxerror{Do we need to talk about keepJust?}
+\fxerror{Mention keepJust and keep}
 \begin{comment}
 \begin{code}
 keepJust

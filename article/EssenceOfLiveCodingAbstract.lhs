@@ -183,9 +183,6 @@ The crucial advantage of embedding control flow into cell states as an effect is
 (e.g., the information to which cell we currently switched)
 out of the box.
 
-\fxerror{Comment quickly that building up the state like this happens automatically and in a way that is good for the framework?
-I have a short comment, but I feel like it doesn't tell enough}
-
 \section{Tooling}
 
 For ease of use, custom GHCi commands are supplied that start a live program in a separate thread and allow reload it when it is edited.

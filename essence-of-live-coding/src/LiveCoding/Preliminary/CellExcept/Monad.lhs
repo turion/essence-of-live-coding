@@ -56,7 +56,7 @@ bindBool' cellE handler = CellExcept
   }
 -}
 \end{code}
-\fxfatal{Finish the wrapped thing}
+\fxerror{Finish the wrapped thing}
 \end{comment}
 \fxerror{We have a Data e here suddenly.
 Can we be cleverer than id?}
@@ -102,7 +102,7 @@ Since the type class is defined for all finite algebraic datatypes, we will call
 \fxerror{Example}
 Any user-contributed or standard type can be an instance this type class,
 given that it is not recursive.
-\fxerror{We omitted functions!!!}
+\fxerror{We omitted functions! But this isn't such a big problem since they don't have a Data instance anyways.}
 
 It is possible to restrict the previous \mintinline{haskell}{CellExcept} definition by the typeclass:
 \begin{spec}

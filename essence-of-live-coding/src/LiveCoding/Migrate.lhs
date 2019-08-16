@@ -88,5 +88,4 @@ setChildren updates a = snd $ gmapAccumT f updates a
   where
     f [] e = ([], e)
     f (update : updates) e = (updates, unGT update $ e)
-
 \end{code}

@@ -207,7 +207,8 @@ quickCheckDebugger testCell
 \end{comment}
 \fxwarning{Could use quickcheck `counterexamples` on `gshow cellState` somehow}
 \fxerror{Should test properties of the state by putting state in a newtype and specify a property that is added to a generic query}
-\fxfatal{New code here}
+\fxerror{There is new code here that I'd like to talk about}
+\begin{comment}
 \begin{code}
 testState
   :: GenericQ Property
@@ -236,4 +237,5 @@ posSumC = Cell { .. }
       , Positive $ getPositive accum + a
       )
 \end{code}
-\fxerror{A test case. E.g. sum and internal accum must be }
+\end{comment}
+\fxerror{This is missing a test case. E.g. sum and internal accum must be positive.}
