@@ -59,7 +59,8 @@ runCellExcept
   -> Cell (ExceptT e m) a b
 \end{code}
 \begin{spec}
-runCellExcept (Bind (Try cell) g) = cell >>>== commute (runCellExcept . g)
+runCellExcept (Bind (Try cell) g)
+  = cell >>>= commute (runCellExcept . g)
 runCellExcept ... = ...
 \end{spec}
 \begin{comment}
@@ -86,7 +87,8 @@ since in the monad context,
 calculations with all types are allowed again.
 \fxerror{But the trouble remains that builtin types like Int and Double can't be thrown.}
 
-\fxfatal{I bet this code is displayed double now somewhere. Find the text for this and move it here}
+\fxfatal{The rest is explained in the main article differently. Merge.}
+\begin{comment}
 \begin{code}
 safely
   :: Monad      m
@@ -102,3 +104,4 @@ discardVoid
 safe :: Monad m => Cell m a b -> CellExcept m a b Void
 safe cell = try $ liftCell cell
 \end{code}
+\end{comment}

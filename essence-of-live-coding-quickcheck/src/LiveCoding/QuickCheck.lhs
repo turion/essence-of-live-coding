@@ -127,7 +127,9 @@ logTest
   :: Monad m
   => Cell m a prop
   -> Cell (WriterT [prop] m) a ()
-logTest cell = liftCell cell >>> arrM (return >>> tell)
+logTest cell
+  =   liftCell cell
+  >>> arrM (return >>> tell)
 \end{code}
 Now the tests can be included in the definition of the whole live program without adding new outputs.
 \fxerror{Need some migration into and out of Writer if this is supposed to work}
