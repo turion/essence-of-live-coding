@@ -307,3 +307,124 @@ withDebugger
 * Backends (Audio, web, OpenGL, ...)
 * Integrate with asynchronous FRP framework (Rhine)
 * Ensuring state properties beyond Haskell types (LiquidHaskell)
+
+## Thanks! Questions?
+
+::: {style="font-size: 68%"}
+------------- -----
+Manuel Bärenz Essence Of Live Coding
+Github        [https://github.com/turion/essence-of-live-coding](https://github.com/turion/essence-of-live-coding)
+Hackage       [https://hackage.haskell.org/package/essence-of-live-coding](https://hackage.haskell.org/package/essence-of-live-coding)
+Article       [https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCoding.pdf](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCoding.pdf)
+Presentation  [https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingPresentation.html](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingPresentation.html)
+------------- -----
+:::
+
+# Backup
+
+## Migrations
+
+``` {.haskell .literate}
+data Migration = Migration
+  { runMigration :: forall a b . (Data a, Data b)
+      => a -> b -> Maybe a
+  }
+
+instance Monoid Migration where ...
+
+migrateWith
+  :: (Data a, Data b)
+  => Migration
+  -> a -> b -> a
+```
+
+## QuickCheck
+
+``` {.haskell .literate}
+instance (Arbitrary a, Show a, Testable prop)
+  => Testable (Cell IO a prop) where ...
+
+testCell :: Monad m => Cell m (Positive Int) Bool
+testCell = arr getPositive >>> sumC >>> arr (>= 0)
+```
+
+```
+ > quickCheck testCell
++++ OK, passed 100 tests.
+```
+
+``` {.haskell .literate}
+logTest :: Cell m a prop -> Cell (WriterT [prop] m) a ()
+logTest cell = cell >>> arrM tell
+
+liveCheck :: Testable prop => Bool
+  -> LiveProgram (WriterT [prop] IO)
+  -> LiveProgram                 IO
+```
+
+## FRP internal state
+
+``` {.haskell .literate}
+data Composition state1 state2 = Composition
+  { state1 :: state1
+  , state2 :: state2
+  } deriving Data
+
+instance Monad m => Category (Cell m) where
+  id = ...
+
+  Cell state1 step1 >>> Cell state2 step2 = Cell { .. }
+    where
+      cellState = Composition state1 state2
+      cellStep ... = ...
+```
+
+## Exceptions
+
+``` {.haskell .literate}
+runExceptT :: ExceptT e m b -> m (Either e b)
+
+runExceptC
+  :: (Data e, Monad m)
+  => Cell (ExceptT e m) a           b
+  -> Cell            m  a (Either e b)
+
+data ExceptState state e
+  = NotThrown state
+  | Exception e
+  deriving Data
+```
+
+## Finite exceptions
+
+``` {.haskell .literate}
+(>>>=) :: (Data e1, Monad m)
+  => Cell (ExceptT e1    m)      a  b
+  -> Cell (ExceptT    e2 m) (e1, a) b
+  -> Cell (ExceptT    e2 m)      a  b
+
+class Finite e where
+  commute
+    :: Monad      m
+    => (e -> Cell m     a  b)
+    -> Cell       m (e, a) b
+```
+
+## Coalgebras
+
+``` {.haskell .literate}
+type StateTransition m a b s = a -> m (b, s)
+
+data MSF m a b = MSF (StateTransition m a b (MSF m a b))
+
+data Coalg m a b = forall s .
+     Coalg s (s -> StateTransition m a b s)
+
+cellCoalgebra :: Cell m a b -> Coalg m a b
+coalgebra     :: MSF  m a b -> Coalg m a b
+
+finality      :: Monad m => Coalg m a b -> MSF m a b
+finalityC     :: Monad m => Cell  m a b -> MSF m a b
+
+coalgebraC    :: Data (MSF m a b) => MSF m a b -> Cell m a b
+```
