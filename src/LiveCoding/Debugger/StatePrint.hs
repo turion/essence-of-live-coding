@@ -93,10 +93,11 @@ liveBindShow (NotYetThrown s1 s2) = "[NotYet " ++ stateShow s1 ++ "; " ++ stateS
 liveBindShow (Thrown e s2) = "[Thrown " ++ gshow e ++ ". " ++ stateShow s2 ++ "]"
 -}
 
+{-
 gcast2 :: forall c t t' a b. (Typeable t, Typeable t')
        => c (t a b) -> Maybe (c (t' a b))
 gcast2 x = fmap (\Refl -> x) (eqT :: Maybe (t :~: t'))
-
+-}
 gcast3
   :: forall f t t' a b c. (Typeable t, Typeable t')
   => f (t a b c) -> Maybe (f (t' a b c))

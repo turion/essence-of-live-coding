@@ -24,5 +24,5 @@ throwingCell = proc _ -> do
 
 main = do
   (debugger, observer) <- countDebugger
-  launchWithDebugger liveProgram $ debugger -- <> statePrint -- TODO Must reimplement Monoid
+  launchWithDebugger liveProgram $ debugger <> statePrint
   await observer 30

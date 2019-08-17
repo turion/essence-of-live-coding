@@ -9,6 +9,7 @@ module LiveCoding.Bind where
 -- base
 import Control.Arrow
 import Control.Concurrent (threadDelay)
+import Control.Monad
 import Data.Data
 import Data.Either (fromRight)
 import Data.Void
@@ -95,7 +96,11 @@ and restarted each time.
 \begin{code}
 
 instance Monad m => Functor (CellExcept m a b) where
+  fmap = liftM
+
 instance Monad m => Applicative (CellExcept m a b) where
+  pure = return
+  (<*>) = ap
 
 instance Monad m => Monad (CellExcept m a b) where
   -- return :: Monad m => e -> CellExcept m a b e
