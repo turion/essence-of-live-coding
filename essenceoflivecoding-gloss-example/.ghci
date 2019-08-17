@@ -1,0 +1,4 @@
+:set -package essenceoflivecoding-gloss -package essenceoflivecoding-pulse -package foreign-store
+:m + LiveCoding.Gloss.GHCi Control.Concurrent LiveCoding.Pulse.GHCi Foreign.Store
+:def livegears (const $ return $ unlines [ "ref <- newIORef (0 :: Float)" , "pulseVar <- playPulseCell $ pulseCell ref" , "glossVar <- playCell $ glossCell ref" , "writeStore (Store 0) ((pulseVar, glossVar, ref) :: (MVar PulseCell, MVar GlossCell, IORef Float))" ])
+:def gearsreload (const $ return $ unlines [ ":reload" , "(pulseVar, glossVar, ref) <- (readStore $ Store 0) :: IO (MVar PulseCell, MVar GlossCell, IORef Float)", "updatePulse pulseVar $ pulseCell ref" , "updateGloss glossVar $ glossCell ref"  ])

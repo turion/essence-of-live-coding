@@ -41,7 +41,7 @@ presentation: revealjs pictures
 symlinks: essenceoflivecoding-gloss-example/.ghci
 
 essenceoflivecoding-gloss-example/.ghci:
-	ln -s essenceoflivecoding-gloss/.ghci essenceoflivecoding-gloss-example/.ghci
+	echo "Won't copy symlink, file exists" #ln -s ../essenceoflivecoding-gloss/.ghci essenceoflivecoding-gloss-example/.ghci
 
 gloss-example: symlinks
 	cd essenceoflivecoding-gloss-example && stack ghci
