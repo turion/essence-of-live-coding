@@ -10,5 +10,5 @@ main = do
   (debugger, observer) <- countDebugger
   var <- launchWithDebugger (printSine t1) $ debugger
   await observer $ t1 * stepRate
-  update var $ printSine t2
+  update var $ printSine t2 `withDebugger` debugger
   await observer $ (t1 + t2) * stepRate
