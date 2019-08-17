@@ -41,13 +41,13 @@ but they are typically restricted to a particular domain such as audio or video.
 Here, an effect-polymorphic, universal live coding framework is developed.
 By being parametrised over arbitrary monads,
 it can connect to many backends and external libraries.
-Consequentially, the framework can be applied to virtually any domain were live coding makes sense.
+Consequentially, the framework can be used in virtually any domain were live coding makes sense.
 
 From an API perspective, Essence Of Livecoding follows the arrowized Functional Reactive Programming (FRP) viewpoint,
 in particular Dunai \cite{Dunai} and Rhine \cite{Rhine}.
 For the library user, this is essential in order to build programs modularly from reusable components,
 and to separate data flow from control flow.
-From a live coding implementation perspective, it is essential for two mirroring purposes:
+From an implementation perspective, it is essential for two mirroring purposes:
 To build up state types modularly which greatly facilitates automatic and generic state migration,
 and to be able to migrate the control state\footnote{%
 A hard problem according to \href{https://elm-lang.org/blog/interactive-programming}{https://elm-lang.org/blog/interactive-programming}.
@@ -109,7 +109,7 @@ migrate :: (Data a, Data b) => a -> b -> a
 \end{spec}
 It receives the new initial state and the old current state,
 and tries to migrate the old state as far as possible to the new state type.
-Wherever the automatic migration would fail
+Wherever the automatic migration would perform suboptimally
 -- as were the case if we wanted to migrate \mintinline{haskell}{nVisitors} from \mintinline{haskell}{Int} to \mintinline{haskell}{Integer} --
 it is possible to extend by a special case provided by the user.
 
@@ -119,7 +119,7 @@ it is possible to extend by a special case provided by the user.
 Writing out the complete state of the live program explicitly and separating its state from the step function is tedious.
 Instead, we want to develop modularly,
 and an arrowized FRP interface will allow us to do so.
-The live program definition is generalized to "`cells"',
+The live program definition is generalized to ``cells'',
 the building blocks of everything live:
 \begin{code}
 data Cell m a b = forall s . Data s => Cell
@@ -153,6 +153,7 @@ we recover live programs as the special case of trivial input and output.
 \fxerror{I guess there is not enough space for control flow?}
 \fxfatal{Extra perks: Debuggers and testing}
 \fxfatal{Advertise the multidisciplinary example containing audio, video and a server, with a screenshot?}
+\fxfatal{Link to open sourced repo? To website with presentation?}
 
 \clearpage
 \bibliography{EssenceOfLiveCoding.bib}

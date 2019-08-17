@@ -6,7 +6,7 @@ import Data.Data
 -- syb
 import Data.Generics.Aliases
 
--- livecoding
+-- essenceoflivecoding
 import LiveCoding.Cell
 import LiveCoding.LiveProgram
 

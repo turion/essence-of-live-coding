@@ -1,6 +1,6 @@
 ---
 title: The essence of live coding
-subtitle: The essence of live coding
+subtitle: Change the program, keep the state!
 author: Manuel Bärenz
 fragments: true
 incremental: true

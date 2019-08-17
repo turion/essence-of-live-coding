@@ -193,6 +193,7 @@ Constructors with the same names,
 but some mismatching arguments,
 and records with some coinciding field labels,
 but possibly a different order.
+\fxerror{We can also do newtype wrappings}
 In nested datatype definitions,
 the function recurses into all children of the data tree.
 Needless to say, if the types do match, then the old state is identically copied.

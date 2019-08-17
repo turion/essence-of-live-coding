@@ -40,6 +40,10 @@ Ideally, show the custom migrations as examples how users can add their own migr
 The main connective could be that Cells build up their state automatically in a way that the migration works well.
 (Test)
 }
+\fxerror{An important point along those lines would also be that the state type becomes a tree,
+branching at \mintinline{haskell}{>>>} and \mintinline{haskell}{***} and \mintinline{haskell}{+++},
+so individual subtrees are preserved well
+}
 In ordinary functional programming, the smallest building blocks are functions.
 It stands to reason that in live coding, they should also be some flavour of functions,
 in fact, \mintinline{haskell}{Arrow}s \cite{Arrows}.
@@ -386,6 +390,7 @@ instance ArrowLoop (Cell Identity) where
 Making use of the \mintinline{haskell}{Arrows} syntax extension,
 we can implement a harmonic oscillator that will produce a sine wave with amplitude 10 and given period length:
 \fxwarning{Comment on rec and ArrowFix}
+\fxerror{I want to add a delay for numerical stability}
 \begin{code}
 sine
   :: MonadFix m

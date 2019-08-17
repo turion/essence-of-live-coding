@@ -98,3 +98,4 @@ keep a = feedback a $ proc (ma, aOld) -> do
   let aNew = fromMaybe aOld ma
   returnA -< (aNew, aNew)
 \end{code}
+\end{comment}
