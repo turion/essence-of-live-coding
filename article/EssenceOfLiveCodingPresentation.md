@@ -163,10 +163,6 @@ data LiveProgram m = forall s .
 
 [⇒ Add inputs and outputs to live programs!]{.fragment .fade-in}
 
-[Syntactic sugar: Arrows]{.fragment .fade-in}
-![Sequential composition](Sequential.png){.fragment .fade-in}
-![Parallel composition](Parallel.png){.fragment .fade-in}
-
 ## Cells
 
 ``` {.haskell .literate .fragment .fade-in}
@@ -176,9 +172,16 @@ data Cell m a b = forall s . Data s => Cell
   }
 ```
 
-* `Category`: (Identity cell and) compose sequentially
-* `Arrow`: (Lift functions and) compose parallely
+## Cells
+
+* `Category`:
+![CategoryId](CategoryId.png){.fragment .fade-in style="border: none"}
+![CategoryCompose](CategoryCompose.png){.fragment .fade-in style="border: none"}
+* `Arrow`:
+![ArrowArr](ArrowArr.png){.fragment .fade-in style="border: none"}
+![ArrowCompose](ArrowCompose.png){.fragment .fade-in style="border: none"}
 * `ArrowChoice`: (Transient) control flow
+
 
 [`liveCell:: Cell m () () -> LiveProgram m`]{.fragment .fade-in}
 
@@ -205,6 +208,12 @@ sumC = Cell { .. } where
 stepRate = 100
 integrate = arr (/ stepRate) >>> sumC
 ```
+
+::: notes
+
+Syntactic sugar: Arrow notation
+
+:::
 
 ``` {.haskell .literate .fragment .fade-in}
 glossCell :: GlossCell

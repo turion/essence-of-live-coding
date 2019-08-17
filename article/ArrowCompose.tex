@@ -1,0 +1,16 @@
+\documentclass[convert]{standalone}
+
+\usepackage{essence-tikz}
+\begin{document}
+\begin{tikzpicture}
+\node[arrowbox] (cell1) at (0, +0.3) {cell1};
+\node[arrowbox] (cell2) at (0, -0.3) {cell2};
+\node[arrowbox, minimum height=1.2cm, minimum width=1.8cm] (cell) {};
+\draw     (-1.5, 0) -- (cell);
+\draw[<-] ( 1.5, 0) -- (cell);
+  \draw     (cell.west) -- (cell1);
+  \draw     (cell.east) -- (cell1);
+  \draw     (cell.west) -- (cell2);
+  \draw     (cell.east) -- (cell2);
+\end{tikzpicture}
+\end{document}

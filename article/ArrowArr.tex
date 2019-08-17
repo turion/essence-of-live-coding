@@ -1,0 +1,10 @@
+\documentclass[convert]{standalone}
+
+\usepackage{essence-tikz}
+\begin{document}
+\begin{tikzpicture}
+\node[circle, draw, inner sep=0.05cm] (f) {f};
+\node[arrowbox, minimum height=0.6cm] {};
+\draw[arrowarrow] (-1, 0) -- (f) -- (1, 0);
+\end{tikzpicture}
+\end{document}

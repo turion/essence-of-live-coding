@@ -1,0 +1,11 @@
+\documentclass[convert]{standalone}
+
+\usepackage{essence-tikz}
+\begin{document}
+\begin{tikzpicture}
+\node[arrowbox] (cell1) at (-0.7, 0) {cell1};
+\node[arrowbox] (cell2) at (+0.7, 0) {cell2};
+\node[arrowbox, minimum width=2.9cm, minimum height=0.8cm] {};
+\draw[arrowarrow] (-1.8, 0) -- (cell1) -- (cell2) -- (1.8, 0);
+\end{tikzpicture}
+\end{document}
