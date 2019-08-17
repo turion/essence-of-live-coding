@@ -317,6 +317,8 @@ Github        [https://github.com/turion/essence-of-live-coding](https://github.
 Hackage       [https://hackage.haskell.org/package/essence-of-live-coding](https://hackage.haskell.org/package/essence-of-live-coding)
 Article       [https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCoding.pdf](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCoding.pdf)
 Presentation  [https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingPresentation.html](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingPresentation.html)
+Abstract      [https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingAbstract.pdf](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingAbstract.pdf)
+Appendix      [https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingAppendix.pdf](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingAppendix.pdf)
 ------------- -----
 :::
 
