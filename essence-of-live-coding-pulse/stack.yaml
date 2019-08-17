@@ -1,4 +1,4 @@
-resolver: lts-12.21
+resolver: lts-13.19
 nix:
   pure: false
   enable: true
