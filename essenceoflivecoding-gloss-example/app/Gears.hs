@@ -1,19 +1,29 @@
 {-# LANGUAGE Arrows #-}
---essenceoflivecoding
+
+-- base
+import Control.Arrow
+import Control.Monad.IO.Class
+import Data.IORef
+
+-- essenceoflivecoding
 import LiveCoding
 
 -- essenceoflivecoding-gloss
 import LiveCoding.Gloss
 
-glossCell :: GlossCell
-glossCell = withDebuggerC glossCell' statePlay
+-- essenceoflivecoding-pulse
+import LiveCoding.Pulse
 
-glossCell' :: GlossCell
-glossCell' = proc _events -> do
-  gearAngle <- integrate -< 30
-  addPicture             -< gear gearAngle
-  phase     <- integrate -< 5
-  addPicture             -< rotate gearAngle $ blinker phase
+glossCell :: IORef Float -> GlossCell
+glossCell ref = withDebuggerC (glossCell' ref) statePlay
+
+glossCell' :: IORef Float -> GlossCell
+glossCell' ref = proc _events -> do
+  gearAngle <- integrate         -< 30
+  addPicture                     -< gear gearAngle
+  arrM (liftIO . writeIORef ref) -< gearAngle
+  phase     <- integrate         -< 5
+  addPicture                     -< rotate gearAngle $ blinker phase
 
 blinker :: Float -> Picture
 blinker phase
@@ -36,5 +46,25 @@ gear angle = scale 3 3 $ rotate angle $ pictures
       , (10, -10)
       ]
 
+tones = [C, E, G]
+
+pulseCell :: IORef Float -> PulseCell
+pulseCell ref = proc _ -> do
+  angle <- getAngleEvery 1024 ref -< ()
+  let frequency = f $ (tones !!) $ (`mod` length tones) $ angle `div` (360 `div` length tones)
+  osc' -< frequency
+
+getAngleEvery :: Int -> IORef Float -> Cell IO () Int
+getAngleEvery maxCount ref = proc _ -> do
+  count <- sumC -< 1
+  mAngle <- if count `mod` maxCount == 0
+    then arr Just <<< constM (readIORef ref) -< ()
+    else returnA                             -< Nothing
+  angle <- keep 0 -< mAngle
+  returnA         -< round angle
+
+
 main :: IO ()
-main = playCellForeground glossCell
+main = do
+  ref <- newIORef 0
+  playCellForeground $ glossCell ref

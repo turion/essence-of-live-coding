@@ -4,10 +4,14 @@ module LiveCoding
   (module X)
   where
 
-import LiveCoding.Cell as X
+-- base
+import Data.Data as X
+
+-- essenceoflivecoding
 import LiveCoding.Bind as X
 import LiveCoding.Cell as X
 import LiveCoding.Cell.Feedback as X
+import LiveCoding.Cell.HotCodeSwap as X
 import LiveCoding.Commutable as X
 import LiveCoding.Coalgebra as X
 import LiveCoding.Debugger as X

@@ -18,6 +18,7 @@ library
     , LiveCoding.Bind
     , LiveCoding.Cell
     , LiveCoding.Cell.Feedback
+    , LiveCoding.Cell.HotCodeSwap
     , LiveCoding.Commutable
     , LiveCoding.Coalgebra
     , LiveCoding.Debugger

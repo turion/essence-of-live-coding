@@ -96,6 +96,21 @@ step Cell { .. } a = do
   return (b, Cell { cellState = cellState', .. })
 \end{code}
 
+\begin{comment}
+\begin{code}
+steps
+  :: Monad m
+  => Cell m a b
+  -> [a]
+  -> m ([b], Cell m a b)
+steps cell [] = return ([], cell)
+steps cell (a : as) = do
+  (b, cell') <- step cell a
+  (bs, cell'') <- steps cell' as
+  return (b : bs, cell'')
+\end{code}
+\end{comment}
+
 As a simple example, consider the following \mintinline{haskell}{Cell} which adds all input and returns the delayed sum each step:
 \begin{code}
 sumC :: (Monad m, Num a, Data a) => Cell m a a

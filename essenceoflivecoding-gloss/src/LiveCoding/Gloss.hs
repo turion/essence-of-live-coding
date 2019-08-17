@@ -32,8 +32,8 @@ type GlossCellWorld = (MVar GlossCell, [Event], Picture)
 
 -- TODO Abstract external main loops
 playCell :: GlossCell -> IO (MVar GlossCell)
-playCell cell = do
-  var <- newMVar cell
+playCell glossCell = do
+  var <- newMVar glossCell
   forkIO $ playIO (InWindow "Gears" (600, 800) (20, 20)) black stepRate (initialWorld var) toPicture handleEvent playStepMVar
   return var
 
@@ -41,19 +41,7 @@ playCell cell = do
 updateGloss :: MVar GlossCell -> GlossCell -> IO ()
 updateGloss var newGlossCell = do
   oldGlossCell <- takeMVar var
-  putMVar var $ hotCodeSwapGloss newGlossCell oldGlossCell
-
-hotCodeSwapGloss
-  :: Cell m a b
-  -> Cell m a b
-  -> Cell m a b
-hotCodeSwapGloss
-  (Cell newState newStep)
-  (Cell oldState _)
-  = Cell
-  { cellState = migrate newState oldState
-  , cellStep  = newStep
-  }
+  putMVar var $ hotCodeSwapCell newGlossCell oldGlossCell
 
 initialWorld cell = (cell, [], blank)
 toPicture (_, _, picture) = return picture

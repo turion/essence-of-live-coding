@@ -254,7 +254,7 @@ Custom GHCi commands:
 * Launch live program in separate thread
 * Edit file, reload, while keeping program running
 * (uses package `foreign-store` under the hood)
-* Gloss adapter
+* Gloss and Pulseaudio adapter
 
 ## QuickCheck
 
@@ -290,7 +290,7 @@ withDebugger
 
 ## What I haven't shown
 
-* Works for web servers and audio as well
+* Works for web servers as well
 * Extensible by custom user migrations
 * Integrate into external main loops
 * Control flow: The details

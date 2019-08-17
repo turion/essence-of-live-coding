@@ -17,8 +17,8 @@ livegloss glossCell = return $ unlines
   [ "var <- playCell " ++ glossCell
   , "saveGloss var"
   ]
-livereload "" = livereload "glossCell"
-livereload glossCell  = return $ unlines
+livereloadgloss "" = livereloadgloss "glossCell"
+livereloadgloss glossCell  = return $ unlines
   [ ":reload"
   , "var <- loadGloss"
   , "updateGloss var " ++ glossCell

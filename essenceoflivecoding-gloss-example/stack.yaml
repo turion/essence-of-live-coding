@@ -2,8 +2,11 @@ resolver: lts-13.19
 extra-deps:
   - ..
   - ../essenceoflivecoding-gloss
+  - ../essenceoflivecoding-pulse
   - Yampa-0.13@sha256:0778b6e92adb62cc6fd83f1121a9d9bd1a6f7dac72baa41120b472addc7ec94f
   - simple-affine-space-0.1@sha256:09e582f2e12ce9feb251cbdacec57fa1f4a838ec63928026d98b758e89f9abd7
+  - pulse-simple-0.1.14@sha256:cd2397c40feb8959cdc6e806987072ce91e388e41427c47ff09ec2a2cfb466f0,773
 nix:
   enable: true
-  packages: [libGL libGLU freeglut zlib]
+  pure: false
+  packages: [libpulseaudio pulseaudio libGL libGLU freeglut zlib]
