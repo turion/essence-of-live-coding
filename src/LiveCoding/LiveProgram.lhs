@@ -269,7 +269,7 @@ instance Monad m => Monoid (LiveProgram m) where
 
 \input{../src/LiveCoding/RuntimeIO.lhs}
 
-\subsection{Livecoding a webserver}
+\subsection{Live coding a webserver}
 
 \fxwarning{Consider redoing this as a GHCi session where we call the server from within Haskell, e.g. with the curl or a HTTP package}
 

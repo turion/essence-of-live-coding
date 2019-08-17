@@ -36,7 +36,7 @@ arbitrary input for a function,
 and checks whether given assertions are valid.
 
 \paragraph{Unit tests}
-In our livecoding approach, programs are not composed of mere functions, but of cells,
+In our live coding approach, programs are not composed of mere functions, but of cells,
 and of course we wish to test them in a similar way before reloading.
 \fxwarning{Say that it's really good to know that your cells do what you expect before you just reload into them. We could need some tooling to call quickcheck before reloading.}
 As a simple example,
@@ -104,7 +104,7 @@ Let us execute our test:
 \end{verbatim}
 A large class of properties can be tested this way.
 We can unit test all components of a new version of our live program before reloading it.
-To go further, one could set up \emph{stateful property-based testing} \cite{ProperTesting} for the livecoding environment.
+To go further, one could set up \emph{stateful property-based testing} \cite{ProperTesting} for the live coding environment.
 
 \paragraph{Migration tests}
 Even better, we can test \emph{before reloading}
@@ -153,7 +153,7 @@ cell1 `agreesWith` cell2 = property $ proc a -> do
   b <- cell1 -<  a
   cell2      -< (a, b)
 \end{code}
-Along these lines, one can set up stateful property-based testing \cite{ProperTesting} for the livecoding environment.
+Along these lines, one can set up stateful property-based testing \cite{ProperTesting} for the live coding environment.
 \begin{comment}
 Similarly, we can check the output of one cell against a reference implementation:
 \begin{code}

@@ -15,7 +15,7 @@
 \begin{abstract}
   One rarely encounters programming languages and frameworks that provide general-purpose and type-safe hot code swap.
   It is demonstrated here that this is entirely possible in Haskell,
-  by faithfully following the motto of livecoding:
+  by faithfully following the motto of live coding:
   ``Change the program, keep the state.''
 
   With generic programming,
@@ -30,7 +30,7 @@
 
 \section{Introduction}
 
-Livecoding has come to denote various concepts,
+Live coding has come to denote various concepts,
 from hot code swap on a production server to artistic performances with code that is written, executed and updated live.
 From the implementor's perspective,
 the common denominator is a framework to update the definition of a program while not interrupting its execution.
@@ -55,7 +55,7 @@ and strongly typed user-side libraries
 exist,
 but the user is restricted to a domain specific language.
 
-In this article, we implement a lightweight general purpose livecoding framework in Haskell from scratch.
+In this article, we implement a lightweight general purpose live coding framework in Haskell from scratch.
 It is not only type-safe, but also type-driven, in that boilerplate code for state migrations
 (which is hard to get right without a static type checker)
 is automatically derived from the type.
@@ -115,7 +115,7 @@ The source code will be made openly available upon publication.\fxerror{Do it, o
 \input{../app/DemoWai/DemoWai1.lhs}
 \input{../app/DemoWai/DemoWai2.lhs}
 
-\section{Livecoding as arrowized FRP}
+\section{Live coding as arrowized FRP}
 \label{sec:FRP}
 
 \fxwarning{Small overview paragraph here? And in the other corresponding places?}
