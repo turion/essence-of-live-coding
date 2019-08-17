@@ -149,9 +149,35 @@ processing it,
 and consuming through further effects,
 we recover live programs as the special case of trivial input and output.
 
+We also provide a monadic control flow interface based on type-safe exceptions.
+It enables the library user to permanently switch from one cell to another,
+triggered by events thrown anywhere within the cell.
+For brevity, further details are deferred to the presentation.
+
 \fxerror{Comment quickly that building up the state like this happens automatically and in a way that is good for the framework?}
-\fxerror{I guess there is not enough space for control flow?}
-\fxfatal{Extra perks: Debuggers and testing}
+
+\section{Tooling}
+
+\fxfatal{Issue about pulse reload, then update here}
+For ease of use, custom GHCi commands are supplied that start a live program in a separate thread and allow reload it when it is edited.
+These cover ordinary live programs in \mintinline{haskell}{IO},
+but also video and audio backends.
+Utilities for integration with other external loops are given.
+
+It is easy to add debugging functionality to the framework,
+e.g. displaying the state or changing it after interacting with the user.
+In short, a debugger is itself a live program that can, as an effect,
+read and modify the state of an arbitrary other live program,
+i.e. it is of this type:
+\begin{spec}
+forall s . Data s => LiveProgram (StateT s m)
+\end{spec}
+As examples, there are debuggers printing the current state to the console,
+displaying it graphically via \texttt{gloss} \cite{Gloss},
+or pausing the execution upon user interaction.
+
+\section{Example}
+
 \fxfatal{Advertise the multidisciplinary example containing audio, video and a server, with a screenshot?}
 \fxfatal{Link to open sourced repo? To website with presentation?}
 
