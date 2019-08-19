@@ -110,7 +110,7 @@ Again, let us understand the function through its state type:
 data Debugging dbgState state = Debugging
   { state    :: state
   , dbgState :: dbgState
-  } deriving (Data, Eq)
+  } deriving (Data, Eq, Show)
 \end{code}
 On every step, the debugger becomes active after the cell steps,
 and is fed the current \mintinline{haskell}{state} of the main program.

@@ -1,10 +1,13 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -- test-framework
 import Test.Framework
 
 -- test-framework-quickcheck2
 import Test.Framework.Providers.QuickCheck2
+
+-- QuickCheck
+import Test.QuickCheck
 
 -- essence-of-live-coding
 import LiveCoding
@@ -16,14 +19,27 @@ intToInteger = toInteger
 
 main = defaultMain tests
 
-tests = return $ testGroup "simple tests"
-  [ testProperty "" $ 13 == migrate (10 :: Integer) (13 :: Integer)
-  , testProperty "" $ Foo1.foo' == migrate Foo1.foo Foo2.foo
-  , testProperty "" $ Foo2.foo' == migrate Foo2.foo Foo1.foo
-  , testProperty "" $ Foo2.bar' == migrate Foo2.bar Foo1.bar
-  , testProperty "" $ Foo2.baz' == migrate Foo2.baz Foo1.baz
-  , testProperty "" $ Foo2.frob' == migrateWith (userMigration intToInteger) Foo2.frob Foo1.frob
-  , testProperty "" $ Foo2.Frob 23 == migrate Foo2.frob (23 :: Integer)
-  , testProperty "" $ Debugging { dbgState = (42 :: Integer), state = (23 :: Integer) } == migrate Debugging { dbgState = (42 :: Integer), state = (42 :: Integer) } (23 :: Integer)
-  , testProperty "" $ (23 :: Integer) == migrate (5 :: Integer) Debugging { dbgState = (42 :: Integer), state = (23 :: Integer) }
+tests =
+  [ testGroup "Builtin types"
+    [ testProperty "Same" $ \(x :: Integer) (y :: Integer) -> x === migrate y x
+    , testProperty "Different" $ \(x :: Integer) (y :: Bool) -> y === migrate y x
+    ]
+  , testGroup "Records"
+    [ testProperty "" $ Foo1.foo' === migrate Foo1.foo Foo2.foo
+    , testProperty "" $ Foo2.foo' === migrate Foo2.foo Foo1.foo
+    , testProperty "" $ Foo2.bar' === migrate Foo2.bar Foo1.bar
+    , testProperty "" $ Foo2.baz' === migrate Foo2.baz Foo1.baz
+    ]
+  , testGroup "User migration"
+    [ testProperty "" $ Foo2.frob' === migrateWith (userMigration intToInteger) Foo2.frob Foo1.frob
+    ]
+  , testGroup "Newtype wrapping"
+    [ testProperty "" $ \(x :: Integer) -> Foo2.Frob x === migrate Foo2.frob x
+    ]
+  , testGroup "Debugging"
+    [ testProperty "To debugging state" $ \(x :: Int) (y :: Int) (z :: Int) ->
+        Debugging { dbgState = x, state = y } === migrate Debugging { dbgState = x, state = z } y
+    , testProperty "From debugging state" $ \(x :: Int) (y :: Int) (z :: Int) ->
+        x === migrate y Debugging { dbgState = z, state = x }
+    ]
   ]
