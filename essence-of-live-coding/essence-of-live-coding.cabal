@@ -64,6 +64,8 @@ test-suite essence-of-live-coding
       base >=4.11 && <4.13
     , syb == 0.7.*
     , essence-of-live-coding
+    , test-framework == 0.8.*
+    , test-framework-quickcheck2 == 0.3.*
 
 executable TestExceptions
   main-is: TestExceptions.hs
