@@ -1,22 +1,45 @@
 name:                essence-of-live-coding-speedtest-yampa
-version:             0.1.0.0
--- synopsis:
--- description:
+version:             0.1.0.1
+synopsis: General purpose live coding framework - Yampa speedtest
+description:
+  essence-of-live-coding is a general purpose and type safe live coding framework.
+  .
+  You can run programs in it, and edit, recompile and reload them while they're running.
+  Internally, the state of the live program is automatically migrated when performing hot code swap.
+  .
+  The library also offers an easy to use FRP interface.
+  It is parametrized by its side effects,
+  separates data flow cleanly from control flow,
+  and allows to develop live programs from reusable, modular components.
+  There are also useful utilities for debugging and quickchecking.
+  .
+  This package contains a simple speed test to compare performance with Yampa.
+
 license:             BSD3
 license-file:        LICENSE
 author:              Manuel Bärenz
 maintainer:          programming@manuelbaerenz.de
--- copyright:
--- category:
+homepage:            https://www.manuelbaerenz.de/#computerscience
+category:            FRP, Live coding
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
 cabal-version:       >=1.10
+
+source-repository head
+  type:     git
+  location: git@github.com:turion/essence-of-live-coding.git
+
+source-repository this
+  type:     git
+  location: git@github.com:turion/essence-of-live-coding.git
+  tag:      v0.1.0.1
+
 
 executable SpeedTest
   main-is: SpeedTest.hs
   hs-source-dirs: app
   build-depends:
-      base >=4.11 && <4.13
+      base >= 4.11 && <4.13
     , essence-of-live-coding
     , transformers == 0.5.*
 
@@ -24,5 +47,5 @@ executable SpeedTestYampa
   main-is: SpeedTestYampa.hs
   hs-source-dirs: app
   build-depends:
-      base >=4.11 && <4.13
+      base >= 4.11
     , Yampa

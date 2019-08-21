@@ -1,23 +1,44 @@
 name:                essence-of-live-coding-pulse-example
-version:             0.1.0.0
--- synopsis:
--- description:
+version:             0.1.0.1
+synopsis: General purpose live coding framework - pulse backend example
+description:
+  essence-of-live-coding is a general purpose and type safe live coding framework.
+  .
+  You can run programs in it, and edit, recompile and reload them while they're running.
+  Internally, the state of the live program is automatically migrated when performing hot code swap.
+  .
+  The library also offers an easy to use FRP interface.
+  It is parametrized by its side effects,
+  separates data flow cleanly from control flow,
+  and allows to develop live programs from reusable, modular components.
+  There are also useful utilities for debugging and quickchecking.
+  .
+  This package contains an example for PulseAudio backend.
+
 license:             BSD3
 license-file:        LICENSE
 author:              Manuel Bärenz
 maintainer:          programming@manuelbaerenz.de
--- copyright:
-category:            Sound
+homepage:            https://www.manuelbaerenz.de/#computerscience
+category:            FRP, Live coding
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
 cabal-version:       >=1.10
 
+source-repository head
+  type:     git
+  location: git@github.com:turion/essence-of-live-coding.git
+
+source-repository this
+  type:     git
+  location: git@github.com:turion/essence-of-live-coding.git
+  tag:      v0.1.0.1
+
+
 executable essence-of-live-coding-pulse-example
   main-is:             Main.hs
-  -- other-modules:
-  -- other-extensions:
   build-depends:
-      base >=4.11
+      base >= 4.11 && <4.13
     , transformers
     , pulse-simple == 0.1.*
     , vector

@@ -99,7 +99,7 @@ the local binding \mintinline{haskell}{var} is lost.
 The package \texttt{foreign-store} \cite{foreign-store} offers a remedy:
 \mintinline{haskell}{var} can be stored persistently across reloads.
 To facilitate its usage, GHCi macros are defined for the initialisation and reload operations (Figure \ref{fig:ghci}).
-\input{../essence-of-live-coding-ghci/src/LiveCoding/GHCi.lhs}
+\input{../essence-of-live-coding/src/LiveCoding/GHCi.lhs}
 They assume the main live program and the \mintinline{haskell}{MVar} to be called \mintinline{haskell}{liveProgram} and \mintinline{haskell}{var},
 respectively,
 but this can of course be generalised.
