@@ -1,10 +1,9 @@
 ---
 title: The essence of live coding
-subtitle: Change the program, keep the state!
+subtitle: Change the program, keep the state! [https://github.com/turion/essence-of-live-coding](https://github.com/turion/essence-of-live-coding)
 author: Manuel Bärenz
 fragments: true
 incremental: true
-
 ---
 
 # Introduction
