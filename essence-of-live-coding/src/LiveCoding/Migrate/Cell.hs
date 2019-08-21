@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 module LiveCoding.Migrate.Cell where
 
@@ -19,9 +20,9 @@ maybeMigrateToComposition1
   => Composition state1 state2
   -> state1'
   -> Maybe (Composition state1 state2)
-maybeMigrateToComposition1 (Composition (_, state2)) state1' = do
+maybeMigrateToComposition1 Composition { state2 } state1' = do
   state1 <- cast state1'
-  return $ Composition (state1, state2)
+  return $ Composition { .. }
 
 -- | Migrate @cell1@ to @cell1 >>> cell2@.
 migrationToComposition1 :: Migration
@@ -31,7 +32,7 @@ maybeMigrateFromComposition1
   :: (Typeable state1', Typeable state1)
   => Composition state1 state2
   -> Maybe       state1'
-maybeMigrateFromComposition1 (Composition (state1, _)) = cast state1
+maybeMigrateFromComposition1 Composition { state1 } = cast state1
 
 -- | Migrate to @cell1@ from @cell1 >>> cell2@.
 migrationFromComposition1 :: Migration
@@ -42,9 +43,9 @@ maybeMigrateToComposition2
   => Composition state1 state2
   -> state2'
   -> Maybe (Composition state1 state2)
-maybeMigrateToComposition2 (Composition (state1, _)) state2' = do
+maybeMigrateToComposition2 Composition { state1 } state2' = do
   state2 <- cast state2'
-  return $ Composition (state1, state2)
+  return $ Composition { .. }
 
 -- | Migrate @cell2@ to @cell1 >>> cell2@.
 migrationToComposition2 :: Migration
@@ -54,7 +55,7 @@ maybeMigrateFromComposition2
   :: (Typeable state2', Typeable state2)
   => Composition state1 state2
   -> Maybe              state2'
-maybeMigrateFromComposition2 (Composition (_, state2)) = cast state2
+maybeMigrateFromComposition2 Composition { state2 } = cast state2
 
 -- | Migrate to @cell2@ from @cell1 >>> cell2@.
 migrationFromComposition2 :: Migration
@@ -71,46 +72,46 @@ migrationComposition
 -- * Migrations involving parallel compositions of cells
 
 maybeMigrateToParallel1
-  :: (Typeable state1', Typeable state1)
-  => Parallel state1 state2
-  -> state1'
-  -> Maybe (Parallel state1 state2)
-maybeMigrateToParallel1 (Parallel (_, state2)) state1' = do
-  state1 <- cast state1'
-  return $ Parallel (state1, state2)
+  :: (Typeable stateP1', Typeable stateP1)
+  => Parallel stateP1 stateP2
+  -> stateP1'
+  -> Maybe (Parallel stateP1 stateP2)
+maybeMigrateToParallel1 (Parallel { stateP2 }) stateP1' = do
+  stateP1 <- cast stateP1'
+  return $ Parallel { .. }
 
 -- | Migrate @cell1@ to @cell1 *** cell2@.
 migrationToParallel1 :: Migration
 migrationToParallel1 = migrationTo2 maybeMigrateToParallel1
 
 maybeMigrateFromParallel1
-  :: (Typeable state1', Typeable state1)
-  => Parallel state1 state2
-  -> Maybe    state1'
-maybeMigrateFromParallel1 (Parallel (state1, _)) = cast state1
+  :: (Typeable stateP1', Typeable stateP1)
+  => Parallel stateP1 stateP2
+  -> Maybe    stateP1'
+maybeMigrateFromParallel1 (Parallel { stateP1 }) = cast stateP1
 
 -- | Migrate to @cell1@ from @cell1 *** cell2@.
 migrationFromParallel1 :: Migration
 migrationFromParallel1 = constMigrationFrom2 maybeMigrateFromParallel1
 
 maybeMigrateToParallel2
-  :: (Typeable state2', Typeable state2)
-  => Parallel state1 state2
-  -> state2'
-  -> Maybe (Parallel state1 state2)
-maybeMigrateToParallel2 (Parallel (state1, _)) state2' = do
-  state2 <- cast state2'
-  return $ Parallel (state1, state2)
+  :: (Typeable stateP2', Typeable stateP2)
+  => Parallel stateP1 stateP2
+  -> stateP2'
+  -> Maybe (Parallel stateP1 stateP2)
+maybeMigrateToParallel2 (Parallel { stateP1 }) stateP2' = do
+  stateP2 <- cast stateP2'
+  return $ Parallel { .. }
 
 -- | Migrate @cell2@ to @cell1 *** cell2@.
 migrationToParallel2 :: Migration
 migrationToParallel2 = migrationTo2 maybeMigrateToParallel2
 
 maybeMigrateFromParallel2
-  :: (Typeable state2', Typeable state2)
-  => Parallel state1 state2
-  -> Maybe           state2'
-maybeMigrateFromParallel2 (Parallel (_, state2)) = cast state2
+  :: (Typeable stateP2', Typeable stateP2)
+  => Parallel stateP1 stateP2
+  -> Maybe           stateP2'
+maybeMigrateFromParallel2 (Parallel { stateP2 }) = cast stateP2
 
 -- | Migrate to @cell2@ from @cell1 *** cell2@.
 migrationFromParallel2 :: Migration

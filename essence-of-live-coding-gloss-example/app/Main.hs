@@ -179,10 +179,10 @@ center :: BoundedPic -> BoundedPic
 center boundPic = let Bounds { .. } = getBounds boundPic in translate (left + right) (bottom + top) boundPic
 
 compPic :: (Data s1, Data s2) => Composition s1 s2 -> BoundedPic
-compPic (Composition (s1, s2))
-  | isUnit s1 = stateBoundedPic s2
-  | isUnit s2 = stateBoundedPic s1
-  | otherwise = stateBoundedPic s1 `addRight` stateBoundedPic s2
+compPic Composition { .. }
+  | isUnit state1 = stateBoundedPic state2
+  | isUnit state2 = stateBoundedPic state1
+  | otherwise = stateBoundedPic state1 `addRight` stateBoundedPic state2
 
 glossDebugger :: Debugger PictureM
 glossDebugger = Debugger $ liveCell $ every 100 >>> keep blank >>> arrM (lift . lift . tell)

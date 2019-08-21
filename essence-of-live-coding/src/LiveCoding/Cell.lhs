@@ -215,12 +215,11 @@ cells implement sequential composition:
 
 \begin{comment}
 \begin{code}
--- TODO For some weird reason, this is more efficient than my own ADT
-newtype Composition state1 state2 = Composition (state1, state2)
+data Composition state1 state2 = Composition
+  { state1 :: state1
+  , state2 :: state2
+  }
   deriving Data
-
-getState2 :: Composition state1 state2 -> state2
-getState2 (Composition (state1, state2)) = state2
 
 instance Monad m => Category (Cell m) where
   id = ArrM return
@@ -236,11 +235,11 @@ instance Monad m => Category (Cell m) where
     }
   Cell state2 step2 . Cell state1 step1 = Cell { .. }
     where
-      cellState = Composition (state1, state2)
-      cellStep (Composition (state1, state2)) a = do
+      cellState = Composition state1 state2
+      cellStep (Composition state1 state2) a = do
         (!b, state1') <- step1 state1 a
         (!c, state2') <- step2 state2 b
-        return (c, Composition (state1', state2'))
+        return (c, Composition state1' state2')
 -- {-# RULES
 -- "arrM/>>>" forall (f :: forall a b m . Monad m => a -> m b) g . arrM f >>> arrM g = arrM (f >=> g)
 -- #-} -- Don't really need rules here because GHC will inline all that anyways
@@ -372,8 +371,10 @@ Then we can execute the live program in the same way as before.
 
 \begin{comment}
 \begin{code}
---data Parallel s1 s2 = Parallel s1 s2
-newtype Parallel s1 s2 = Parallel (s1, s2)
+data Parallel stateP1 stateP2 = Parallel
+  { stateP1 :: stateP1
+  , stateP2 :: stateP2
+  }
   deriving Data
 
 instance Monad m => Arrow (Cell m) where
@@ -401,13 +402,13 @@ instance Monad m => Arrow (Cell m) where
       return ((b, d), state')
     , ..
     }
-  Cell state1 step1 *** Cell state2 step2 = Cell { .. }
+  Cell stateP1 step1 *** Cell stateP2 step2 = Cell { .. }
     where
-      cellState = Parallel (state1, state2)
-      cellStep (Parallel (state1, state2)) (a, c) = do
-        (!b, state1') <- step1 state1 a
-        (!d, state2') <- step2 state2 c
-        return ((b, d), Parallel (state1', state2'))
+      cellState = Parallel { .. }
+      cellStep (Parallel { .. }) (a, c) = do
+        (!b, stateP1') <- step1 stateP1 a
+        (!d, stateP2') <- step2 stateP2 c
+        return ((b, d), Parallel stateP1' stateP2')
 
 arrM :: (a -> m b) -> Cell m a b
 arrM = ArrM
