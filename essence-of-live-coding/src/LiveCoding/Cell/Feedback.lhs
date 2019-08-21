@@ -30,12 +30,12 @@ feedback
   -> Cell   m    a      b
 \end{code}
 Let us have a look at its internal state:
-\begin{spec}
+\begin{code}
 data Feedback sPrevious sAdditional = Feedback
   { sPrevious   :: sPrevious
   , sAdditional :: sAdditional
-  }
-\end{spec}
+  } deriving Data
+\end{code}
 In \mintinline{haskell}{feedback sAdditional cell},
 the \mintinline{haskell}{cell} has state \mintinline{haskell}{sPrevious},
 and to this state we add \mintinline{haskell}{sAdditional}.
@@ -50,15 +50,12 @@ but in turn it is always safe to use since it does not use \mintinline{haskell}{
 \fxwarning{Possibly remark on Data instance of s?}
 \begin{comment}
 \begin{code}
-newtype Feedback s s' = Feedback (s, s')
-  deriving Data
-
-feedback s (Cell state step) = Cell { .. }
+feedback sAdditional (Cell sPrevious step) = Cell { .. }
   where
-    cellState = Feedback (state, s)
-    cellStep (Feedback (state, s)) a = do
-      ((!b, !s'), state') <- step state (a, s)
-      return (b, Feedback (state', s'))
+    cellState = Feedback { .. }
+    cellStep Feedback { .. } a = do
+      ((!b, !sAdditional'), sPrevious') <- step sPrevious (a, sAdditional)
+      return (b, Feedback sPrevious' sAdditional')
 feedback cellState (ArrM f) = Cell { .. }
   where
     cellStep state a = f (a, state)
