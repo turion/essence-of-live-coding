@@ -143,8 +143,17 @@ The steps are:
 
 ### Reading
 
-* _The essence of live coding_: [Preprint article](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCoding.pdf)
-* _Arrowized monadic FRP_: [`dunai`](http://hackage.haskell.org/package/dunai) and [`rhine`](https://github.com/turion/rhine)
+* [ICFP 2019 presentation](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingPresentation.html).
+  For a quick pitch.
+* [Abstract](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingAbstract.pdf)
+  For a 2-page overview.
+* [Preprint article](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCoding.pdf).
+  For all the details.
+* [Appendix](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingAppendix.pdf).
+  For all the details that were left out in the article.
+* The [`dunai`](http://hackage.haskell.org/package/dunai) and [`rhine`](https://github.com/turion/rhine) packages.
+  For backup material on how to program in this FRP dialect.
+  (Spoiler: `rhine` is going towards live coding soon.)
 
 ## Best practice
 
