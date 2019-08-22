@@ -2,6 +2,7 @@
 
 -- base
 import Control.Arrow
+import Control.Monad (void)
 import Control.Monad.IO.Class
 import Data.IORef
 
@@ -53,12 +54,12 @@ pulseCell ref = proc _ -> do
   angle <- getAngleEvery 1024 ref -< ()
   let frequency = f $ (tones !!)
         $ (`mod` length tones)
-        $ angle `div` (360 `div` length tones)
+        $ angle `div` (60 `div` length tones)
   osc' -< frequency
 
 getAngleEvery :: Int -> IORef Float -> Cell IO () Int
 getAngleEvery maxCount ref = proc _ -> do
-  count <- sumC -< 1
+  count <- sumC   -< 1
   mAngle <- if count `mod` maxCount == 0
     then arr Just <<< constM (readIORef ref) -< ()
     else returnA                             -< Nothing
@@ -69,4 +70,6 @@ getAngleEvery maxCount ref = proc _ -> do
 main :: IO ()
 main = do
   ref <- newIORef 0
-  playCellForeground $ glossCell ref
+  void $ playPulseCell $ pulseCell ref
+  void $ playCell $ glossCell ref
+  void $ getLine
