@@ -47,15 +47,18 @@ gear angle = scale 3 3 $ rotate angle $ pictures
       , (10, -10)
       ]
 
-tones = [C, E, G]
+tones = [D, F, A]
 
 pulseCell :: IORef Float -> PulseCell
 pulseCell ref = proc _ -> do
   angle <- getAngleEvery 1024 ref -< ()
-  let frequency = f $ (tones !!)
-        $ (`mod` length tones)
-        $ angle `div` (60 `div` length tones)
-  osc' -< frequency
+  osc'                            -< cycleTones angle
+
+cycleTones :: Int -> Float
+cycleTones angle = f
+  $ (tones !!)
+  $ (`mod` length tones)
+  $ angle `div` (60 `div` length tones)
 
 getAngleEvery :: Int -> IORef Float -> Cell IO () Int
 getAngleEvery maxCount ref = proc _ -> do
