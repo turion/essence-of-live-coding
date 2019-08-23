@@ -184,3 +184,8 @@ it's advisable to follow these patterns:
 
 * For multiple backends, you currently need to write your own `.ghci` file, and store all `MVar`s in a single tuple.
 * For custom migrations, you currently need to write your own `.ghci` file.
+* If your program doesn't compile when you _enter_ GHCi,
+  you will need to leave GHCi again and recompile.
+  Otherwise the live coding infrastructure will not be loaded.
+  After it has successfully compiled, you can reload from within GHCi,
+  and further compilation errors do not affect the infrastructure.

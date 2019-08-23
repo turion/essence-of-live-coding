@@ -18,6 +18,11 @@ incremental: true
 
 ## Change the program, keep the state!
 
+::: notes
+
+Explain what we're going to code briefly
+
+:::
 ![](gears.png){style="height: 400px;"}
 
 # How does it work?
@@ -79,6 +84,10 @@ Greetings, number 2
 HI #3
 ```
 
+## Thank you for your attention.
+
+* That was a joke.
+
 ## ...change the program...
 
 
@@ -87,7 +96,9 @@ data State = State
   { nVisitors :: Integer
   , lastTime  :: UTCTime
   }
+```
 
+``` {.haskell .literate .fragment .fade-in}
 server greeting = LiveProgram { .. } where
   liveState = State 1 $ read "2019-07-24 19:00:00 UTC"
   liveStep State { .. } = do
@@ -115,12 +126,13 @@ Migrating to new state should...
 [⇒ Need _old live state_ and _new initial state_]{.fragment .fade-in}
 
 ``` {.haskell .literate .fragment .fade-in}
-migrate :: a -> b -> a
+migrate :: sNew -> sOld -> sNew
 ```
 
 ::: notes
 
-* Such a migrate function exists: `const`
+* Ask the audience.
+  Such a migrate function exists: `const`
 
 :::
 
@@ -128,7 +140,7 @@ migrate :: a -> b -> a
 ## Actual implementation: Generics
 
 ``` {.haskell .literate .fragment .fade-in}
-migrate :: (Data a, Data b) => a -> b -> a
+migrate :: (Data sNew, Data sOld) => sNew -> sOld -> sNew
 migrate = ... -- Just some 50 lines generic code
 ```
 
@@ -185,6 +197,12 @@ data Cell m a b = forall s . Data s => Cell
 [`liveCell:: Cell m () () -> LiveProgram m`]{.fragment .fade-in}
 
 ## Wait... I've seen this before!?
+
+::: notes
+
+There we also explain why this is FRP.
+
+:::
 
 ``` {.haskell .literate .fragment .fade-in}
 data MSF m a b => MSF { unMSF :: a -> m (b, MSF m a b) }
@@ -304,7 +322,7 @@ withDebugger
 ## Further directions
 
 * Backends (Audio, web, OpenGL, ...)
-* Integrate with asynchronous FRP framework (Rhine)
+* Integrate with asynchronous FRP framework (Rhine. ICFP 2019. Iván Pérez & MB)
 * Ensuring state properties beyond Haskell types (LiquidHaskell)
 
 ## Thanks! Questions?
