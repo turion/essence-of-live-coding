@@ -5,7 +5,9 @@ module TestData.Foo2 where
 import Data.Data
 import Data.Typeable
 
-data Foo = Foo Integer
+data Foo
+  = Fooo Integer
+  | Foo  Integer
   deriving (Show, Eq, Typeable, Data)
 
 foo = Foo 2
