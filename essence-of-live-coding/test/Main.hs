@@ -43,6 +43,8 @@ tests =
   , testGroup "Constructors"
     [ testProperty "Finds correct constructor"
       $ \x y z -> migrate (Foo2.Fooo z) (Foo1.Foo x y) === Foo2.Foo x
+    , testProperty "Finds correct constructor with records"
+      $ \barA barB barC baarA baarB -> migrate Foo2.Bar { .. } Foo1.Baar { .. } === Foo2.Baar { .. }
     ]
   , testGroup "User migration"
     [ testProperty "Can add migration from Int to Integer"

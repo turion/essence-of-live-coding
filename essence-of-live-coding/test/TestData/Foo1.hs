@@ -11,10 +11,15 @@ data Foo = Foo Integer Bool
 foo = Foo 1 False
 foo' = Foo 2 False
 
-data Bar = Bar
+data Bar
+  = Bar
   { barA :: Integer
   , barD :: Integer
   , barC :: Bool
+  }
+  | Baar
+  { baarB :: Bool
+  , baarA :: Int
   }
   deriving (Show, Eq, Typeable, Data)
 

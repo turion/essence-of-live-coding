@@ -13,10 +13,14 @@ data Foo
 foo = Foo 2
 foo' = Foo 1
 
-data Bar = Bar
+data Bar
+  = Bar
   { barB :: Integer
   , barA :: Integer
   , barC :: String
+  }
+  | Baar
+  { baarA :: Int
   }
   deriving (Show, Eq, Typeable, Data)
 
