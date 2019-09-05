@@ -1,5 +1,12 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TupleSections #-}
+
+-- base
+import Control.Arrow
+import Data.Functor.Identity
+import System.IO.Unsafe (unsafePerformIO)
 
 -- test-framework
 import Test.Framework
@@ -62,4 +69,68 @@ tests =
     $ \(x :: Int) (y :: Int) (z :: Int)
     -> x === migrate y Debugging { dbgState = z, state = x }
     ]
+  , testGroup "Cells"
+    [ testGroup "Sequential composition"
+      [ testProperty "From 1" CellMigrationSimulation
+          { cell1 = sumC >>> arr toInteger
+          , cell2 = sumC >>> arr toInteger >>> sumC
+          , input1 = [1, 1, 1] :: [Int]
+          , input2 = [1, 1, 1]
+          , output1 = [0, 1, 2]
+          , output2 = [0, 3, 7]
+          }
+      ]
+    , testGroup "Choice"
+      [ testProperty "From left" CellMigrationSimulation
+        { cell1 = arr fromEither >>> sumC >>> arr toInteger
+        , cell2 = (sumC >>> arr toInteger) ||| (arr toInteger >>> sumC)
+        , input1 = [Left  1, Right 1, Left  (1 :: Int)]
+        , input2 = [Right 1, Left  1, Right 1]
+        , output1 = [0, 1, 2]
+        , output2 = [0, 3, 1]
+        }
+      ]
+    , testGroup "Control flow"
+      [ testProperty "Into safe" CellMigrationSimulation
+        { cell1 = countFrom 0
+        , cell2 = safely $ do
+            try $ countFrom 10  >>> throwIf (>  1) ()
+            safe $ countFrom 20
+        , input1 = replicate 3 ()
+        , input2 = replicate 3 ()
+        , output1 = [0, 1, 2]
+        , output2 = [23, 24, 25]
+        }
+      ]
+    ]
   ]
+
+withEvilDebugger :: Cell IO a b -> Cell Identity a b
+withEvilDebugger cell = hoistCell (Identity . unsafePerformIO) $ withDebuggerC cell statePrint
+
+countFrom :: Monad m => Int -> Cell m () Int
+countFrom n = arr (const 1) >>> sumC >>> arr (+ n)
+
+fromEither (Left  a) = a
+fromEither (Right a) = a
+
+data CellMigrationSimulation a b = CellMigrationSimulation
+  { cell1 :: Cell Identity a b
+  , cell2 :: Cell Identity a b
+  , input1 :: [a]
+  , input2 :: [a]
+  , output1 :: [b]
+  , output2 :: [b]
+  }
+
+instance (Eq b, Show b) => Testable (CellMigrationSimulation a b) where
+  property CellMigrationSimulation { .. }
+    = let Identity (output1', output2') = simulateCellMigration cell1 cell2 input1 input2
+      in output1 === output1' .&&. output2 === output2'
+
+simulateCellMigration :: Monad m => Cell m a b -> Cell m a b -> [a] -> [a] -> m ([b], [b])
+simulateCellMigration cell1 cell2 as1 as2 = do
+  (bs1, cell1') <- steps cell1 as1
+  let cell2' = hotCodeSwapCell cell2 cell1'
+  (bs2, _) <- steps cell2' as2
+  return (bs1, bs2)

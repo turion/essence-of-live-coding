@@ -52,6 +52,7 @@ library
     , LiveCoding.LiveProgram
     , LiveCoding.LiveProgram.HotCodeSwap
     , LiveCoding.Migrate
+    , LiveCoding.Migrate.Cell
     , LiveCoding.Migrate.Migration
     , LiveCoding.Migrate.Debugger
     , LiveCoding.RuntimeIO

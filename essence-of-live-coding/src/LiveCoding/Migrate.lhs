@@ -23,6 +23,7 @@ import Data.Generics.Twins
 
 -- essence-of-live-coding
 import LiveCoding.Migrate.Debugger
+import LiveCoding.Migrate.Cell
 import LiveCoding.Migrate.Migration
 \end{code}
 \end{comment}
@@ -39,7 +40,11 @@ migrateWith specific = runSafeMigration $ treeMigration specific
 
 -- | Covers standard cases such as matching types, to and from debuggers, to newtypes.
 standardMigration :: Migration
-standardMigration = castMigration <> migrationDebugging <> newtypeMigration
+standardMigration
+  =  castMigration
+  <> migrationDebugging
+  <> migrationCell
+  <> newtypeMigration
 
 -- | The standard migration working horse.
 --   Tries to apply the given migration,
