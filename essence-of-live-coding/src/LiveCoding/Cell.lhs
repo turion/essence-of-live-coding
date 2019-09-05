@@ -7,6 +7,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -18,7 +19,7 @@ module LiveCoding.Cell where
 import Control.Arrow
 import Control.Category
 import Control.Concurrent (threadDelay)
-import Control.Monad ((>=>)) -- Only for rewrite rule
+import Control.Monad
 import Control.Monad.Fix
 import Data.Data
 import Prelude hiding ((.), id)
@@ -80,7 +81,9 @@ data Cell m a b = forall s . Data s => Cell
   { cellState :: s
   , cellStep  :: s -> a -> m (b, s)
   }
+  | ArrM { runArrM :: a -> m b }
 \end{code}
+\fxfatal{I've added, to improve performance and migration, the ArrM constructor. Add to LiveProgram as well and explain in both places.}
 Such a cell may progress by one step,
 consuming an \mintinline{haskell}{a} as input,
 and producing, by means of an effect in some monad \mintinline{haskell}{m},
@@ -95,6 +98,7 @@ step
 step Cell { .. } a = do
   (b, cellState') <- cellStep cellState a
   return (b, Cell { cellState = cellState', .. })
+step cell@ArrM { .. } a = ( , cell) <$> runArrM a
 \end{code}
 
 \begin{comment}
@@ -131,6 +135,10 @@ liveCell Cell { .. } = LiveProgram
   { liveState = cellState
   , liveStep  = fmap snd . flip cellStep ()
   }
+liveCell ArrM { .. } = LiveProgram
+  { liveState = ()
+  , liveStep  = runArrM
+  }
 \end{code}
 \begin{comment}
 \begin{code}
@@ -164,6 +172,9 @@ hoistCell morph Cell { .. } = Cell
   { cellStep = \s a -> morph $ cellStep s a
   , ..
   }
+hoistCell morph ArrM { .. } = ArrM
+  { runArrM = morph . runArrM
+  }
 \end{code}
 \end{comment}
 
@@ -189,11 +200,17 @@ getState2 :: Composition state1 state2 -> state2
 getState2 (Composition (state1, state2)) = state2
 
 instance Monad m => Category (Cell m) where
-  id = Cell
-    { cellState = ()
-    , cellStep  = \() a -> return (a, ())
-    }
+  id = ArrM return
 
+  ArrM f . ArrM g = ArrM $ f <=< g
+  Cell { .. } . ArrM { .. } = Cell
+    { cellStep = \state -> cellStep state <=< runArrM
+    , ..
+    }
+  ArrM { .. } . Cell { .. } = Cell
+    { cellStep = \state -> (runKleisli $ first $ Kleisli runArrM) <=< cellStep state -- first runArrM <=< 
+    , ..
+    }
   Cell state2 step2 . Cell state1 step1 = Cell { .. }
     where
       cellState = Composition (state1, state2)
@@ -352,11 +369,23 @@ newtype Parallel s1 s2 = Parallel (s1, s2)
   deriving Data
 
 instance Monad m => Arrow (Cell m) where
-  arr f = Cell
-    { cellState = ()
-    , cellStep  = \() a -> return (f a, ())
-    }
+  arr = arrM . (return .)
 
+  ArrM f *** ArrM g = ArrM $ runKleisli $ Kleisli f *** Kleisli g
+  ArrM { .. } *** Cell { .. } = Cell
+    { cellStep = \state (a, c) -> do
+      b <- runArrM a
+      (d, state') <- cellStep state c
+      return ((b, d), state')
+    , ..
+    }
+  Cell { .. } *** ArrM { .. } = Cell
+    { cellStep = \state (a, c) -> do
+      (b, state') <- cellStep state a
+      d <- runArrM c
+      return ((b, d), state')
+    , ..
+    }
   Cell state1 step1 *** Cell state2 step2 = Cell { .. }
     where
       cellState = Parallel (state1, state2)
@@ -365,20 +394,25 @@ instance Monad m => Arrow (Cell m) where
         (d, state2') <- step2 state2 c
         return ((b, d), Parallel (state1', state2'))
 
-arrM :: Functor m => (a -> m b) -> Cell m a b
-arrM f = Cell
-  { cellState = ()
-  , cellStep  = \() a -> (, ()) <$> f a
-  }
+arrM :: (a -> m b) -> Cell m a b
+arrM = ArrM
 
-constM :: Functor m => m b -> Cell m a b
+constM :: m b -> Cell m a b
 constM = arrM . const
+
+constC :: Monad m => b -> Cell m a b
+constC = constM . return
 \end{code}
 \end{comment}
 
 \begin{comment}
 \begin{code}
 instance MonadFix m => ArrowLoop (Cell m) where
+  loop ArrM { .. } = ArrM
+    { runArrM = \a -> do
+        rec (b, c) <- (\c' -> runArrM (a, c')) c
+        return b
+    }
   loop (Cell state step) = Cell { .. }
     where
       cellState = state
@@ -508,6 +542,27 @@ instance Monad m => ArrowChoice (Cell m) where
         return (Left b, cellState')
       cellStep cellState (Right b) = return (Right b, cellState)
       -}
+  ArrM f +++ ArrM g = ArrM $ runKleisli $ Kleisli f +++ Kleisli g
+  ArrM { .. } +++ Cell { .. } = Cell
+    { cellStep = \state -> \case
+        Left a -> do
+          b <- runArrM a
+          return (Left b, state)
+        Right c -> do
+          (d, state') <- cellStep state c
+          return (Right d, state')
+    , ..
+    }
+  Cell { .. } +++ ArrM { .. } = Cell
+    { cellStep = \state -> \case
+        Left a -> do
+          (b, state') <- cellStep state a
+          return (Left b, state')
+        Right c -> do
+          d <- runArrM c
+          return (Right d, state)
+    , ..
+    }
   (Cell stateL stepL) +++ (Cell stateR stepR) = Cell { .. }
     where
       cellState = Choice stateL stateR
