@@ -9,6 +9,7 @@ import Data.Maybe (fromMaybe)
 import Data.Monoid
 
 -- syb
+import Data.Generics.Aliases
 import Data.Generics.Schemes (glength)
 
 data Migration = Migration
@@ -50,3 +51,15 @@ userMigration
   => (c -> d)
   -> Migration
 userMigration specific = Migration $ \_a b -> cast =<< specific <$> cast b
+
+migrationTo2
+  :: Typeable t
+  => (forall a b c . (Typeable a, Typeable b, Typeable c) => t b c -> a -> Maybe (t b c))
+  -> Migration
+migrationTo2 f = Migration $ \t a -> ext2M (const Nothing) (flip f a) t
+
+constMigrationFrom2
+  :: Typeable t
+  => (forall a b c . (Typeable a, Typeable b, Typeable c) => t b c -> Maybe a)
+  -> Migration
+constMigrationFrom2 f = Migration $ \_ t -> ext2Q (const Nothing) f t
