@@ -209,6 +209,15 @@ migrationFromExceptState = constMigrationFrom2 maybeMigrateFromExceptState
 migrationExceptState :: Migration
 migrationExceptState = migrationToExceptState <> migrationFromExceptState
 
+maybeMigrateToComposedExceptState
+  :: (Typeable state, Typeable state')
+  => Composition (ExceptState state1 e) state2
+  -> ExceptState state1' e'
+  -> Maybe (Composition (ExceptState state1 e) state2)
+maybeMigrateToComposedExceptState (Composition (NotThrown state1, state2)) (NotThrown state1')
+
+-- | Migration from @try cell1 >> safe cell@ to @try cell1 >> try cell2 >> safe cell@
+
 -- * Overall migration
 
 -- | Combines all 'Cell'-related migrations.

@@ -101,6 +101,19 @@ tests =
         , output1 = [0, 1, 2]
         , output2 = [23, 24, 25]
         }
+      , testProperty "Into more exceptions" CellMigrationSimulation
+        { cell1 = withEvilDebugger $ safely $ do
+            try $ countFrom 0 >>> throwIf (> 1) ()
+            safe $ countFrom 10
+        , cell2 = withEvilDebugger $ safely $ do
+            try $ countFrom 0  >>> throwIf (>  1) ()
+            try $ countFrom 20 >>> throwIf (> 21) ()
+            safe $ countFrom 30
+        , input1 = replicate 3 ()
+        , input2 = replicate 3 ()
+        , output1 = [0, 1, 10]
+        , output2 = [21, 30, 31]
+        }
       ]
     ]
   ]
