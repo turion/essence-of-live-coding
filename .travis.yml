@@ -1,0 +1,20 @@
+if: branch IN (master, develop)
+language: haskell
+ghc:
+  - '8.6'
+  - '8.4.3'
+env:
+  - PACKAGE=essence-of-live-coding
+  - PACKAGE=essence-of-live-coding-pulse
+  - PACKAGE=essence-of-live-coding-gloss
+  - PACKAGE=essence-of-live-coding-pulse-example
+  - PACKAGE=essence-of-live-coding-gloss-example
+  - PACKAGE=essence-of-live-coding-gloss-quickcheck
+  - PACKAGE=essence-of-live-coding-gloss-speedtest-yampa
+before_install:
+  - cd rhine
+  - cabal sandbox init
+  - cd ..
+  - cd ${PACKAGE}
+  - cabal sandbox init
+  - cabal sandbox add-source ../essence-of-live-coding
