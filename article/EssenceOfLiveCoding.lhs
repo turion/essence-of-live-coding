@@ -30,6 +30,10 @@
 
 \section{Introduction}
 
+\fxfatal{Lots of literature on "transducers" and "resumptions" that should be at least acknowledged:
+Milner's 1975 paper "Processes: a mathematical model of computing agents" (https://www.sciencedirect.com/science/article/pii/S0049237X08719487), for which I can't find a free pdf. They typically went by the name "resumption", e.g. https://group-mmm.org/~ichiro/papers/component-trace.pdf Section 7, https://www.cs.ox.ac.uk/files/6660/crm.pdf, https://www.researchgate.net/publication/220173613_Geometry_of_Interaction_and_Linear_Combinatory_Algebras Section 5.4.
+}
+
 Live coding has come to denote various concepts,
 from hot code swap on a production server to artistic performances with code that is written, executed and updated live.
 From the implementor's perspective,
