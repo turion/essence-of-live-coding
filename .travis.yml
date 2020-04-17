@@ -11,7 +11,7 @@ env:
   - PACKAGE=essence-of-live-coding-gloss-example
   - PACKAGE=essence-of-live-coding-gloss-quickcheck
   - PACKAGE=essence-of-live-coding-gloss-speedtest-yampa
+  - PACKAGE=demos
+  - PACKAGE=gears
 before_install:
   - cd ${PACKAGE}
-  - cabal sandbox init
-  - cabal sandbox add-source ../essence-of-live-coding
