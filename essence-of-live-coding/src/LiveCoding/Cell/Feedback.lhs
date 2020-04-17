@@ -58,6 +58,9 @@ feedback s (Cell state step) = Cell { .. }
     cellStep (Feedback (state, s)) a = do
       ((b, s'), state') <- step state (a, s)
       return (b, Feedback (state', s'))
+feedback cellState (ArrM f) = Cell { .. }
+  where
+    cellStep state a = f (a, state)
 \end{code}
 \end{comment}
 It enables us to write delays:
