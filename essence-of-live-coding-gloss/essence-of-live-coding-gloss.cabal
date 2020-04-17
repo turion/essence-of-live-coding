@@ -41,7 +41,7 @@ library
     LiveCoding.Gloss.GHCi
     LiveCoding.Gloss.PictureM
   build-depends:
-      base >= 4.11 && <4.13
+      base >= 4.11 && < 5
     , syb
     , transformers
     , essence-of-live-coding

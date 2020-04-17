@@ -42,7 +42,7 @@ executable DemoSine
       Examples
   hs-source-dirs: app
   build-depends:
-      base >= 4.11 && <4.13
+      base >= 4.11 && < 5
     , essence-of-live-coding
 
 executable DemoSineWait
@@ -51,7 +51,7 @@ executable DemoSineWait
       Examples
   hs-source-dirs: app
   build-depends:
-      base >= 4.11 && <4.13
+      base >= 4.11 && < 5
     , essence-of-live-coding
 
 executable DemoSineWaitChange
@@ -60,7 +60,7 @@ executable DemoSineWaitChange
       Examples
   hs-source-dirs: app
   build-depends:
-      base >= 4.11 && <4.13
+      base >= 4.11 && < 5
     , essence-of-live-coding
 
 executable DemoSinesForever
@@ -69,7 +69,7 @@ executable DemoSinesForever
       Examples
   hs-source-dirs: app
   build-depends:
-      base >= 4.11 && <4.13
+      base >= 4.11 && < 5
     , essence-of-live-coding
 
 executable DemoWai
@@ -80,7 +80,7 @@ executable DemoWai
       DemoWai.DemoWai2
   hs-source-dirs: app
   build-depends:
-      base >= 4.11 && <4.13
+      base >= 4.11 && < 5
     , essence-of-live-coding
     , transformers == 0.5.*
     , wai  == 3.2.*

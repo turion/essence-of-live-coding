@@ -30,7 +30,7 @@ library
     LiveCoding.Pulse
     LiveCoding.Pulse.GHCi
   build-depends:
-      base >= 4.11 && <4.13
+      base >= 4.11 && < 5
     , essence-of-live-coding
     , transformers
     , pulse-simple == 0.1.*
