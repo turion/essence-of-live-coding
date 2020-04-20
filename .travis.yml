@@ -3,15 +3,8 @@ ghc:
   - '8.8'
   - '8.6'
   - '8.4.3'
-env:
-  - PACKAGE=essence-of-live-coding
-  - PACKAGE=essence-of-live-coding-pulse
-  - PACKAGE=essence-of-live-coding-gloss
-  - PACKAGE=essence-of-live-coding-pulse-example
-  - PACKAGE=essence-of-live-coding-gloss-example
-  - PACKAGE=essence-of-live-coding-gloss-quickcheck
-  - PACKAGE=essence-of-live-coding-gloss-speedtest-yampa
-  - PACKAGE=demos
-  - PACKAGE=gears
 before_install:
-  - cd ${PACKAGE}
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev pulseaudio
+script: cabal build all && cabal test all
+install: skip
