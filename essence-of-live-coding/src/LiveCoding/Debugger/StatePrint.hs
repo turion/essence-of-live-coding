@@ -126,7 +126,7 @@ dataCast3
   :: (Typeable t, Data a)
   => (forall b c d. (Data b, Data c, Data d) => f (t b c d))
   -> Maybe (f a)
-dataCast3 x =   r 
+dataCast3 x =   r
   where
     r = if typeRepFingerprint (typeOf (getArg x)) == typeRepFingerprint (typeOf (getArg (fromJust r)))
        then Just $ unsafeCoerce x

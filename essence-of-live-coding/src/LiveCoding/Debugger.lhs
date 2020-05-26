@@ -126,9 +126,9 @@ Live programs with debuggers are started just as usual.
 Inspecting the state of the example \mintinline{haskell}{printSineWait} from Section \ref{sec:control flow context} is daunting, though:
 \begin{verbatim}
 Waiting...
-(Composition ((,) (Composition ((,) (()) 
-(Composition ((,) (()) (Composition ((,) 
-(Composition ((,) (()) (Composition ((,) 
+(Composition ((,) (Composition ((,) (())
+(Composition ((,) (()) (Composition ((,)
+(Composition ((,) (()) (Composition ((,)
 [...]
 \end{verbatim}
 \fxerror{I still have the tuples here!}
