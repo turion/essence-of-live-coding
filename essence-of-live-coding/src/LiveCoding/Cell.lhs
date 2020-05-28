@@ -83,6 +83,17 @@ data Cell m a b = forall s . Data s => Cell
   }
   | ArrM { runArrM :: a -> m b }
 \end{code}
+\begin{comment}
+\begin{code}
+-- | Converts every 'Cell' to the 'Cell' constructor.
+toCell :: Functor m => Cell m a b -> Cell m a b
+toCell cell@Cell {} = cell
+toCell ArrM { .. } = Cell
+  { cellState = ()
+  , cellStep  = const $ fmap (, ()) . runArrM
+  }
+\end{code}
+\end{comment}
 \fxfatal{I've added, to improve performance and migration, the ArrM constructor. Add to LiveProgram as well and explain in both places.}
 Such a cell may progress by one step,
 consuming an \mintinline{haskell}{a} as input,
