@@ -12,6 +12,7 @@ import LiveCoding.Cell.Monad as X
 import LiveCoding.Cell.Monad.Trans as X hiding (State)
 import LiveCoding.Cell.Feedback as X
 import LiveCoding.Cell.HotCodeSwap as X
+import LiveCoding.Cell.NonBlocking as X
 import LiveCoding.Cell.Resample as X
 import LiveCoding.Cell.Util as X
 import LiveCoding.CellExcept as X
