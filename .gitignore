@@ -2,6 +2,8 @@
 *.pdf
 *.html
 dist/*
-dist-newstyle/*
+dist-newstyle
 acmart*
 *.png
+*.o
+*.hi
