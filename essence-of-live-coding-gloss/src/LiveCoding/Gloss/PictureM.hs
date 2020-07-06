@@ -13,7 +13,7 @@ import LiveCoding
 type PictureM = WriterT Picture IO
 
 runPictureM :: GlossCell -> Cell IO [Event] Picture
-runPictureM = transformOutput $ fmap massageWriterOutput . runWriterT
+runPictureM = hoistCellOutput $ fmap massageWriterOutput . runWriterT
 
 massageWriterOutput (((), s), pic) = (pic, s)
 

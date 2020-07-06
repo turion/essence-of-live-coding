@@ -357,15 +357,6 @@ hoistCell
 \end{code}
 For example, we may eliminate a \mintinline{haskell}{ReaderT r} context by supplying the environment through the \mintinline{haskell}{runReaderT} monad morphism,
 or lift into a monad transformer:
-\begin{comment}
-\begin{code}
-runReaderC
-  ::               r
-  -> Cell (ReaderT r m) a b
-  -> Cell            m  a b
-runReaderC r = hoistCell $ flip runReaderT r
-\end{code}
-\end{comment}
 \begin{code}
 liftCell
   :: (Monad m, MonadTrans t)
@@ -379,19 +370,8 @@ we can successively handle effects
 until we arrive at \mintinline{haskell}{IO}.
 Then we can execute the live program in the same way as before.
 
-\fxerror{Talk about this more general transformation in the comments?}
 \begin{comment}
 \begin{code}
-transformOutput
-  :: (Monad m1, Monad m2)
-  => (forall s . m1 (b1, s) -> m2 (b2, s))
-  -> Cell m1 a b1
-  -> Cell m2 a b2
-transformOutput morph Cell { .. } = Cell
-  { cellState = cellState
-  , cellStep  = (morph .) . cellStep
-  }
-
 --data Parallel s1 s2 = Parallel s1 s2
 newtype Parallel s1 s2 = Parallel (s1, s2)
   deriving Data

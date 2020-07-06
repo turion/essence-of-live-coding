@@ -18,6 +18,8 @@ import Test.QuickCheck
 
 -- essence-of-live-coding
 import LiveCoding
+
+import qualified Monad.Trans
 import qualified TestData.Foo1 as Foo1
 import qualified TestData.Foo2 as Foo2
 import Util
@@ -103,6 +105,7 @@ tests =
         }
       ]
     ]
+    , Monad.Trans.test
   ]
 
 countFrom :: Monad m => Int -> Cell m () Int

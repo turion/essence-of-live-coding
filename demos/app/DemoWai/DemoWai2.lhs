@@ -23,7 +23,7 @@ import Control.Monad.Trans.Reader
 import Network.Wai
 
 -- essence-of-live-coding
-import LiveCoding
+import LiveCoding hiding (State)
 
 import DemoWai.Env
 \end{code}

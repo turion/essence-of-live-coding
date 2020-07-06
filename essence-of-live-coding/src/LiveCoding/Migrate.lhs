@@ -24,6 +24,7 @@ import Data.Generics.Twins
 -- essence-of-live-coding
 import LiveCoding.Migrate.Debugger
 import LiveCoding.Migrate.Cell
+import LiveCoding.Migrate.Monad.Trans
 import LiveCoding.Migrate.Migration
 \end{code}
 \end{comment}
@@ -45,6 +46,7 @@ standardMigration
   <> migrationDebugging
   <> migrationCell
   <> newtypeMigration
+  <> migrationState
 
 -- | The standard migration working horse.
 --   Tries to apply the given migration,

@@ -22,6 +22,7 @@ import Control.Monad.Trans.Reader
 
 -- essence-of-live-coding
 import LiveCoding.Cell
+import LiveCoding.Cell.Monad.Trans
 
 \end{code}
 \end{comment}
@@ -141,12 +142,6 @@ As soon as the exception is thrown, the second cell is activated and fed with th
   case eb of
     Left e -> runReaderC' cell2 -< (e, a)
     Right b -> returnA -< b
-
-runReaderC' :: Cell (ReaderT r m) a b -> Cell m (r, a) b
-runReaderC' Cell { .. } = Cell
-  { cellStep = \state (r, a) -> runReaderT (cellStep state a) r
-  , ..
-  }
 \end{code}
 \end{comment}
 

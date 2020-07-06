@@ -40,6 +40,8 @@ library
     , LiveCoding.Cell
     , LiveCoding.Cell.Feedback
     , LiveCoding.Cell.HotCodeSwap
+    , LiveCoding.Cell.Monad
+    , LiveCoding.Cell.Monad.Trans
     , LiveCoding.Cell.Resample
     , LiveCoding.CellExcept
     , LiveCoding.Coalgebra
@@ -51,9 +53,11 @@ library
     , LiveCoding.Forever
     , LiveCoding.LiveProgram
     , LiveCoding.LiveProgram.HotCodeSwap
+    , LiveCoding.LiveProgram.Monad.Trans
     , LiveCoding.Migrate
     , LiveCoding.Migrate.Cell
     , LiveCoding.Migrate.Migration
+    , LiveCoding.Migrate.Monad.Trans
     , LiveCoding.Migrate.Debugger
     , LiveCoding.RuntimeIO
 
@@ -80,7 +84,8 @@ test-suite test
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
-      TestData.Foo1
+      Monad.Trans
+    , TestData.Foo1
     , TestData.Foo2
     , Util
   hs-source-dirs: test
