@@ -63,3 +63,9 @@ constMigrationFrom2
   => (forall a b c . (Typeable a, Typeable b, Typeable c) => t b c -> Maybe a)
   -> Migration
 constMigrationFrom2 f = Migration $ \_ t -> ext2Q (const Nothing) f t
+
+migrationTo1
+  :: Typeable t
+  => (forall a b . (Typeable a, Typeable b) => t b -> a -> Maybe (t b))
+  -> Migration
+migrationTo1 f = Migration $ \t a -> ext1M (const Nothing) (flip f a) t
