@@ -20,6 +20,8 @@ import LiveCoding.Debugger.StatePrint as X
 import LiveCoding.Exceptions as X
 import LiveCoding.Exceptions.Finite as X
 import LiveCoding.Forever as X
+import LiveCoding.Handle as X
+import LiveCoding.Handle.Examples as X
 import LiveCoding.LiveProgram as X
 import LiveCoding.LiveProgram.HotCodeSwap as X
 import LiveCoding.LiveProgram.Monad.Trans as X
