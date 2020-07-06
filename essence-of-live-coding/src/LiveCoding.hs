@@ -1,5 +1,3 @@
-\begin{comment}
-\begin{code}
 module LiveCoding
   (module X)
   where
@@ -26,5 +24,3 @@ import LiveCoding.Migrate as X
 import LiveCoding.Migrate.Debugger as X
 import LiveCoding.Migrate.Migration as X
 import LiveCoding.RuntimeIO as X
-\end{code}
-\end{comment}
