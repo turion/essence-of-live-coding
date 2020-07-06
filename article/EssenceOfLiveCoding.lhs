@@ -111,7 +111,7 @@ A monadic interface to our live programs is presented.
 In Section \ref{sec:tooling}, several useful tools such as debuggers and quickchecking utilities are shown.
 
 This article is written in literate Haskell and supplies the library presented here.
-The source code will be made openly available upon publication.\fxerror{Do it, or at least post a preview link for the reviewers here.}
+The source code is available at \href{https://github.com/turion/essence-of-live-coding} and \href{https://hackage.haskell.org/package/essence-of-live-coding}.
 
 \input{../essence-of-live-coding/src/LiveCoding/LiveProgram.lhs}
 \fxerror{I believe this is even easier with Servant because it has simple functions!}
