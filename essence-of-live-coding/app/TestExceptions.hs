@@ -11,8 +11,8 @@ import LiveCoding
 
 liveProgram = liveCell
   $ safely $ do
-    try $   throwingCell
-    safe $ arr (const (3:: Integer)) >>> sumC >>> arr (const ())
+    try $ throwingCell
+    safe $ arr (const (3 :: Integer)) >>> sumC >>> arr (const ())
 
 throwingCell = proc _ -> do
   n <- sumC -< (1 :: Integer)
@@ -20,7 +20,6 @@ throwingCell = proc _ -> do
     then throwC -< ()
     else returnA -< ()
   arrM $ lift . print -< n
-
 
 main = do
   (debugger, observer) <- countDebugger
