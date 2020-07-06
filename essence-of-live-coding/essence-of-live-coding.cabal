@@ -82,6 +82,7 @@ test-suite test
   other-modules:
       TestData.Foo1
     , TestData.Foo2
+    , Util
   hs-source-dirs: test
   build-depends:
       base >= 4.11 && < 5

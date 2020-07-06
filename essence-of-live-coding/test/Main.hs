@@ -6,7 +6,6 @@
 -- base
 import Control.Arrow
 import Data.Functor.Identity
-import System.IO.Unsafe (unsafePerformIO)
 
 -- test-framework
 import Test.Framework
@@ -21,6 +20,7 @@ import Test.QuickCheck
 import LiveCoding
 import qualified TestData.Foo1 as Foo1
 import qualified TestData.Foo2 as Foo2
+import Util
 
 intToInteger :: Int -> Integer
 intToInteger = toInteger
@@ -105,32 +105,8 @@ tests =
     ]
   ]
 
-withEvilDebugger :: Cell IO a b -> Cell Identity a b
-withEvilDebugger cell = hoistCell (Identity . unsafePerformIO) $ withDebuggerC cell statePrint
-
 countFrom :: Monad m => Int -> Cell m () Int
 countFrom n = arr (const 1) >>> sumC >>> arr (+ n)
 
 fromEither (Left  a) = a
 fromEither (Right a) = a
-
-data CellMigrationSimulation a b = CellMigrationSimulation
-  { cell1 :: Cell Identity a b
-  , cell2 :: Cell Identity a b
-  , input1 :: [a]
-  , input2 :: [a]
-  , output1 :: [b]
-  , output2 :: [b]
-  }
-
-instance (Eq b, Show b) => Testable (CellMigrationSimulation a b) where
-  property CellMigrationSimulation { .. }
-    = let Identity (output1', output2') = simulateCellMigration cell1 cell2 input1 input2
-      in output1 === output1' .&&. output2 === output2'
-
-simulateCellMigration :: Monad m => Cell m a b -> Cell m a b -> [a] -> [a] -> m ([b], [b])
-simulateCellMigration cell1 cell2 as1 as2 = do
-  (bs1, cell1') <- steps cell1 as1
-  let cell2' = hotCodeSwapCell cell2 cell1'
-  (bs2, _) <- steps cell2' as2
-  return (bs1, bs2)
