@@ -19,10 +19,7 @@ test_for_errors
 popd
 
 pushd essence-of-live-coding-gloss-example
-cabal repl &> result.txt <<EOF
-:livegloss
-:livereloadgloss
-EOF
+cat ../replcommands.txt | cabal repl &> result.txt
 test_for_errors
 popd
 

@@ -31,15 +31,18 @@ import LiveCoding
 import LiveCoding.Gloss hiding (statePicture, every, translate)
 
 main :: IO ()
-main = playCellForeground glossCell
+main = runHandlingStateT $ foreground liveProgram
 
-glossCell' :: GlossCell
-glossCell' = arr (const ()) >>> sine 3 >>> arr realToFrac >>> arr circleThing >>> addPicture
+liveProgram :: LiveProgram (HandlingStateT IO)
+liveProgram = liveCell $ glossWrapC defaultSettings glossCell
+
+glossCell' :: Cell PictureM () ()
+glossCell' = sine 3 >>> arr realToFrac >>> arr circleThing >>> addPicture
   where
     circleThing x = Gloss.translate (x * 10 - 90) 0 myCircle
     myCircle = color white $ thickCircle 10 20
 
-glossCell :: GlossCell
+glossCell :: Cell PictureM () ()
 glossCell = withDebuggerC glossCell' glossDebugger
 
 -- * To be ported to essence-of-live-coding-gloss (and delete the Arrows)
@@ -163,7 +166,7 @@ compPic (Composition (s1, s2))
   | otherwise = stateBoundedPic s1 `addRight` stateBoundedPic s2
 
 glossDebugger :: Debugger PictureM
-glossDebugger = Debugger $ liveCell $ every 100 >>> keep blank >>> arrM (lift . tell)
+glossDebugger = Debugger $ liveCell $ every 100 >>> keep blank >>> arrM (lift . lift . tell)
 
 every :: Data s => Integer -> Cell (StateT s PictureM) () (Maybe Picture)
 every maxN = proc () -> do

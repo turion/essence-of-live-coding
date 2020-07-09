@@ -38,7 +38,6 @@ library
   exposed-modules:
     LiveCoding.Gloss
     LiveCoding.Gloss.Debugger
-    LiveCoding.Gloss.GHCi
     LiveCoding.Gloss.PictureM
   build-depends:
       base >= 4.11 && < 5
