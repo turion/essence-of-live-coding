@@ -15,11 +15,14 @@ import LiveCoding.Gloss
 -- essence-of-live-coding-pulse
 import LiveCoding.Pulse
 
-glossCell :: IORef Float -> Cell PictureM [Event] ()
+glossProg :: IORef Float -> LiveProgram (HandlingStateT IO)
+glossProg = liveCell . glossWrapC defaultSettings . glossCell
+
+glossCell :: IORef Float -> Cell PictureM () ()
 glossCell ref = withDebuggerC (glossCell' ref) statePlay
 
-glossCell' :: IORef Float -> Cell PictureM [Event] ()
-glossCell' ref = proc _events -> do
+glossCell' :: IORef Float -> Cell PictureM () ()
+glossCell' ref = proc () -> do
   gearAngle <- integrate         -< 30
   addPicture                     -< gear gearAngle
   arrM (liftIO . writeIORef ref) -< gearAngle
@@ -74,5 +77,5 @@ main :: IO ()
 main = do
   ref <- newIORef 0
   void $ playPulseCell $ pulseCell ref
-  void $ playCell $ glossCell ref
+  void $ runHandlingStateT $ foreground $ glossProg ref
   void $ getLine
