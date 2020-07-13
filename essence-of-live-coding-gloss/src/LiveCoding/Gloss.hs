@@ -16,7 +16,7 @@ import System.Exit (exitSuccess)
 -- transformers
 import Control.Arrow (returnA)
 import Control.Monad.Trans.Writer
-import Control.Monad.Trans.State (StateT)
+import Control.Monad.Trans.State.Strict (StateT)
 
 -- gloss
 import Graphics.Gloss as X
