@@ -51,6 +51,7 @@ library
     , LiveCoding.Exceptions.Finite
     , LiveCoding.External
     , LiveCoding.Forever
+    , LiveCoding.GHCi
     , LiveCoding.Handle
     , LiveCoding.Handle.Examples
     , LiveCoding.LiveProgram

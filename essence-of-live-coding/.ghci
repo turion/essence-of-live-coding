@@ -3,3 +3,5 @@
 :def liveinit liveinit
 :def livestep livestep
 :def livereload livereload
+:def livelaunch livelaunch
+:def livestop livestop
