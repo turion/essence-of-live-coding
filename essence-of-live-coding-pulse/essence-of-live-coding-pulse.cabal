@@ -28,7 +28,6 @@ cabal-version:       >=1.10
 library
   exposed-modules:
     LiveCoding.Pulse
-    LiveCoding.Pulse.GHCi
   build-depends:
       base >= 4.11 && < 5
     , essence-of-live-coding >= 0.2.0.1

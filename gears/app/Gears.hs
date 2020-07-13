@@ -15,19 +15,16 @@ import LiveCoding.Gloss
 -- essence-of-live-coding-pulse
 import LiveCoding.Pulse
 
-glossProg :: IORef Float -> LiveProgram (HandlingStateT IO)
-glossProg = liveCell . glossWrapC defaultSettings . glossCell
+glossCell :: Cell PictureM (IORef Float) ()
+glossCell = withDebuggerC glossCell' statePlay
 
-glossCell :: IORef Float -> Cell PictureM () ()
-glossCell ref = withDebuggerC (glossCell' ref) statePlay
-
-glossCell' :: IORef Float -> Cell PictureM () ()
-glossCell' ref = proc () -> do
-  gearAngle <- integrate         -< 30
-  addPicture                     -< gear gearAngle
-  arrM (liftIO . writeIORef ref) -< gearAngle
-  phase     <- integrate         -< 5
-  addPicture                     -< rotate gearAngle $ blinker phase
+glossCell' :: Cell PictureM (IORef Float) ()
+glossCell' = proc ref -> do
+  gearAngle <- integrate             -< 30
+  addPicture                         -< gear gearAngle
+  arrM $ liftIO . uncurry writeIORef -< (ref, gearAngle)
+  phase     <- integrate             -< 5
+  addPicture                         -< rotate gearAngle $ blinker phase
 
 blinker :: Float -> Picture
 blinker phase
@@ -52,10 +49,11 @@ gear angle = scale 3 3 $ rotate angle $ pictures
 
 tones = [D, F, A]
 
-pulseCell :: IORef Float -> PulseCell
-pulseCell ref = proc _ -> do
-  angle <- getAngleEvery 1024 ref -< ()
-  osc'                            -< cycleTones angle
+pulseCell :: PulseCell (IORef Float) ()
+pulseCell = proc ref -> do
+  angle <- getAngleEvery 1024 -< ref
+  pulse <- osc'               -< cycleTones angle
+  returnA                     -< (pulse, ())
 
 cycleTones :: Int -> Float
 cycleTones angle = f
@@ -63,19 +61,20 @@ cycleTones angle = f
   $ (`mod` length tones)
   $ angle `div` (60 `div` length tones)
 
-getAngleEvery :: Int -> IORef Float -> Cell IO () Int
-getAngleEvery maxCount ref = proc _ -> do
+getAngleEvery :: Int -> Cell IO (IORef Float) Int
+getAngleEvery maxCount = proc ref -> do
   count <- sumC   -< 1
   mAngle <- if count `mod` maxCount == 0
-    then arr Just <<< constM (readIORef ref) -< ()
-    else returnA                             -< Nothing
+    then arr Just <<< arrM readIORef -< ref
+    else returnA                     -< Nothing
   angle <- keep 0 -< mAngle
   returnA         -< round angle
 
+liveProgram :: LiveProgram (HandlingStateT IO)
+liveProgram = liveCell mainCell
+
+mainCell :: Cell (HandlingStateT IO) () ()
+mainCell = handling (ioRefHandle 0) >>> (pulseWrapC pulseCell &&& glossWrapC defaultSettings glossCell) >>> arr (const ())
 
 main :: IO ()
-main = do
-  ref <- newIORef 0
-  void $ playPulseCell $ pulseCell ref
-  void $ runHandlingStateT $ foreground $ glossProg ref
-  void $ getLine
+main = runHandlingStateT $ foreground liveProgram
