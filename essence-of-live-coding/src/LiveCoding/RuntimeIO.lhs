@@ -17,19 +17,7 @@ import LiveCoding.LiveProgram
 import LiveCoding.LiveProgram.HotCodeSwap
 import LiveCoding.Debugger
 import LiveCoding.Migrate
-
-stepProgram :: Monad m => LiveProgram m -> m (LiveProgram m)
-stepProgram LiveProgram {..} = do
-  liveState' <- liveStep liveState
-  return LiveProgram { liveState = liveState', .. }
-
-stepProgramMVar
-  :: MVar (LiveProgram IO)
-  -> IO ()
-stepProgramMVar var = do
-  currentProgram <- takeMVar var
-  nextProgram <- stepProgram currentProgram
-  putMVar var nextProgram
+import LiveCoding.RuntimeIO.Launch
 \end{code}
 \end{comment}
 
@@ -58,7 +46,7 @@ Instead, we can store the program in an \mintinline{haskell}{MVar}
 and call \mintinline{haskell}{stepProgramMVar} on it.
 Now that we can migrate any \mintinline{haskell}{Data},
 we can follow the original plan of exchanging the live program in mid-execution:
-\begin{code}
+\begin{spec}
 update
   :: MVar (LiveProgram IO)
   ->       LiveProgram IO
@@ -66,7 +54,7 @@ update
 update var newProg = do
   oldProg <- takeMVar var
   putMVar var $ hotCodeSwap newProg oldProg
-\end{code}
+\end{spec}
 The old program is retrieved from the concurrent variable,
 migrated to the new state,
 and put back for further execution.
@@ -101,15 +89,8 @@ The package \texttt{foreign-store} \cite{foreign-store} offers a remedy:
 To facilitate its usage, GHCi macros are defined for the initialisation and reload operations.
 \begin{comment}
 \begin{code}
-launch :: LiveProgram IO -> IO (MVar (LiveProgram IO))
-launch liveProg = do
-  var <- newMVar liveProg
-  forkIO $ background var
-  return var
-
-launchWithDebugger :: LiveProgram IO -> Debugger IO -> IO (MVar (LiveProgram IO))
-launchWithDebugger liveProg debugger = launch $ liveProg `withDebugger` debugger
 {-
+launchWithDebugger :: LiveProgram IO -> Debugger IO -> IO (MVar (LiveProgram IO), ThreadId)
   var <- newMVar liveProg
   forkIO $ backgroundWithDebugger var debugger
   return var
@@ -128,12 +109,6 @@ backgroundWithDebugger var debugger = forever $ do
   liveProg'' <- debug debugger liveProg'
   putMVar var liveProg''
 -}
-
-background :: MVar (LiveProgram IO) -> IO ()
-background var = forever $ do
-  liveProg   <- takeMVar var
-  liveProg'  <- stepProgram liveProg
-  putMVar var liveProg'
 
 {-
 -- Old version where combine was called from background

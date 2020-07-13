@@ -62,6 +62,7 @@ library
     , LiveCoding.Migrate.Monad.Trans
     , LiveCoding.Migrate.Debugger
     , LiveCoding.RuntimeIO
+    , LiveCoding.RuntimeIO.Launch
 
   other-modules:
       LiveCoding.Preliminary.CellExcept

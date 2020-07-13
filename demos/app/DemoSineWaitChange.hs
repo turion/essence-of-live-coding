@@ -15,7 +15,7 @@ printSineWait' t = liveCell
 
 main = do
   (debugger, observer) <- countDebugger
-  var <- launchWithDebugger (printSineWait' t1) $ debugger
+  launchedProgram <- launchWithDebugger (printSineWait' t1) $ debugger
   await observer $ (2 + t1) * stepRate
-  update var $ printSineWait' t2 `withDebugger` debugger
+  update launchedProgram $ printSineWait' t2 `withDebugger` debugger
   await observer $ (2 + t1 + t2) * stepRate
