@@ -1,4 +1,7 @@
-:set -package essence-of-live-coding-pulse
-:m + LiveCoding.Pulse.GHCi Control.Concurrent
-:def livepulse livepulse
-:def livereloadpulse livereloadpulse
+:set -package essence-of-live-coding-pulse-example
+:m + LiveCoding.GHCi Control.Concurrent
+:def liveinit liveinit
+:def livestep livestep
+:def livereload livereload
+:def livelaunch livelaunch
+:def livestop livestop

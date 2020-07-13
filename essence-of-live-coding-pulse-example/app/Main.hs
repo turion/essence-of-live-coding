@@ -68,7 +68,11 @@ cycleThrough bs cycleLength = let vector = Vector.fromList (NonEmpty.toList bs) 
 
 frequencies' = cycleThrough (NonEmpty.fromList $ [f D, f G, o $ f Bb]) 8000
 
-pulseCell = frequencies' >>> osc'
+pulseCell :: PulseCell () ()
+pulseCell = frequencies' >>> osc' >>> arr (, ())
+
+liveProgram :: LiveProgram (HandlingStateT IO)
+liveProgram = liveCell $ pulseWrapC pulseCell
 
 main :: IO ()
-main = void $ playPulseCell pulseCell
+main = runHandlingStateT $ foreground liveProgram

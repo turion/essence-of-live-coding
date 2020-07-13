@@ -15,33 +15,30 @@ import Sound.Pulse.Simple
 
 -- essence-of-live-coding
 import LiveCoding
+import Control.Monad.Trans.Class (MonadTrans(lift))
 
-type PulseCell = Cell IO () Float
+type PulseCell a b = Cell IO a (Float, b)
 
-playPulseCell :: PulseCell -> IO (MVar PulseCell)
-playPulseCell pulseCell = do
-  var <- newMVar pulseCell
-  pulseClient <- simpleNew
-    Nothing
-    "example"
-    Play
-    Nothing
-    "this is an example application"
-    (SampleSpec (F32 LittleEndian) 44100 1)
-    Nothing
-    Nothing
-  forkIO $ forever $ do
-    cell <- takeMVar var
-    (samples, cell') <- steps cell $ replicate 1024 ()
-    simpleWrite pulseClient samples
-    putMVar var cell'
-  return var
+pulseHandle :: Handle IO Simple
+pulseHandle = Handle
+  { create = simpleNew
+      Nothing
+      "example"
+      Play
+      Nothing
+      "this is an example application"
+      (SampleSpec (F32 LittleEndian) 44100 1)
+      Nothing
+      Nothing
+  , destroy = simpleFree
+  }
 
--- TODO Generalisable
-updatePulse :: MVar PulseCell -> PulseCell -> IO ()
-updatePulse var newCell = do
-  oldCell <- takeMVar var
-  putMVar var $ hotCodeSwapCell newCell oldCell
+pulseWrapC :: PulseCell a b -> Cell (HandlingStateT IO) a b
+pulseWrapC cell = proc a -> do
+  simple <- handling pulseHandle -< ()
+  (sample, b) <- liftCell cell -< a
+  arrM $ lift . uncurry simpleWrite -< (simple, [sample])
+  returnA -< b
 
 -- Returns the sum between -1 and 1
 wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
@@ -93,4 +90,3 @@ f note = 220 * (2 ** (fromIntegral (fromEnum note) / 12))
 
 o :: Float -> Float
 o = (* 2)
-
