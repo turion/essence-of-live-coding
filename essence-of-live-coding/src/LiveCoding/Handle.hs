@@ -12,6 +12,7 @@ module LiveCoding.Handle
   , handling
   , HandlingState (..)
   , HandlingStateT
+  , isRegistered
   , runHandlingState
   , runHandlingStateC
   , runHandlingStateT
