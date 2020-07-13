@@ -8,9 +8,9 @@ import Control.Arrow
 import qualified Data.IntMap as IntMap
 
 -- transformers
-import Control.Monad.Trans.RWS.Strict
+import Control.Monad.Trans.RWS.Strict (RWS, tell)
 import qualified Control.Monad.Trans.RWS.Strict as RWS
-import qualified Control.Monad.Trans.State.Strict as State
+import Control.Monad.Trans.State.Strict
 
 -- test-framework
 import Test.Framework
@@ -27,7 +27,7 @@ import Control.Monad.Trans.Class (MonadTrans(lift))
 testHandle :: Handle (RWS () [String] Int) String
 testHandle = Handle
   { create = do
-      n <- get
+      n <- RWS.get
       return $ "Handle #" ++ show n
   , destroy = const $ tell ["Destroyed handle"]
   }
@@ -46,7 +46,7 @@ test = testGroup "Handle.LiveProgram"
   ]
     where
       inspectHandlingState = do
-        HandlingState { .. } <- State.get
+        HandlingState { .. } <- get
         lift $ tell
           [ "Handles: " ++ show nHandles
           , "Destructors: " ++ unwords ((show . second isRegistered) <$> IntMap.toList destructors)
