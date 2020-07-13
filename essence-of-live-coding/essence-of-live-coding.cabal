@@ -90,6 +90,7 @@ test-suite test
   main-is: Main.hs
   other-modules:
       Handle
+    , Monad
     , Monad.Trans
     , TestData.Foo1
     , TestData.Foo2
@@ -98,6 +99,7 @@ test-suite test
   build-depends:
       base >= 4.11 && < 5
     , syb == 0.7.*
+    , transformers >= 0.5
     , essence-of-live-coding
     , test-framework == 0.8.*
     , test-framework-quickcheck2 == 0.3.*
