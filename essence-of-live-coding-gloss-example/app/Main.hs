@@ -13,7 +13,7 @@ import Prelude hiding (Bounded)
 -- transformers
 import Control.Monad.Trans.Accum
 
-import Control.Monad.Trans.State
+import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Writer
 

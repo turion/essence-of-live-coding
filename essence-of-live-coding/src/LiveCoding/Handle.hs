@@ -28,7 +28,7 @@ import qualified Data.IntMap as IntMap
 
 -- transformers
 import Control.Monad.Trans.Class (MonadTrans(lift))
-import Control.Monad.Trans.State
+import Control.Monad.Trans.State.Strict
 
 -- essence-of-live-coding
 import LiveCoding.Cell

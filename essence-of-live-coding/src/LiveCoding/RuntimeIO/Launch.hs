@@ -10,7 +10,7 @@ import Control.Concurrent
 import Control.Monad
 
 -- transformers
-import Control.Monad.Trans.State
+import Control.Monad.Trans.State.Strict
 
 -- essence-of-live-coding
 import LiveCoding.Debugger

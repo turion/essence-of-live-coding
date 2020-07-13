@@ -10,8 +10,8 @@ import Control.Arrow (arr, (>>>))
 import Data.Data (Data)
 
 -- transformers
-import Control.Monad.Trans.State
 import Control.Monad.Trans.Reader (runReaderT, ReaderT)
+import Control.Monad.Trans.State.Strict (StateT (..), runStateT, evalStateT)
 
 -- essence-of-live-coding
 import LiveCoding.Cell
