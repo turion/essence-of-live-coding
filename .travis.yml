@@ -1,4 +1,7 @@
 language: haskell
+cache:
+  directories:
+    - $HOME/.cabal
 ghc:
   - '8.8'
   - '8.6'
