@@ -1,3 +1,4 @@
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module LiveCoding.Cell.NonBlocking
@@ -7,29 +8,39 @@ module LiveCoding.Cell.NonBlocking
 
 -- base
 import Control.Concurrent
-import Control.Monad (void, when)
+import Control.Monad ((>=>), void, when)
+import Data.Data
 
 -- essence-of-live-coding
 import LiveCoding.Cell
+import LiveCoding.Handle
+import LiveCoding.Handle.Examples
+
+threadVarHandle :: Handle IO (MVar ThreadId)
+threadVarHandle = Handle
+  { create = newEmptyMVar
+  , destroy = tryTakeMVar >=> mapM_ killThread
+  }
 
 {- | Wrap a cell in a non-blocking way.
-
 Every incoming sample of @nonBlocking cell@ results in an immediate output,
 either @Just b@ if the value was computed since the last poll,
 or @Nothing@ if no new value was computed yet.
 The resulting cell can be polled by sending 'Nothing'.
-
 The boolean flag controls whether the current computation is aborted and restarted when new data arrives.
 -}
 nonBlocking
-  :: Bool
+  :: Typeable b
+  => Bool
   -- ^ Pass 'True' to abort the computation when new data arrives. 'False' discards new data.
-  ->     Cell IO        a         b
-  -> IO (Cell IO (Maybe a) (Maybe b))
-nonBlocking abort Cell { .. } = do
-  threadVar <- newEmptyMVar
-  resultVar <- newEmptyMVar
-  let nonBlockingStep s Nothing = do
+  -> Cell IO a b
+  -> Cell (HandlingStateT IO) (Maybe a) (Maybe b)
+nonBlocking abort Cell { .. } = proc aMaybe -> do
+  threadVar <- handling threadVarHandle            -< ()
+  resultVar <- handling emptyMVarHandle            -< ()
+  liftCell Cell { cellStep = nonBlockingStep, .. } -< (aMaybe, threadVar, resultVar)
+    where
+      nonBlockingStep s (Nothing, threadVar, resultVar) = do
         bsMaybe <- tryTakeMVar resultVar
         case bsMaybe of
           Just (b, s') -> do
@@ -37,7 +48,7 @@ nonBlocking abort Cell { .. } = do
             killThread threadId
             return (Just b, s')
           Nothing -> return (Nothing, s)
-      nonBlockingStep s (Just a) = do
+      nonBlockingStep s (Just a, threadVar, resultVar) = do
         noThreadRunning <- if abort
             -- Abort the current computation if it is still running
           then do
@@ -49,8 +60,8 @@ nonBlocking abort Cell { .. } = do
         when noThreadRunning $ do
           threadId <- forkIO $ putMVar resultVar =<< cellStep s a
           putMVar threadVar threadId
-        nonBlockingStep s Nothing
-  return Cell { cellStep = nonBlockingStep, .. }
+        nonBlockingStep s (Nothing, threadVar, resultVar)
 
--- FIXME That's a wart. I should write this out with a general wrapper that sends Kleisli arrow transformations to cell transformations
+-- It would have been nice to refactor this with 'hoistCellKleisli',
+-- but that would expose the existential state type to the handle.
 nonBlocking abort noCell = nonBlocking abort $ toCell noCell
