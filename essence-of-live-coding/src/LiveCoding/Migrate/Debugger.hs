@@ -19,7 +19,6 @@ maybeMigrateToDebugging Debugging { dbgState } state' = do
   return Debugging { .. }
 
 -- | Tries to cast the current state into the joint state of debugger and program.
---   Will cast to the program state if possible, or else try to cast to the debugger state.
 migrationToDebugging :: Migration
 migrationToDebugging = migrationTo2 maybeMigrateToDebugging
 
