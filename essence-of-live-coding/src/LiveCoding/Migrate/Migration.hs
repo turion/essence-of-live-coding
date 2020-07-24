@@ -54,7 +54,7 @@ userMigration specific = Migration $ \_a b -> cast =<< specific <$> cast b
 
 migrationTo2
   :: Typeable t
-  => (forall a b c . (Typeable a, Typeable b, Typeable c) => t b c -> a -> Maybe (t b c))
+  => (forall a b c . (Data a, Data b, Data c) => t b c -> a -> Maybe (t b c))
   -> Migration
 migrationTo2 f = Migration $ \t a -> ext2M (const Nothing) (flip f a) t
 
