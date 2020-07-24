@@ -98,30 +98,7 @@ But as soon as we do this,
 the local binding \mintinline{haskell}{var} is lost.
 The package \texttt{foreign-store} \cite{foreign-store} offers a remedy:
 \mintinline{haskell}{var} can be stored persistently across reloads.
-To facilitate its usage, GHCi macros are defined for the initialisation and reload operations (Figure \ref{fig:ghci}).
-\input{../essence-of-live-coding/src/LiveCoding/GHCi.lhs}
-They assume the main live program and the \mintinline{haskell}{MVar} to be called \mintinline{haskell}{liveProgram} and \mintinline{haskell}{var},
-respectively,
-but this can of course be generalised.
-With the macros loaded, the session simplifies to:
-\begin{verbatim}
- > :liveinit
- > :livestep
-0
- > :livestep
-1
- > :livereload
-[1 of 1] Compiling Main ( ... )
-Ok, one module loaded.
- > :livestep
-2
- > :livestep
-1
- > :livestep
-0
-\end{verbatim}
-Before entering \texttt{:livereload},
-the main file was edited in place and reloaded.
+To facilitate its usage, GHCi macros are defined for the initialisation and reload operations.
 \begin{comment}
 \begin{code}
 launch :: LiveProgram IO -> IO (MVar (LiveProgram IO))
@@ -169,10 +146,15 @@ combine var prog = do
 -}
 \end{code}
 \end{comment}
+
 Of course,
 it is not intended to enter \texttt{:livestep} repeatedly when coding.
 We want to launch a separate thread which executes the steps in the background.
 Again, we can reuse the function \mintinline{haskell}{launch}.
 (Only the type signature needs updating.)
+Using \texttt{ghcid} (``GHCi as a daemon'' \cite{ghcid}),
+the launching and reloading operations can be automatically triggered upon starting \texttt{ghcid} and editing the code,
+allowing for a smooth live coding experience without any manual intervention.
+
 In the next subsection,
 a full example is shown.
