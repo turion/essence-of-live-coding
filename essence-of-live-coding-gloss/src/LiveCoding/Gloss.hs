@@ -80,10 +80,13 @@ glossHandle GlossSettings { .. } = Handle
   }
 
 getPicture :: GlossVars -> IO Picture
-getPicture GlossVars { .. } = readIORef glossPicRef
+getPicture GlossVars { .. } = do
+  threadDelay 10000
+  readIORef glossPicRef
 
 handleEvent :: Event -> GlossVars -> IO GlossVars
 handleEvent event vars@GlossVars { .. } = do
+  threadDelay 10000
   modifyIORef glossEventsRef (event :)
   return vars
 
@@ -105,9 +108,9 @@ glossWrapC glossSettings cell = proc a -> do
   liftCell pump -< (glossVars, a)
   where
     pump = proc (GlossVars { .. }, a) -> do
-      _      <- arrM takeMVar                         -< glossDTimeVar
+      dTime  <- arrM takeMVar                         -< glossDTimeVar
       events <- arrM $ flip atomicModifyIORef' ([], ) -< glossEventsRef
       (picture, b) <- runPictureT cell                -< (events, a)
       arrM (uncurry writeIORef)                       -< (glossPicRef, picture)
-      arrM threadDelay                                -< 1000 -- TODO Tweak for better performance
+      -- arrM threadDelay                                -< round $ 1000 * dTime -- TODO Tweak for better performance
       returnA                                         -< b
