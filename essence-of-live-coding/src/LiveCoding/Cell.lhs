@@ -379,6 +379,13 @@ newtype Parallel s1 s2 = Parallel (s1, s2)
 instance Monad m => Arrow (Cell m) where
   arr = arrM . (return .)
 
+  -- For efficiency because Arrow desugaring favours 'first'
+  first ArrM { .. } = ArrM { runArrM = \(a, c) -> ( , c) <$> runArrM a }
+  first Cell { .. } = Cell
+    { cellStep = \s (a, c) -> first ( , c) <$> cellStep s a
+    , ..
+    }
+
   ArrM f *** ArrM g = ArrM $ runKleisli $ Kleisli f *** Kleisli g
   ArrM { .. } *** Cell { .. } = Cell
     { cellStep = \state (a, c) -> do
