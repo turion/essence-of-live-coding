@@ -1,12 +1,15 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Arrows #-}
 module LiveCoding.Pulse where
 
 -- base
 import Control.Arrow as X
 import Control.Concurrent
-import Control.Monad (forever)
+import Control.Monad (void, forever)
 import Control.Monad.Fix
+import Data.Maybe (fromMaybe)
 import Data.Monoid (getSum, Sum(Sum))
+import qualified Data.List.NonEmpty as Unzip
 
 -- transformers
 import Control.Monad.Trans.Class (MonadTrans(lift))
@@ -60,18 +63,36 @@ This performs several steps of your cell at a time,
 replicating the input so many times.
 -}
 pulseWrapC
-  :: Int
+  :: Typeable b
+  => Int
   -- ^ Specifies how many steps of your 'PulseCell' should be performed in one step of 'pulseWrapC'.
   -> PulseCell IO a b
-  -- ^ Your cell that produces samples.
+  -- ^ Your cell that writes samples.
   -> Cell (HandlingStateT IO) a [b]
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
-  samplesAndBs <- resampleList $ liftCell $ runWriterC cell -< replicate bufferSize a
+  bsMaybe <- inSepThread $ calcAndPushSamples bufferSize cell -< (simple, a)
+  returnA -< fromMaybe [] bsMaybe
+
+calcAndPushSamples :: Int -> PulseCell IO a b -> Cell IO (Simple, a) [b]
+calcAndPushSamples bufferSize cell = proc (simple, a) -> do
+  samplesAndBs <- resampleList $ runWriterC cell -< replicate bufferSize a
   let (samples, bs) = unzip samplesAndBs
       samples' = getSum <$> samples
-  arrM $ lift . uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
+  arrM $ uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
   returnA -< bs
+
+inSepThread :: Typeable b => Cell IO a b -> Cell (HandlingStateT IO) a (Maybe b)
+inSepThread Cell { .. } = proc a -> do
+  resultVar <- handling $ newMVarHandle Nothing -< ()
+  liftCell Cell { cellStep = backgroundStep, cellState = cellState } -< (resultVar, a)
+    where
+      backgroundStep s (resultVar, a) = do
+        (bMaybe, s'Maybe) <- Unzip.unzip <$> takeMVar resultVar
+        let s' = fromMaybe s s'Maybe
+        forkIO $ putMVar resultVar =<< Just <$> cellStep s' a
+        return (bMaybe, s')
+inSepThread notACell = inSepThread $ toCell notACell
 
 {- | Returns the sum of all incoming values,
 and wraps it between -1 and 1.
