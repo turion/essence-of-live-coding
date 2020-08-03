@@ -1,10 +1,11 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Arrows #-}
 module LiveCoding.Pulse where
 
 -- base
 import Control.Arrow as X
 import Control.Concurrent
-import Control.Monad (forever)
+import Control.Monad (void, forever)
 import Control.Monad.Fix
 
 -- transformers
@@ -16,6 +17,7 @@ import Sound.Pulse.Simple
 -- essence-of-live-coding
 import LiveCoding
 import Control.Monad.Trans.Class (MonadTrans(lift))
+import Data.Maybe (fromMaybe)
 
 type PulseCell a b = Cell IO a (Float, b)
 
@@ -36,13 +38,29 @@ pulseHandle = Handle
   , destroy = simpleFree
   }
 
-pulseWrapC :: Int -> PulseCell a b -> Cell (HandlingStateT IO) a [b]
+pulseWrapC :: Int -> PulseCell a () -> Cell (HandlingStateT IO) a ()
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
-  samplesAndBs <- resampleList $ liftCell cell -< replicate bufferSize a
-  let (samples, bs) = unzip samplesAndBs
-  arrM $ lift . uncurry simpleWrite -< samples `seq` bs `seq` (simple, samples)
-  returnA -< bs
+  -- inSepThread calcAndPushSamples -< (simple, a)
+  -- FIXME It remains to test whether sound actually works that way
+  -- FIXME Also try only StrictData
+  liftCell calcAndPushSamples -< (simple, a)
+    where
+      calcAndPushSamples = proc (simple, a) -> do
+        samplesAndBs <- resampleList cell -< replicate bufferSize a
+        let (samples, bs) = unzip samplesAndBs
+        arrM $ uncurry simpleWrite -< (simple, samples)
+
+inSepThread :: Cell IO a () -> Cell (HandlingStateT IO) a ()
+inSepThread Cell { .. } = proc a -> do
+  resultVar <- handling $ newMVarHandle Nothing -< ()
+  liftCell Cell { cellStep = backgroundStep, cellState = cellState } -< (resultVar, a)
+    where
+      backgroundStep s (resultVar, a) = do
+        s' <- fromMaybe s <$> takeMVar resultVar
+        forkIO $ putMVar resultVar =<< (Just . snd) <$> cellStep s a
+        return ((), s')
+inSepThread notACell = inSepThread $ toCell notACell
 
 -- Returns the sum between -1 and 1
 wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
