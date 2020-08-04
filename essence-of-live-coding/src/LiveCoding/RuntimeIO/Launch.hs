@@ -104,7 +104,4 @@ stepProgram LiveProgram {..} = do
 stepProgramMVar
   :: MVar (LiveProgram IO)
   -> IO ()
-stepProgramMVar var = do
-  currentProgram <- takeMVar var
-  nextProgram <- stepProgram currentProgram
-  putMVar var nextProgram
+stepProgramMVar programVar = modifyMVar_ programVar stepProgram
