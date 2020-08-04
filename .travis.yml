@@ -8,8 +8,11 @@ ghc:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev libpulse-dev libblas-dev liblapack-dev
+  - git fetch origin master:origin/master
 script:
   - cabal new-build all --enable-tests
   - cabal new-test all --enable-tests
-  - git fetch origin master:origin/master && git rebase origin/master --exec "cabal new-build all --enable-tests"
+  - git rebase origin/master --exec "cabal new-build all --enable-tests"
+  - ./test-repl.sh
+  - git rebase origin/master --exec "./test-repl.sh"
 install: skip
