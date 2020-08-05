@@ -73,7 +73,7 @@ glossHandle GlossSettings { .. } = Handle
       glossPicRef <- newIORef blank
       glossExitRef <- newIORef False
       let glossVars = GlossVars { .. }
-      glossThread <- forkIO
+      glossThread <- forkOS
         $ playIO displaySetting backgroundColor stepsPerSecond glossVars getPicture handleEvent stepGloss
       return GlossHandle { .. }
   , destroy = \GlossHandle { glossVars = GlossVars { .. }, .. } -> writeIORef glossExitRef True
