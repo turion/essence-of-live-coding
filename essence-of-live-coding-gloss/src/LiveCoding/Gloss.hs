@@ -105,9 +105,9 @@ glossWrapC glossSettings cell = proc a -> do
   liftCell pump -< (glossVars, a)
   where
     pump = proc (GlossVars { .. }, a) -> do
-      _      <- arrM takeMVar                        -< glossDTimeVar
-      events <- arrM $ flip atomicModifyIORef ([], ) -< glossEventsRef
-      (picture, b) <- runPictureT cell               -< (events, a)
-      arrM (uncurry writeIORef)                      -< (glossPicRef, picture)
-      arrM threadDelay                               -< 10000 -- TODO Tweak for better performance
-      returnA                                        -< b
+      _      <- arrM takeMVar                         -< glossDTimeVar
+      events <- arrM $ flip atomicModifyIORef' ([], ) -< glossEventsRef
+      (picture, b) <- runPictureT cell                -< (events, a)
+      arrM (uncurry writeIORef)                       -< (glossPicRef, picture)
+      arrM threadDelay                                -< 1000 -- TODO Tweak for better performance
+      returnA                                         -< b
