@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {- |
 Run a cell at a fixed integer multiple speed.
 The general approach is to take an existing cell (the "inner" cell)
@@ -30,8 +31,8 @@ resampleList Cell { cellState, cellStep = singleStep } = Cell { .. }
   where
     cellStep s [] = return ([], s)
     cellStep s (a : as) = do
-      (b , s' ) <- singleStep s  a
-      (bs, s'') <- cellStep   s' as
+      (!b , !s' ) <- singleStep s  a
+      (!bs, !s'') <- cellStep   s' as
       return (b : bs, s'')
 
 resampleMaybe :: Monad m => Cell m a b -> Cell m (Maybe a) (Maybe b)

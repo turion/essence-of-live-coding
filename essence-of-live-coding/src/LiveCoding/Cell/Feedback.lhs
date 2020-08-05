@@ -1,6 +1,7 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -97,7 +98,7 @@ keepJust = feedback Nothing $ arr keep
 --   A new value can be stored by inputting 'Maybe a'.
 keep :: (Data a, Monad m) => a -> Cell m (Maybe a) a
 keep a = feedback a $ proc (ma, aOld) -> do
-  let aNew = fromMaybe aOld ma
+  let !aNew = fromMaybe aOld ma
   returnA -< (aNew, aNew)
 \end{code}
 \end{comment}

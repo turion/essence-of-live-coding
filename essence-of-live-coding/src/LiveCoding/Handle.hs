@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ExistentialQuantification #-}
@@ -171,10 +172,10 @@ handling
   -> Cell (HandlingStateT m) arbitrary h
 handling handleImpl@Handle { .. } = Cell
   { cellState = Uninitialized
-  , cellStep = \state input -> case state of
-      handling@Handling { .. } -> do
+  , cellStep = \state _ -> case state of
+      !handling@Handling { .. } -> do
         reregister handleImpl handling
-        return (handle, state)
+        handle `seq` return (handle, handling)
       Uninitialized -> do
         handle <- lift create
         id <- register handleImpl handle
