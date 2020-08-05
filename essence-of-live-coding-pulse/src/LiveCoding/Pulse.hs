@@ -19,6 +19,9 @@ import Control.Monad.Trans.Class (MonadTrans(lift))
 
 type PulseCell a b = Cell IO a (Float, b)
 
+sampleRate :: Num a => a
+sampleRate = 48000
+
 pulseHandle :: Handle IO Simple
 pulseHandle = Handle
   { create = simpleNew
@@ -27,18 +30,19 @@ pulseHandle = Handle
       Play
       Nothing
       "this is an example application"
-      (SampleSpec (F32 LittleEndian) 44100 1)
+      (SampleSpec (F32 LittleEndian) sampleRate 1)
       Nothing
       Nothing
   , destroy = simpleFree
   }
 
-pulseWrapC :: PulseCell a b -> Cell (HandlingStateT IO) a b
-pulseWrapC cell = proc a -> do
+pulseWrapC :: Int -> PulseCell a b -> Cell (HandlingStateT IO) a [b]
+pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
-  (sample, b) <- liftCell cell -< a
-  arrM $ lift . uncurry simpleWrite -< (simple, [sample])
-  returnA -< b
+  samplesAndBs <- resampleList $ liftCell cell -< replicate bufferSize a
+  let (samples, bs) = unzip samplesAndBs
+  arrM $ lift . uncurry simpleWrite -< samples `seq` bs `seq` (simple, samples)
+  returnA -< bs
 
 -- Returns the sum between -1 and 1
 wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
@@ -49,6 +53,9 @@ wrapSum = Cell
         (_, accum')  = properFraction $ accum + a
     in return (accum', accum')
   }
+
+wrapIntegral :: (Monad m, Data a, RealFloat a) => Cell m a a
+wrapIntegral = arr (/ sampleRate) >>> wrapSum
 
 modSum :: (Monad m, Data a, Integral a) => a -> Cell m a a
 modSum denominator = Cell
@@ -63,7 +70,7 @@ clamp lower upper a = min upper $ max lower a
 osc :: (Data a, RealFloat a, MonadFix m) => Cell (ReaderT a m) () a
 osc = proc _ -> do
   f <- constM ask -< ()
-  phase <- wrapSum -< f / 44100
+  phase <- wrapSum -< f / 48000
   returnA -< sin $ 2 * pi * phase
 
 osc' :: (Data a, RealFloat a, MonadFix m) => Cell m a a

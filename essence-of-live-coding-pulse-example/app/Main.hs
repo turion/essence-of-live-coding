@@ -72,7 +72,7 @@ pulseCell :: PulseCell () ()
 pulseCell = frequencies' >>> osc' >>> arr (, ())
 
 liveProgram :: LiveProgram (HandlingStateT IO)
-liveProgram = liveCell $ pulseWrapC pulseCell
+liveProgram = liveCell $ pulseWrapC 1024 pulseCell >>> arr (const ())
 
 main :: IO ()
 main = runHandlingStateT $ foreground liveProgram
