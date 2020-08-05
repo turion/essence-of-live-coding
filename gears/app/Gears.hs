@@ -74,7 +74,11 @@ liveProgram :: LiveProgram (HandlingStateT IO)
 liveProgram = liveCell mainCell
 
 mainCell :: Cell (HandlingStateT IO) () ()
-mainCell = handling (ioRefHandle 0) >>> (pulseWrapC 1600 pulseCell &&& glossWrapC defaultSettings glossCell) >>> arr (const ())
+mainCell = proc () -> do
+  handle <- handling $ ioRefHandle 0   -< ()
+  pulseWrapC 1600 pulseCell            -< handle
+  glossWrapC defaultSettings glossCell -< handle
+  returnA                              -< ()
 
 main :: IO ()
 main = runHandlingStateT $ foreground liveProgram
