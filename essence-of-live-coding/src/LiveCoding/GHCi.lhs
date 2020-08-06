@@ -26,37 +26,22 @@ livelaunch _ = return $ unlines
   , "save launchedProgram"
   ]
 
-livestop _ = return "stop LaunchedProgram { .. } liveProgram"
+livestop _ = return "stop launchedProgram"
 
 \end{code}
 
-\begin{spec}
--- Previous version. Could also parametrise by liveProgram
-liveinit "" = liveinit "liveProgram"
-liveinit progName = return $ unlines
-  [ "programVar <- newMVar " ++ progName
-  , "save programVar"
-  ]
-\end{spec}
-\begin{spec}
-livereload "" = livereload "liveProgram"
-livereload progName = return $ unlines
-  [ ":reload"
-  , "programVar <- load"
-  , "update programVar " ++ progName
-  ]
-\end{spec}
 \end{comment}
 \begin{figure}
 \begin{code}
--- code is getting uglier. Do I want to store the m type? Because then I can't switch backend monads easily anymore
-load :: IO (MVar (LiveProgram IO), Maybe ThreadId)
-load = readStore $ Store 0
+-- The LiveProgram serves as a proxy for m.
+load :: Launchable m => LiveProgram m -> IO (LaunchedProgram m)
+load _ = readStore $ Store 0
 \end{code}
 \begin{code}
-save :: (MVar (LiveProgram IO), Maybe ThreadId) -> IO ()
+save :: Launchable m => LaunchedProgram m -> IO ()
 save = writeStore $ Store 0
 \end{code}
+% Could also parametrise by liveProgram
 \begin{code}
 liveinit _ = return $ unlines
   [ "programVar <- newMVar liveProgram"
@@ -67,12 +52,12 @@ liveinit _ = return $ unlines
 \begin{code}
 livereload _ = return $ unlines
   [ ":reload"
-  , "launchedProgram@LaunchedProgram { .. } <- load"
+  , "launchedProgram <- load liveProgram"
   , "update launchedProgram liveProgram"
   ]
 \end{code}
 \begin{code}
-livestep _ = return "stepProgramMVar programVar"
+livestep _ = return "stepLaunchedProgram launchedProgram"
 \end{code}
 \caption{\texttt{GHCi.lhs}}
 \label{fig:ghci}

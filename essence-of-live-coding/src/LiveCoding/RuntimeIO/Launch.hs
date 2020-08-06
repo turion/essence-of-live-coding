@@ -76,7 +76,7 @@ stop
   -> IO ()
 stop launchedProgram@LaunchedProgram { .. } = do
   update launchedProgram mempty
-  stepProgramMVar programVar
+  stepLaunchedProgram launchedProgram
   killThread threadId
 
 -- | Launch a 'LiveProgram', but first attach a debugger to it.
@@ -100,8 +100,9 @@ stepProgram LiveProgram {..} = do
   liveState' <- liveStep liveState
   return LiveProgram { liveState = liveState', .. }
 
--- | Advance a 'LiveProgram' in an 'MVar' by a single step and store the result.
-stepProgramMVar
-  :: MVar (LiveProgram IO)
+-- | Advance a launched 'LiveProgram' by a single step and store the result.
+stepLaunchedProgram
+  :: (Monad m, Launchable m)
+  => LaunchedProgram m
   -> IO ()
-stepProgramMVar programVar = modifyMVar_ programVar stepProgram
+stepLaunchedProgram LaunchedProgram { .. } = modifyMVar_ programVar stepProgram
