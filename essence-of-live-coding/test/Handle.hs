@@ -37,8 +37,8 @@ testHandle = Handle
   }
 
 cellWithAction
-  :: forall a b . (State Int b)
-  -> Cell Identity a (String, Int)
+  :: State Int b
+  -> Cell Identity () (String, Int)
 cellWithAction action = flip runStateC 0 $ runHandlingStateC $ handling testHandle >>> arrM (<$ lift action)
 
 test = testGroup "Handle"

@@ -169,10 +169,10 @@ handling
     --  , MonadBase m n
      )
   => Handle m h
-  -> Cell (HandlingStateT m) arbitrary h
+  -> Cell (HandlingStateT m) () h
 handling handleImpl@Handle { .. } = Cell
   { cellState = Uninitialized
-  , cellStep = \state _ -> case state of
+  , cellStep = \state () -> case state of
       !handling@Handling { .. } -> do
         reregister handleImpl handling
         handle `seq` return (handle, handling)
