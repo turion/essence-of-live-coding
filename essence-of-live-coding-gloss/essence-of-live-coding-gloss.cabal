@@ -48,3 +48,4 @@ library
     , gloss
   hs-source-dirs:      src
   default-language:    Haskell2010
+  default-extensions: StrictData

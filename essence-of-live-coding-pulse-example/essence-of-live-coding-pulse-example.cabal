@@ -46,3 +46,4 @@ executable essence-of-live-coding-pulse-example
     , essence-of-live-coding-pulse
   hs-source-dirs:      app
   default-language:    Haskell2010
+  default-extensions: StrictData
