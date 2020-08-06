@@ -43,7 +43,6 @@ pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
   -- inSepThread calcAndPushSamples -< (simple, a)
   -- FIXME It remains to test whether sound actually works that way
-  -- FIXME Also try only StrictData
   liftCell calcAndPushSamples -< (simple, a)
     where
       calcAndPushSamples = proc (simple, a) -> do
