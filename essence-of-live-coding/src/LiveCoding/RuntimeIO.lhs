@@ -87,40 +87,6 @@ the local binding \mintinline{haskell}{var} is lost.
 The package \texttt{foreign-store} \cite{foreign-store} offers a remedy:
 \mintinline{haskell}{var} can be stored persistently across reloads.
 To facilitate its usage, GHCi macros are defined for the initialisation and reload operations.
-\begin{comment}
-\begin{code}
-{-
-launchWithDebugger :: LiveProgram IO -> Debugger IO -> IO (MVar (LiveProgram IO), ThreadId)
-  var <- newMVar liveProg
-  forkIO $ backgroundWithDebugger var debugger
-  return var
--}
-
-{-
-debug :: Debugger_ -> LiveProgram IO -> IO (LiveProgram IO)
-debug Debugger_ { .. } LiveProgram { .. } = do
-  liveState' <- debugState liveState
-  return LiveProgram { liveState = liveState', .. }
-
-backgroundWithDebugger :: MVar (LiveProgram IO) -> Debugger_ -> IO ()
-backgroundWithDebugger var debugger = forever $ do
-  liveProg   <- takeMVar var
-  liveProg'  <- stepProgram liveProg
-  liveProg'' <- debug debugger liveProg'
-  putMVar var liveProg''
--}
-
-{-
--- Old version where combine was called from background
-combine :: MVar (LiveProgram IO) -> LiveProgram IO -> IO ()
-combine var prog = do
-  success <- tryPutMVar var prog
-  unless success $ do
-    newProg <- takeMVar var
-    combine var $ hotCodeSwap prog newProg
--}
-\end{code}
-\end{comment}
 
 Of course,
 it is not intended to enter \texttt{:livestep} repeatedly when coding.
