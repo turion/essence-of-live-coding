@@ -1,5 +1,3 @@
-\begin{comment}
-\begin{code}
 {- | Support functions to call common live coding functionalities like launching and reloading
 from a @ghci@ or @cabal repl@ session.
 
@@ -28,37 +26,28 @@ livelaunch _ = return $ unlines
 
 livestop _ = return "stop launchedProgram"
 
-\end{code}
-
-\end{comment}
-\begin{figure}
-\begin{code}
--- The LiveProgram serves as a proxy for m.
+-- | Load a 'LiveProgram' of a given type from the store.
+--   The value of the given 'LiveProgram' is not used,
+--   it only serves as a proxy for m.
 load :: Launchable m => LiveProgram m -> IO (LaunchedProgram m)
 load _ = readStore $ Store 0
-\end{code}
-\begin{code}
+
+-- | Save a 'LiveProgram' to the store.
 save :: Launchable m => LaunchedProgram m -> IO ()
 save = writeStore $ Store 0
-\end{code}
-% Could also parametrise by liveProgram
-\begin{code}
+
+-- TODO Could also parametrise this and all other commands by the 'liveProgram'
+
 liveinit _ = return $ unlines
   [ "programVar <- newMVar liveProgram"
   , "threadId <- myThreadId"
   , "save LaunchedProgram { .. }"
   ]
-\end{code}
-\begin{code}
+
 livereload _ = return $ unlines
   [ ":reload"
   , "launchedProgram <- load liveProgram"
   , "update launchedProgram liveProgram"
   ]
-\end{code}
-\begin{code}
+
 livestep _ = return "stepLaunchedProgram launchedProgram"
-\end{code}
-\caption{\texttt{GHCi.lhs}}
-\label{fig:ghci}
-\end{figure}
