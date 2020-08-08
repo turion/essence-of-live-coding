@@ -21,6 +21,7 @@ cache:
   directories:
     - $HOME/.cabal
 ghc:
+  - '8.10'
   - '8.8'
   - '8.6'
 script:
