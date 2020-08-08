@@ -8,6 +8,8 @@ addons:
       - libpulse-dev
       - libblas-dev
       - liblapack-dev
+    sources:
+      - sourceline: 'ppa:hvr/ghc'
 cache:
   directories:
     - $HOME/.cabal
