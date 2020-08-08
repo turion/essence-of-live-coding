@@ -13,4 +13,6 @@ script:
   - cabal new-build all --enable-tests
   - cabal new-test all --enable-tests
   - git rebase origin/master --exec "cabal new-build all --enable-tests"
+  - ./test-repl.sh
+  - git rebase origin/master --exec "./test-repl.sh"
 install: skip
