@@ -12,7 +12,7 @@ cache:
   directories:
     - $HOME/.cabal
 ghc:
-  - '8.8'
+  - '8.8.3'
   - '8.6'
 script:
   - cabal new-build all --enable-tests
