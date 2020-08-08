@@ -46,7 +46,7 @@ Instead, we can store the program in an \mintinline{haskell}{MVar}
 and call \mintinline{haskell}{stepProgramMVar} on it.
 Now that we can migrate any \mintinline{haskell}{Data},
 we can follow the original plan of exchanging the live program in mid-execution:
-\begin{spec}
+\begin{code}
 update
   :: MVar (LiveProgram IO)
   ->       LiveProgram IO
@@ -54,7 +54,7 @@ update
 update var newProg = do
   oldProg <- takeMVar var
   putMVar var $ hotCodeSwap newProg oldProg
-\end{spec}
+\end{code}
 The old program is retrieved from the concurrent variable,
 migrated to the new state,
 and put back for further execution.
