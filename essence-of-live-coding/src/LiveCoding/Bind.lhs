@@ -87,3 +87,7 @@ The migrated program did not restart and wait again,
 but remembered to immediately continue executing the sine generator from the same phase as before.
 This is in contrast to simplistic approaches to live coding in which the control flow state is forgotten upon reload,
 and restarted each time.
+
+In most other programming languages where control flow is builtin,
+this would typically require reworking the compiler or interpreter,
+but in Haskell, we succeed entirely within the language.

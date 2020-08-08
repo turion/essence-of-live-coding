@@ -66,8 +66,7 @@ server greeting = LiveProgram { .. } where
   liveState = State 1
   liveStep State { .. } = do
     putStrLn $ greeting ++ show nVisitors
-    let nVisitors = nVisitors + 1
-    return State { .. }
+    return State { nVisitors = nVisitors + 1, .. }
 
 yeOldeServer = server "Greetings, number "
 ```
@@ -103,9 +102,8 @@ server greeting = LiveProgram { .. } where
   liveState = State 1 $ read "2019-07-24 19:00:00 UTC"
   liveStep State { .. } = do
     putStrLn $ greeting ++ show nVisitors
-    let nVisitors = nVisitors + 1
     lastTime <- getCurrentTime
-    return State { .. }
+    return State { nVisitors = nVisitors + 1, .. }
 ```
 
 [...but the new state won't type-check!]{.fragment .fade-in .alert-red}

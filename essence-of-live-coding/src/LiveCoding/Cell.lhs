@@ -81,8 +81,13 @@ data Cell m a b = forall s . Data s => Cell
   { cellState :: s
   , cellStep  :: s -> a -> m (b, s)
   }
-  | ArrM { runArrM :: a -> m b }
 \end{code}
+\begin{comment}
+\begin{code}
+  | ArrM { runArrM :: a -> m b }
+  -- ^ Added to improve performance and keep state types simpler
+\end{code}
+\end{comment}
 \begin{comment}
 \begin{code}
 -- | Converts every 'Cell' to the 'Cell' constructor.
@@ -94,7 +99,6 @@ toCell ArrM { .. } = Cell
   }
 \end{code}
 \end{comment}
-\fxfatal{I've added, to improve performance and migration, the ArrM constructor. Add to LiveProgram as well and explain in both places.}
 Such a cell may progress by one step,
 consuming an \mintinline{haskell}{a} as input,
 and producing, by means of an effect in some monad \mintinline{haskell}{m},
@@ -109,8 +113,12 @@ step
 step Cell { .. } a = do
   (b, cellState') <- cellStep cellState a
   return (b, Cell { cellState = cellState', .. })
+\end{code}
+\begin{comment}
+\begin{code}
 step cell@ArrM { .. } a = ( , cell) <$> runArrM a
 \end{code}
+\end{comment}
 
 \begin{comment}
 \begin{code}
@@ -146,11 +154,15 @@ liveCell Cell { .. } = LiveProgram
   { liveState = cellState
   , liveStep  = fmap snd . flip cellStep ()
   }
+\end{code}
+\begin{comment}
+\begin{code}
 liveCell ArrM { .. } = LiveProgram
   { liveState = ()
   , liveStep  = runArrM
   }
 \end{code}
+\end{comment}
 \begin{comment}
 \begin{code}
 toLiveCell
@@ -264,9 +276,13 @@ buildLiveProg
 buildLiveProg sensor sf actuator = liveCell
   $ sensor >>> sf >>> actuator
 \end{code}
-This will conveniently allow us to build a whole live program from smaller components.
+This (optional) division of the reactive program into three such parts is inspired by Yampa \cite{Yampa}.
+We conveniently build a whole live program from smaller components.
 It is never necessary to specify a big state type manually,
 it will be composed from basic building blocks like \mintinline{haskell}{Composition}.
+
+The migration function is easily extended such that it correctly handles the common cases where we extend a cell \mintinline{haskell}{cellMiddle} to the composition \mintinline{haskell}{cellLeft >>> cellMiddle},
+or to \mintinline{haskell}{cellMiddle >>> cellRight}.
 
 \paragraph{Arrowized FRP}
 \mintinline{haskell}{Cell}s can be made an instance of the \mintinline{haskell}{Arrow} type class,
@@ -287,10 +303,11 @@ The next subsection gives some examples.
 An essential aspect of an FRP framework is some notion of \emph{time}.
 \fxwarning{Citation?}
 As this approach essentially uses the \texttt{dunai} API,
-a detailed treatment of time domains and clocks as in \cite{Rhine} can be readily applied here.
-But let us, for simplicity and explicitness,
+a detailed treatment of time domains and clocks as in \texttt{rhine} \cite{Rhine} could be readily applied here,
+but this will be deferred to future work.
+For simplicity and explicitness,
 assume that we will execute all \mintinline{haskell}{Cell}s at a certain fixed step rate,
-say a thousand steps per second.
+say, twenty five steps per second.
 Then an Euler integration cell can be defined:
 \begin{code}
 stepRate :: Num a => a

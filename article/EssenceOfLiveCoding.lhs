@@ -104,14 +104,16 @@ which allows us to reuse modular, functional components and separate data flow f
 Crucially, the state of our live programs is built up automatically by using FRP idioms.
 The result is presented in Section \ref{sec:FRP},
 which heavily draws inspiration from Dunai,
-a monadic arrowized FRP framework.
+a monadic arrowized FRP framework;
+and from Caspi's and Pouzet's work on synchronous stream functions \cite{CaspiPouzet}.
 After having implemented the data flow aspects of our framework,
 we turn to control flow in Section \ref{sec:control flow}.
 A monadic interface to our live programs is presented.
 In Section \ref{sec:tooling}, several useful tools such as debuggers and quickchecking utilities are shown.
 
 This article is written in literate Haskell and supplies the library presented here.
-The source code is available at \href{https://github.com/turion/essence-of-live-coding} and \href{https://hackage.haskell.org/package/essence-of-live-coding}.
+The source code is available at \href{https://github.com/turion/essence-of-live-coding}{https://github.com/turion/essence-of-live-coding},
+while additional resources such as a presentation can be found at \href{https://www.manuelbaerenz.de/#computerscience}{https://www.manuelbaerenz.de/#computerscience}.
 
 \input{../essence-of-live-coding/src/LiveCoding/LiveProgram.lhs}
 \fxerror{I believe this is even easier with Servant because it has simple functions!}
@@ -119,7 +121,7 @@ The source code is available at \href{https://github.com/turion/essence-of-live-
 \input{../demos/app/DemoWai/DemoWai1.lhs}
 \input{../demos/app/DemoWai/DemoWai2.lhs}
 
-\section{Live coding as arrowized FRP}
+\section{Live coding as arrowized Functional Reactive Programming}
 \label{sec:FRP}
 
 \fxwarning{Small overview paragraph here? And in the other corresponding places?}
@@ -129,6 +131,7 @@ We have to plan the whole program in advance and artificially separate its state
 Such a development approach prevents us from writing programs in a modular fashion.
 %But composing simple reusable building blocks is a key tenet in functional programming which we would not want to miss.
 The purpose of this section is to show that we can develop live programs modularly by extending the approach presented so far to an arrowized FRP framework.
+Coincidentally, but naturally, we will end up with a coalgebraic presentation of synchronous stream functions which differs from Caspi's and Pouzet's work \cite{CaspiPouzet} only in notation and the presence of monads.
 
 %\subsection{Arrowized FRP with effects}
 
@@ -165,8 +168,10 @@ but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 \input{../essence-of-live-coding/src/LiveCoding/Debugger.lhs}
 \input{../essence-of-live-coding-quickcheck/src/LiveCoding/QuickCheck.lhs}
 
-\subsection{External main loops}
+% \subsection{External main loops}
+
 \fxfatal{Can integrate into external main loops using \mintinline{haskell}{step} for cells or an equivalent \mintinline{haskell}{stepMVar}.}
+\fxfatal{Need to mention Handles and NonBlocking}
 
 \section{Conclusion}
 
