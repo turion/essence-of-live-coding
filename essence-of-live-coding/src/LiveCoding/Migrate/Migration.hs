@@ -31,9 +31,11 @@ instance Semigroup Migration where
 instance Monoid Migration where
   mempty = Migration $ const $ const Nothing
 
+-- | Try to migrate by casting the first type into the second
 castMigration :: Migration
 castMigration = Migration $ const cast
 
+-- | Migrate a value into a newtype wrapping
 newtypeMigration :: Migration
 newtypeMigration = Migration $ \a b -> do
   -- Is it an algebraic datatype with a single constructor?

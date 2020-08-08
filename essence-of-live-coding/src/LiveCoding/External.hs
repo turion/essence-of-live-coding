@@ -18,6 +18,7 @@ import Control.Monad.Trans.Writer
 
 -- essence-of-live-coding
 import LiveCoding.Cell
+import LiveCoding.Cell.Monad.Trans
 import LiveCoding.Exceptions
 
 type ExternalCell m eIn eOut a b = Cell (ReaderT eIn (WriterT eOut m)) a b

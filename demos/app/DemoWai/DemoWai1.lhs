@@ -19,7 +19,7 @@ import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
 
 -- essence-of-live-coding
-import LiveCoding
+import LiveCoding hiding (State)
 
 import DemoWai.Env
 \end{code}
