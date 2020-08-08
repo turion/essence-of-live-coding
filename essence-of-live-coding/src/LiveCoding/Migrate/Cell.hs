@@ -15,17 +15,25 @@ import LiveCoding.Migrate.Migration
 -- * Migrations involving sequential compositions of cells
 
 maybeMigrateToComposition1
-  :: (Typeable state1', Typeable state1)
+  :: (Data state1', Data state1)
   => Composition state1 state2
   -> state1'
   -> Maybe (Composition state1 state2)
-maybeMigrateToComposition1 (Composition (_, state2)) state1' = do
-  state1 <- cast state1'
-  return $ Composition (state1, state2)
+maybeMigrateToComposition1 = maybeMigrateToComposition1With castMigration
 
 -- | Migrate @cell1@ to @cell1 >>> cell2@.
 migrationToComposition1 :: Migration
 migrationToComposition1 = migrationTo2 maybeMigrateToComposition1
+
+maybeMigrateToComposition1With
+  :: (Data state1', Data state1)
+  => Migration
+  -> Composition state1 state2
+  -> state1'
+  -> Maybe (Composition state1 state2)
+maybeMigrateToComposition1With (Migration f) (Composition ((state1, state2))) state1' = do
+  state1 <- f state1 state1'
+  return $ Composition (state1, state2)
 
 maybeMigrateFromComposition1
   :: (Typeable state1', Typeable state1)
