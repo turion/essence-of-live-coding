@@ -10,6 +10,13 @@ addons:
       - liblapack-dev
     sources:
       - sourceline: 'ppa:hvr/ghc'
+    packages:
+      - libgl1-mesa-dev
+      - libglu1-mesa-dev
+      - freeglut3-dev
+      - libpulse-dev
+      - libblas-dev
+      - liblapack-dev
 cache:
   directories:
     - $HOME/.cabal
