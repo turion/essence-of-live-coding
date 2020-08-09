@@ -90,6 +90,7 @@ data HandlingState m = HandlingState
 
 -- | In this monad, handles can be registered,
 --   and their destructors automatically executed.
+--   It is basically a monad in which handles are automatically garbage collected.
 type HandlingStateT m = StateT (HandlingState m) m
 
 initHandlingState :: HandlingState m
