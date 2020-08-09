@@ -1,10 +1,11 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Arrows #-}
 module LiveCoding.Pulse where
 
 -- base
 import Control.Arrow as X
 import Control.Concurrent
-import Control.Monad (forever)
+import Control.Monad (void, forever)
 import Control.Monad.Fix
 
 -- transformers
@@ -15,33 +16,50 @@ import Sound.Pulse.Simple
 
 -- essence-of-live-coding
 import LiveCoding
+import Control.Monad.Trans.Class (MonadTrans(lift))
+import Data.Maybe (fromMaybe)
 
-type PulseCell = Cell IO () Float
+type PulseCell a b = Cell IO a (Float, b)
 
-playPulseCell :: PulseCell -> IO (MVar PulseCell)
-playPulseCell pulseCell = do
-  var <- newMVar pulseCell
-  pulseClient <- simpleNew
-    Nothing
-    "example"
-    Play
-    Nothing
-    "this is an example application"
-    (SampleSpec (F32 LittleEndian) 44100 1)
-    Nothing
-    Nothing
-  forkIO $ forever $ do
-    cell <- takeMVar var
-    (samples, cell') <- steps cell $ replicate 1024 ()
-    simpleWrite pulseClient samples
-    putMVar var cell'
-  return var
+sampleRate :: Num a => a
+sampleRate = 48000
 
--- TODO Generalisable
-updatePulse :: MVar PulseCell -> PulseCell -> IO ()
-updatePulse var newCell = do
-  oldCell <- takeMVar var
-  putMVar var $ hotCodeSwapCell newCell oldCell
+pulseHandle :: Handle IO Simple
+pulseHandle = Handle
+  { create = simpleNew
+      Nothing
+      "example"
+      Play
+      Nothing
+      "this is an example application"
+      (SampleSpec (F32 LittleEndian) sampleRate 1)
+      Nothing
+      Nothing
+  , destroy = simpleFree
+  }
+
+pulseWrapC :: Int -> PulseCell a () -> Cell (HandlingStateT IO) a ()
+pulseWrapC bufferSize cell = proc a -> do
+  simple <- handling pulseHandle -< ()
+  -- inSepThread calcAndPushSamples -< (simple, a)
+  -- FIXME It remains to test whether sound actually works that way
+  liftCell calcAndPushSamples -< (simple, a)
+    where
+      calcAndPushSamples = proc (simple, a) -> do
+        samplesAndBs <- resampleList cell -< replicate bufferSize a
+        let (samples, bs) = unzip samplesAndBs
+        arrM $ uncurry simpleWrite -< (simple, samples)
+
+inSepThread :: Cell IO a () -> Cell (HandlingStateT IO) a ()
+inSepThread Cell { .. } = proc a -> do
+  resultVar <- handling $ newMVarHandle Nothing -< ()
+  liftCell Cell { cellStep = backgroundStep, cellState = cellState } -< (resultVar, a)
+    where
+      backgroundStep s (resultVar, a) = do
+        s' <- fromMaybe s <$> takeMVar resultVar
+        forkIO $ putMVar resultVar =<< (Just . snd) <$> cellStep s a
+        return ((), s')
+inSepThread notACell = inSepThread $ toCell notACell
 
 -- Returns the sum between -1 and 1
 wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
@@ -52,6 +70,9 @@ wrapSum = Cell
         (_, accum')  = properFraction $ accum + a
     in return (accum', accum')
   }
+
+wrapIntegral :: (Monad m, Data a, RealFloat a) => Cell m a a
+wrapIntegral = arr (/ sampleRate) >>> wrapSum
 
 modSum :: (Monad m, Data a, Integral a) => a -> Cell m a a
 modSum denominator = Cell
@@ -66,7 +87,7 @@ clamp lower upper a = min upper $ max lower a
 osc :: (Data a, RealFloat a, MonadFix m) => Cell (ReaderT a m) () a
 osc = proc _ -> do
   f <- constM ask -< ()
-  phase <- wrapSum -< f / 44100
+  phase <- wrapSum -< f / 48000
   returnA -< sin $ 2 * pi * phase
 
 osc' :: (Data a, RealFloat a, MonadFix m) => Cell m a a
@@ -93,4 +114,3 @@ f note = 220 * (2 ** (fromIntegral (fromEnum note) / 12))
 
 o :: Float -> Float
 o = (* 2)
-
