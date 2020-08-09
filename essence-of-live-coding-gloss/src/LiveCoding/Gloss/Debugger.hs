@@ -8,7 +8,7 @@ import Data.Data
 -- transformers
 import Control.Monad.Trans.Writer
 import Control.Monad.Trans.Class
-import Control.Monad.Trans.State
+import Control.Monad.Trans.State.Strict
 
 -- syb
 import Data.Generics.Text

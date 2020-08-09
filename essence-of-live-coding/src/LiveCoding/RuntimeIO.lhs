@@ -17,19 +17,7 @@ import LiveCoding.LiveProgram
 import LiveCoding.LiveProgram.HotCodeSwap
 import LiveCoding.Debugger
 import LiveCoding.Migrate
-
-stepProgram :: Monad m => LiveProgram m -> m (LiveProgram m)
-stepProgram LiveProgram {..} = do
-  liveState' <- liveStep liveState
-  return LiveProgram { liveState = liveState', .. }
-
-stepProgramMVar
-  :: MVar (LiveProgram IO)
-  -> IO ()
-stepProgramMVar var = do
-  currentProgram <- takeMVar var
-  nextProgram <- stepProgram currentProgram
-  putMVar var nextProgram
+import LiveCoding.RuntimeIO.Launch
 \end{code}
 \end{comment}
 
@@ -99,53 +87,6 @@ the local binding \mintinline{haskell}{var} is lost.
 The package \texttt{foreign-store} \cite{foreign-store} offers a remedy:
 \mintinline{haskell}{var} can be stored persistently across reloads.
 To facilitate its usage, GHCi macros are defined for the initialisation and reload operations.
-\begin{comment}
-\begin{code}
-launch :: LiveProgram IO -> IO (MVar (LiveProgram IO))
-launch liveProg = do
-  var <- newMVar liveProg
-  forkIO $ background var
-  return var
-
-launchWithDebugger :: LiveProgram IO -> Debugger IO -> IO (MVar (LiveProgram IO))
-launchWithDebugger liveProg debugger = launch $ liveProg `withDebugger` debugger
-{-
-  var <- newMVar liveProg
-  forkIO $ backgroundWithDebugger var debugger
-  return var
--}
-
-{-
-debug :: Debugger_ -> LiveProgram IO -> IO (LiveProgram IO)
-debug Debugger_ { .. } LiveProgram { .. } = do
-  liveState' <- debugState liveState
-  return LiveProgram { liveState = liveState', .. }
-
-backgroundWithDebugger :: MVar (LiveProgram IO) -> Debugger_ -> IO ()
-backgroundWithDebugger var debugger = forever $ do
-  liveProg   <- takeMVar var
-  liveProg'  <- stepProgram liveProg
-  liveProg'' <- debug debugger liveProg'
-  putMVar var liveProg''
--}
-
-background :: MVar (LiveProgram IO) -> IO ()
-background var = forever $ do
-  liveProg   <- takeMVar var
-  liveProg'  <- stepProgram liveProg
-  putMVar var liveProg'
-
-{-
--- Old version where combine was called from background
-combine :: MVar (LiveProgram IO) -> LiveProgram IO -> IO ()
-combine var prog = do
-  success <- tryPutMVar var prog
-  unless success $ do
-    newProg <- takeMVar var
-    combine var $ hotCodeSwap prog newProg
--}
-\end{code}
-\end{comment}
 
 Of course,
 it is not intended to enter \texttt{:livestep} repeatedly when coding.

@@ -25,6 +25,7 @@ stepProgram liveProgram@LiveProgram { .. } = do
   liveState' <- liveStep liveState
   return liveProgram { liveState = liveState' }
 \end{code}
+\fxerror{Maybe I should use modifyMVar here?}
 \begin{code}
 stepProgramMVar
   :: MVar (LiveProgram IO s)

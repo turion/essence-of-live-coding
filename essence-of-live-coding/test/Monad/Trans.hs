@@ -13,6 +13,7 @@ import Test.QuickCheck
 
 -- essence-of-live-coding
 import LiveCoding
+import LiveCoding.Cell.Monad.Trans (State(State))
 
 test = testGroup "Monad.Trans"
   [ testProperty "Migrates into runStateL"

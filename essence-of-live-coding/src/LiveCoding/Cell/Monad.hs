@@ -55,4 +55,4 @@ hoistCellKleisliStateChange morph init Cell { .. } = Cell
   { cellStep  = morph cellStep
   , cellState = init cellState
   }
-hoistCellKleisliState morph init cell = hoistCellKleisliState morph init $ toCell cell
+hoistCellKleisliStateChange morph init cell = hoistCellKleisliStateChange morph init $ toCell cell

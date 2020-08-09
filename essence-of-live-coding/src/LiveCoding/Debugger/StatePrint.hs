@@ -15,7 +15,7 @@ import Unsafe.Coerce
 
 -- transformers
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.State
+import Control.Monad.Trans.State.Strict
 
 -- syb
 import Data.Generics.Aliases

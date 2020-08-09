@@ -17,6 +17,8 @@ import Test.Framework.Providers.QuickCheck2
 import Test.QuickCheck
 
 -- essence-of-live-coding
+import qualified Handle
+import qualified Monad
 import LiveCoding
 
 import qualified Monad.Trans
@@ -104,6 +106,8 @@ tests =
         , output2 = [23, 24, 25]
         }
       ]
+    , Handle.test
+    , Monad.test
     ]
     , Monad.Trans.test
   ]

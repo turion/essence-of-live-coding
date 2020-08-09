@@ -37,9 +37,9 @@ main = do
   responseVar <- newEmptyMVar
   requestVar <- newEmptyMVar
   let env = Env { .. }
-  liveProgVar <- launch $ hoistLiveProgram (flip runReaderT env) oldServer
+  launchedProgram <- launch $ hoistLiveProgram (flip runReaderT env) oldServer
   forkIO $ run 8080 $ app env
   _ <- getLine
-  update liveProgVar $ hoistLiveProgram (flip runReaderT env) newServer
+  update launchedProgram $ hoistLiveProgram (flip runReaderT env) newServer
   _ <- getLine
   putStrLn "That's it"

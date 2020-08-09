@@ -50,6 +50,3 @@ simulateCellMigration cell1 cell2 as1 as2 = do
   let cell2' = hotCodeSwapCell cell2 cell1'
   (bs2, _) <- steps cell2' as2
   return (bs1, bs2)
-
-withEvilDebugger :: Cell IO a b -> Cell Identity a b
-withEvilDebugger cell = hoistCell (Identity . unsafePerformIO) $ withDebuggerC cell statePrint

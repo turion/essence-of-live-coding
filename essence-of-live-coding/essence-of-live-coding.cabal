@@ -51,6 +51,9 @@ library
     , LiveCoding.Exceptions.Finite
     , LiveCoding.External
     , LiveCoding.Forever
+    , LiveCoding.GHCi
+    , LiveCoding.Handle
+    , LiveCoding.Handle.Examples
     , LiveCoding.LiveProgram
     , LiveCoding.LiveProgram.HotCodeSwap
     , LiveCoding.LiveProgram.Monad.Trans
@@ -60,6 +63,7 @@ library
     , LiveCoding.Migrate.Monad.Trans
     , LiveCoding.Migrate.Debugger
     , LiveCoding.RuntimeIO
+    , LiveCoding.RuntimeIO.Launch
 
   other-modules:
       LiveCoding.Preliminary.CellExcept
@@ -74,6 +78,7 @@ library
   build-depends:
       base >= 4.11 && < 5
     , transformers == 0.5.*
+    , containers >= 0.6
     , syb == 0.7.*
     , vector-sized >= 1.2
     , foreign-store
@@ -84,14 +89,21 @@ test-suite test
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
-      Monad.Trans
+      Handle
+    , Handle.LiveProgram
+    , Monad
+    , Monad.Trans
     , TestData.Foo1
     , TestData.Foo2
     , Util
+    , Util.LiveProgramMigration
   hs-source-dirs: test
   build-depends:
       base >= 4.11 && < 5
     , syb == 0.7.*
+    , transformers >= 0.5
+    , containers >= 0.6
+    , mtl >= 2.2
     , essence-of-live-coding
     , test-framework == 0.8.*
     , test-framework-quickcheck2 == 0.3.*

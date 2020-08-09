@@ -6,7 +6,7 @@ module LiveCoding.LiveProgram.Monad.Trans where
 import Data.Data
 
 -- transformers
-import Control.Monad.Trans.State
+import Control.Monad.Trans.State.Strict
 
 -- essence-of-live-coding
 import LiveCoding.LiveProgram
