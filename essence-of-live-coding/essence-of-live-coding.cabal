@@ -43,6 +43,7 @@ library
     , LiveCoding.Cell.Monad
     , LiveCoding.Cell.Monad.Trans
     , LiveCoding.Cell.Resample
+    , LiveCoding.Cell.Util
     , LiveCoding.CellExcept
     , LiveCoding.Coalgebra
     , LiveCoding.Debugger

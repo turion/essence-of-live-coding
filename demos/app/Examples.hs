@@ -8,13 +8,10 @@ import Control.Concurrent
 -- essence-of-live-coding
 import LiveCoding
 
--- TODO Should go into various utils files
-sumFrom :: Monad m => Integer -> Cell m Integer Integer
-sumFrom n0 = feedback n0 $ proc (n, acc) -> returnA -< (acc, acc + n)
-
-count :: Monad m => Cell m a Integer
-count = arr (const 1) >>> sumFrom 0
+countUpTo :: Monad m => Integer -> Cell (ExceptT () m) a Integer
 countUpTo     n = arr (const   1 ) >>> sumFrom 0 >>> throwIf_ (>= n)
+
+countDownFrom :: Monad m => Integer -> Cell (ExceptT () m) a Integer
 countDownFrom n = arr (const (-1)) >>> sumFrom n >>> throwIf_ (<= 0)
 
 throwWhenReaches
