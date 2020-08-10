@@ -19,6 +19,7 @@ import Data.Vector.Sized
 
 -- essence-of-live-coding
 import LiveCoding.Cell
+import LiveCoding.Cell.Monad
 
 -- | Execute the inner cell for n steps per outer step.
 resample :: (Monad m, KnownNat n) => Cell m a b -> Cell m (Vector n a) (Vector n b)
@@ -26,12 +27,12 @@ resample cell = arr toList >>> resampleList cell >>> arr (fromList >>> fromJust)
 
 -- | Execute the cell for as many steps as the input list is long.
 resampleList :: Monad m => Cell m a b -> Cell m [a] [b]
-resampleList Cell { cellState, cellStep = singleStep } = Cell { .. }
+resampleList cell = hoistCellKleisli morph cell
   where
-    cellStep s [] = return ([], s)
-    cellStep s (a : as) = do
-      (b , s' ) <- singleStep s  a
-      (bs, s'') <- cellStep   s' as
+    morph _ s [] = return ([], s)
+    morph singleStep s (a : as) = do
+      (b , s' ) <- singleStep s a
+      (bs, s'') <- morph singleStep s' as
       return (b : bs, s'')
 
 resampleMaybe :: Monad m => Cell m a b -> Cell m (Maybe a) (Maybe b)
