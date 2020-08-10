@@ -42,6 +42,7 @@ executable SpeedTest
       base >= 4.11 && < 5
     , essence-of-live-coding
     , transformers == 0.5.*
+  default-extensions: StrictData
 
 executable SpeedTestYampa
   main-is: SpeedTestYampa.hs
