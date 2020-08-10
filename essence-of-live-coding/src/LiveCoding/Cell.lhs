@@ -238,7 +238,7 @@ instance Monad m => Category (Cell m) where
     where
       cellState = Composition (state1, state2)
       cellStep (Composition (state1, state2)) a = do
-        (b, state1') <- step1 state1 a
+        (!b, state1') <- step1 state1 a
         (!c, state2') <- step2 state2 b
         return (c, Composition (state1', state2'))
 -- {-# RULES
