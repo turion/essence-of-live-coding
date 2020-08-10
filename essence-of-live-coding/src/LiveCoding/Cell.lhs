@@ -215,6 +215,10 @@ cells implement sequential composition:
 
 \begin{comment}
 \begin{code}
+-- | Like @base@s '<=<', but strict in the intermediate @b@
+(<==<) :: Monad m => (b -> m c) -> (a -> m b) -> a -> m c
+g <==< f = (g $!) <=< f
+
 -- TODO For some weird reason, this is more efficient than my own ADT
 newtype Composition state1 state2 = Composition (state1, state2)
   deriving Data
@@ -225,13 +229,13 @@ getState2 (Composition (state1, state2)) = state2
 instance Monad m => Category (Cell m) where
   id = ArrM return
 
-  ArrM f . ArrM g = ArrM $ f <=< g
+  ArrM f . ArrM g = ArrM $ f <==< g
   Cell { .. } . ArrM { .. } = Cell
-    { cellStep = \state -> cellStep state <=< runArrM
+    { cellStep = \state -> cellStep state <==< runArrM
     , ..
     }
   ArrM { .. } . Cell { .. } = Cell
-    { cellStep = \state -> (runKleisli $ first $ Kleisli runArrM) <=< cellStep state
+    { cellStep = \state -> (runKleisli $ first $ Kleisli runArrM) <==< cellStep state
     , ..
     }
   Cell state2 step2 . Cell state1 step1 = Cell { .. }
