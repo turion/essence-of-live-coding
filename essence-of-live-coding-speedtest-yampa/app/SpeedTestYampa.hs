@@ -44,4 +44,3 @@ main = reactimate
   where
     helper _ (Left s) = print s >> return True
     helper _ (Right x) = return False
-
