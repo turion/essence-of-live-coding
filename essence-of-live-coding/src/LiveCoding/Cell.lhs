@@ -382,7 +382,7 @@ instance Monad m => Arrow (Cell m) where
   -- For efficiency because Arrow desugaring favours 'first'
   first ArrM { .. } = ArrM { runArrM = \(a, c) -> ( , c) <$> runArrM a }
   first Cell { .. } = Cell
-    { cellStep = \s (a, c) -> first ( , c) <$> cellStep s a
+    { cellStep = \s (a, c) -> first ((, c) $!) <$> cellStep s a
     , ..
     }
 
