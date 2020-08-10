@@ -55,7 +55,7 @@ test = testGroup "Handle"
     }
   , testProperty "Trigger destructors" CellMigrationSimulation
     { cell1 = cellWithAction $ return ()
-    , cell2 = flip runStateC (error "Shouldn't reinitialise state")
+    , cell2 = flip runStateC 23
         $ runHandlingStateC $ arr $ const "Done"
     , input1 = replicate 3 ()
     , input2 = replicate 3 ()
