@@ -1,5 +1,6 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE RecordWildCards #-}
 module LiveCoding.Pulse where
 
 -- base
@@ -103,8 +104,7 @@ wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
 wrapSum = Cell
   { cellState = 0
   , cellStep  = \accum a ->
-    let
-        (_, accum') = properFraction $ accum + a
+    let (_, !accum') = properFraction $ accum + a
     in return (accum', accum')
   }
 
@@ -126,8 +126,8 @@ clamp lower upper a = min upper $ max lower a
 --   See 'osc'' and 'oscAt'.
 osc :: (Data a, RealFloat a, Monad m) => Cell (ReaderT a m) () a
 osc = proc _ -> do
-  f <- constM ask -< ()
-  phase <- wrapIntegral -< f
+  !f <- constM ask -< ()
+  !phase <- wrapIntegral -< f
   returnA -< sin $ 2 * pi * phase
 
 -- | A sine oscillator, at a fixed frequency.
@@ -137,7 +137,7 @@ oscAt = flip runReaderC osc
 -- | A sine oscillator, at a frequency that can be specified live.
 osc' :: (Data a, RealFloat a, Monad m) => Cell m a a
 osc' = proc a -> do
-  runReaderC' osc -< (a, ())
+  runReaderC' osc -< a `seq` (a, ())
 
 {- | A basic musical note (western traditional notation, german nomenclature).
 
