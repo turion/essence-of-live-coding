@@ -247,7 +247,7 @@ instance (Typeable h) => Data (Handling h) where
   dataTypeOf _ = dataTypeHandling
   toConstr Handling { .. } = handlingConstr
   toConstr Uninitialized = uninitializedConstr
-  gunfold _ _ = error "Handling.gunfold"
+  gunfold _cons nil constructor = nil Uninitialized
 
 dataTypeDestructor :: DataType
 dataTypeDestructor = mkDataType "Destructor" [ destructorConstr ]
