@@ -52,8 +52,10 @@ pulseHandle = Handle
       "this is an example application"
       (SampleSpec (F32 LittleEndian) sampleRate 1)
       Nothing
-      Nothing
-  , destroy = simpleFree
+      -- Nothing
+      (Just (BufferAttr Nothing (Just 1000) Nothing Nothing Nothing))
+      -- (Just (BufferAttr Nothing (Just 2048) Nothing Nothing (Just 2048)))
+  , destroy = \simple -> putStrLn "Destroying pulse" >> simpleFree simple
   }
 
 {- | Run a 'PulseCell' with a started pulse backend.
