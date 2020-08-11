@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module LiveCoding.Cell.NonBlocking
@@ -43,7 +44,7 @@ nonBlocking abort Cell { .. } = proc aMaybe -> do
       nonBlockingStep s (Nothing, threadVar, resultVar) = do
         bsMaybe <- tryTakeMVar resultVar
         case bsMaybe of
-          Just (b, s') -> do
+          Just (!b, !s') -> do
             threadId <- takeMVar threadVar
             killThread threadId
             return (Just b, s')
