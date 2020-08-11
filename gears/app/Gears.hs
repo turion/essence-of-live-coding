@@ -56,14 +56,14 @@ gear angle = scale 3 3 $ rotate angle $ pictures
       , (10, -10)
       ]
 
-tones = [D, F, A]
+tones = [A, C, E]
 
 pulseCell :: PulseCell IO (IORef Float) ()
 pulseCell = proc ref -> do
-  angle <- liftCell $ getAngleEvery 1024 -< ref
-  pulse <- osc'                          -< cycleTones angle
-  addSample                              -< pulse
-  returnA                                -< ()
+  angle <- liftCell $ getAngleEvery 10 -< ref
+  pulse <- osc'                        -< cycleTones angle
+  addSample                            -< atan pulse ** 3
+  returnA                              -< ()
 
 cycleTones :: Int -> Float
 cycleTones angle = f
