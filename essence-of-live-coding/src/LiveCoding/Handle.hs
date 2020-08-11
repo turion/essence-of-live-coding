@@ -22,6 +22,7 @@ module LiveCoding.Handle
 -- base
 import Control.Arrow (returnA, arr, (>>>))
 import Data.Data
+import Data.Maybe
 
 -- containers
 import Data.IntMap
@@ -247,7 +248,11 @@ instance (Typeable h) => Data (Handling h) where
   dataTypeOf _ = dataTypeHandling
   toConstr Handling { .. } = handlingConstr
   toConstr Uninitialized = uninitializedConstr
-  gunfold _cons nil constructor = nil Uninitialized
+  gunfold cons nil constructor = case constrIndex constructor of
+    1 -> fromMaybe (nil Uninitialized) $ do
+      Nothing -- I'd like to at least cast here, but I don't know the type, do I?
+      -- Just $ cons $ cons $ nil Handling -- Doesn't work due to missing type class
+    2 -> nil Uninitialized
 
 dataTypeDestructor :: DataType
 dataTypeDestructor = mkDataType "Destructor" [ destructorConstr ]
