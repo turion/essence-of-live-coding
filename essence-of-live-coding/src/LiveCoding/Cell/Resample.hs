@@ -5,6 +5,7 @@ and produce a new cell (the "outer" cell) that will accept several copies of the
 The inner cell is stepped for each input.
 -}
 
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 module LiveCoding.Cell.Resample where
@@ -31,8 +32,8 @@ resampleList cell = hoistCellKleisli morph cell
   where
     morph _ s [] = return ([], s)
     morph singleStep s (a : as) = do
-      (b , s' ) <- singleStep s a
-      (bs, s'') <- morph singleStep s' as
+      (!b , s' ) <- singleStep s a
+      (!bs, s'') <- morph singleStep s' as
       return (b : bs, s'')
 
 resampleMaybe :: Monad m => Cell m a b -> Cell m (Maybe a) (Maybe b)

@@ -25,7 +25,7 @@ mainCell = proc _ -> do
   m <- accum (Max 0) -< Max x
   m' <- accum (Min 0) -< Min x
   c <- sumC   -< (1 :: Int)
-  if c > 1000 * 1000 * 10
+  if c > 1000 * 1000
     then do
       arrM (lift . print) -< (s, getMax m, getMin m')
       throwC  -< ()

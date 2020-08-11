@@ -1,6 +1,7 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
@@ -104,7 +105,7 @@ runExceptC (Cell state step) = Cell { .. }
     cellStep (NotThrown s) a = do
       stateExcept <- runExceptT $ step s a
       case stateExcept of
-        Right (b, s')
+        Right (!b, s')
           -> return (Right b, NotThrown s')
         Left e
           -> cellStep (Exception e) a

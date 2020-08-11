@@ -15,7 +15,7 @@ import Test.Framework.Providers.QuickCheck2
 
 test = testProperty "State effect" CellMigrationSimulation
   { cell1 = flip runStateC (0 :: Int) $ constM (modify (+ 1))
-  , cell2 = flip runStateC (error "Shouldn't be reinitialized") $ constM (modify (+ 2))
+  , cell2 = flip runStateC 23 $ constM (modify (+ 2))
   , input1 = [(), (), ()]
   , input2 = [(), (), ()]
   , output1 = [((), 1), ((), 2), ((), 3)]

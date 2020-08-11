@@ -231,14 +231,14 @@ instance Monad m => Category (Cell m) where
     , ..
     }
   ArrM { .. } . Cell { .. } = Cell
-    { cellStep = \state -> (runKleisli $ first $ Kleisli runArrM) <=< cellStep state -- first runArrM <=<
+    { cellStep = \state -> (runKleisli $ first $ Kleisli runArrM) <=< cellStep state
     , ..
     }
   Cell state2 step2 . Cell state1 step1 = Cell { .. }
     where
       cellState = Composition (state1, state2)
       cellStep (Composition (state1, state2)) a = do
-        (b, state1') <- step1 state1 a
+        (!b, state1') <- step1 state1 a
         (!c, state2') <- step2 state2 b
         return (c, Composition (state1', state2'))
 -- {-# RULES
@@ -382,22 +382,22 @@ instance Monad m => Arrow (Cell m) where
   -- For efficiency because Arrow desugaring favours 'first'
   first ArrM { .. } = ArrM { runArrM = \(a, c) -> ( , c) <$> runArrM a }
   first Cell { .. } = Cell
-    { cellStep = \s (a, c) -> first ( , c) <$> cellStep s a
+    { cellStep = \s (a, c) -> first ((, c) $!) <$> cellStep s a
     , ..
     }
 
   ArrM f *** ArrM g = ArrM $ runKleisli $ Kleisli f *** Kleisli g
   ArrM { .. } *** Cell { .. } = Cell
     { cellStep = \state (a, c) -> do
-      b <- runArrM a
-      (d, state') <- cellStep state c
+      !b <- runArrM a
+      (!d, state') <- cellStep state c
       return ((b, d), state')
     , ..
     }
   Cell { .. } *** ArrM { .. } = Cell
     { cellStep = \state (a, c) -> do
-      (b, state') <- cellStep state a
-      d <- runArrM c
+      (!b, state') <- cellStep state a
+      !d <- runArrM c
       return ((b, d), state')
     , ..
     }
@@ -405,8 +405,8 @@ instance Monad m => Arrow (Cell m) where
     where
       cellState = Parallel (state1, state2)
       cellStep (Parallel (state1, state2)) (a, c) = do
-        (b, state1') <- step1 state1 a
-        (d, state2') <- step2 state2 c
+        (!b, state1') <- step1 state1 a
+        (!d, state2') <- step2 state2 c
         return ((b, d), Parallel (state1', state2'))
 
 arrM :: (a -> m b) -> Cell m a b
@@ -561,20 +561,20 @@ instance Monad m => ArrowChoice (Cell m) where
   ArrM { .. } +++ Cell { .. } = Cell
     { cellStep = \state -> \case
         Left a -> do
-          b <- runArrM a
+          !b <- runArrM a
           return (Left b, state)
         Right c -> do
-          (d, state') <- cellStep state c
+          (!d, state') <- cellStep state c
           return (Right d, state')
     , ..
     }
   Cell { .. } +++ ArrM { .. } = Cell
     { cellStep = \state -> \case
         Left a -> do
-          (b, state') <- cellStep state a
+          (!b, state') <- cellStep state a
           return (Left b, state')
         Right c -> do
-          d <- runArrM c
+          !d <- runArrM c
           return (Right d, state)
     , ..
     }
@@ -582,10 +582,10 @@ instance Monad m => ArrowChoice (Cell m) where
     where
       cellState = Choice stateL stateR
       cellStep (Choice stateL stateR) (Left a) = do
-        (b, stateL') <- stepL stateL a
+        (!b, stateL') <- stepL stateL a
         return (Left b, (Choice stateL' stateR))
       cellStep (Choice stateL stateR) (Right c) = do
-        (d, stateR') <- stepR stateR c
+        (!d, stateR') <- stepR stateR c
         return (Right d, (Choice stateL stateR'))
 \end{code}
 \end{comment}

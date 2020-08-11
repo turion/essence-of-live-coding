@@ -31,7 +31,7 @@ mainSF = proc _ -> do
   -- s <- integral -< x
   -- Event c <- count -< Event ()
   c <- integral -< timestep
-  if s `seq` c > 10000000
+  if s `seq` c > 1000 * 1000
     then returnA -< Left s
     else returnA -< Right x
 
@@ -44,4 +44,3 @@ main = reactimate
   where
     helper _ (Left s) = print s >> return True
     helper _ (Right x) = return False
-

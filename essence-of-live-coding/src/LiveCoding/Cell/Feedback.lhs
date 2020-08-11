@@ -1,6 +1,7 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -56,7 +57,7 @@ feedback s (Cell state step) = Cell { .. }
   where
     cellState = Feedback (state, s)
     cellStep (Feedback (state, s)) a = do
-      ((b, s'), state') <- step state (a, s)
+      ((!b, !s'), state') <- step state (a, s)
       return (b, Feedback (state', s'))
 feedback cellState (ArrM f) = Cell { .. }
   where
