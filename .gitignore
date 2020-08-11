@@ -7,3 +7,6 @@ acmart*
 *.png
 *.o
 *.hi
+*.hp
+*.prof
+*.ps
