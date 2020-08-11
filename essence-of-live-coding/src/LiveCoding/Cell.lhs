@@ -231,7 +231,7 @@ instance Monad m => Category (Cell m) where
     , ..
     }
   ArrM { .. } . Cell { .. } = Cell
-    { cellStep = \state -> (runKleisli $ first $ Kleisli runArrM) <=< cellStep state -- first runArrM <=<
+    { cellStep = \state -> (runKleisli $ first $ Kleisli runArrM) <=< cellStep state
     , ..
     }
   Cell state2 step2 . Cell state1 step1 = Cell { .. }
