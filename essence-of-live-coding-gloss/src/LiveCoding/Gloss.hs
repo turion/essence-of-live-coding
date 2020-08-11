@@ -8,15 +8,16 @@ module LiveCoding.Gloss
   ) where
 
 -- base
+import Control.Arrow (returnA)
 import Control.Concurrent
 import Control.Monad (when)
 import Data.IORef
 import System.Exit (exitSuccess)
 
 -- transformers
-import Control.Arrow (returnA)
-import Control.Monad.Trans.Writer
+import Control.Monad.Trans.Class (MonadTrans(lift))
 import Control.Monad.Trans.State.Strict (StateT)
+import Control.Monad.Trans.Writer
 
 -- gloss
 import Graphics.Gloss as X
@@ -92,7 +93,7 @@ handleEvent debugEvents event vars@GlossVars { .. } = do
 
 stepGloss :: Float -> GlossVars -> IO GlossVars
 stepGloss dTime vars@GlossVars { .. } = do
-  threadDelay $ round $ dTime * 1000
+  -- threadDelay $ round $ dTime * 1000
   putMVar glossDTimeVar dTime
   exitNow <- readIORef glossExitRef
   when exitNow exitSuccess
@@ -102,15 +103,17 @@ stepGloss dTime vars@GlossVars { .. } = do
 --   start the gloss backend and connect the cell to it.
 --   This introduces 'Handle's, which need to be taken care of by calling 'runHandlingState'
 --   or a similar function.
-glossWrapC :: GlossSettings -> Cell PictureM a b -> Cell (StateT (HandlingState IO) IO) a b
+glossWrapC :: Typeable b => GlossSettings -> Cell PictureM a b -> Cell (StateT (HandlingState IO) IO) a (Maybe b)
 glossWrapC glossSettings cell = proc a -> do
   GlossHandle { .. } <- handling $ glossHandle glossSettings -< ()
-  liftCell pump -< (glossVars, a)
+  bMaybe <- nonBlocking False pump -< Just (glossVars, a)
+  arrM $ lift . threadDelay                               -< 100 -- TODO Tweak for better performance
+  returnA -< bMaybe
   where
     pump = proc (GlossVars { .. }, a) -> do
       _      <- arrM takeMVar                        -< glossDTimeVar
       events <- arrM $ flip atomicModifyIORef ([], ) -< glossEventsRef
       (picture, b) <- runPictureT cell               -< (events, a)
       arrM (uncurry writeIORef)                      -< (glossPicRef, picture)
-      arrM threadDelay                               -< 10000 -- TODO Tweak for better performance
+      arrM threadDelay                               -< 100 -- TODO Tweak for better performance
       returnA                                        -< b

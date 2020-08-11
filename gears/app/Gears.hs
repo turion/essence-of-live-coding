@@ -2,6 +2,7 @@
 
 -- base
 import Control.Arrow
+import Control.Concurrent
 import Control.Monad (void)
 import Control.Monad.IO.Class
 import Data.IORef
@@ -9,6 +10,9 @@ import Data.Maybe (fromMaybe)
 
 -- time
 import Data.Time.Clock
+
+-- transformers
+import Control.Monad.Trans.Class (MonadTrans(lift))
 
 -- essence-of-live-coding
 import LiveCoding
@@ -98,6 +102,7 @@ mainCell = proc () -> do
   pulseWrapC 1600 pulseCell            -< handle
   glossWrapC defaultSettings glossCell -< handle
   printFPS "mainCell" -< ()
+  arrM $ lift . threadDelay                               -< 100 -- TODO Tweak for better performance
   returnA                              -< ()
 
 main :: IO ()
