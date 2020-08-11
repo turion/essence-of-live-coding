@@ -72,7 +72,8 @@ pulseWrapC
   -> Cell (HandlingStateT IO) a [b]
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
-  bsMaybe <- inSepThread $ calcAndPushSamples bufferSize cell -< (simple, a)
+  -- FIXME It remains to test whether sound actually works that way
+  bsMaybe <- nonBlocking False $ calcAndPushSamples bufferSize cell -< Just (simple, a)
   returnA -< fromMaybe [] bsMaybe
 
 calcAndPushSamples :: Int -> PulseCell IO a b -> Cell IO (Simple, a) [b]
@@ -82,18 +83,6 @@ calcAndPushSamples bufferSize cell = proc (simple, a) -> do
       samples' = getSum <$> samples
   arrM $ uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
   returnA -< bs
-
-inSepThread :: Typeable b => Cell IO a b -> Cell (HandlingStateT IO) a (Maybe b)
-inSepThread Cell { .. } = proc a -> do
-  resultVar <- handling $ newMVarHandle Nothing -< ()
-  liftCell Cell { cellStep = backgroundStep, cellState = cellState } -< (resultVar, a)
-    where
-      backgroundStep s (resultVar, a) = do
-        (bMaybe, s'Maybe) <- Unzip.unzip <$> takeMVar resultVar
-        let s' = fromMaybe s s'Maybe
-        forkIO $ putMVar resultVar =<< Just <$> cellStep s' a
-        return (bMaybe, s')
-inSepThread notACell = inSepThread $ toCell notACell
 
 {- | Returns the sum of all incoming values,
 and wraps it between -1 and 1.
