@@ -43,10 +43,7 @@ cellWithAction action = flip runStateC 0 $ runHandlingStateC $ handling testHand
 
 test = testGroup "Handle"
   [ testProperty "Preserve Handles" CellMigrationSimulation
-    { cell1 = cellWithAction $ do
-        n <- get
-        let n' = n + 1
-        put n'
+    { cell1 = cellWithAction $ modify (+ 1)
     , cell2 = cellWithAction $ return ()
     , input1 = replicate 3 ()
     , input2 = replicate 3 ()
