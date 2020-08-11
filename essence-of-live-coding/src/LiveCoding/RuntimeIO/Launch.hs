@@ -9,6 +9,9 @@ module LiveCoding.RuntimeIO.Launch where
 import Control.Concurrent
 import Control.Monad
 
+-- time
+import Data.Time.Clock
+
 -- transformers
 import Control.Monad.Trans.State.Strict
 
@@ -63,7 +66,10 @@ update
   -> IO ()
 update LaunchedProgram { .. } newProg = do
   oldProg <- takeMVar programVar
+  before <- getCurrentTime
   putMVar programVar $ hotCodeSwap (runIO newProg) oldProg
+  after <- getCurrentTime
+  putStrLn $ "Hot code swap latency: " ++ show (after `diffUTCTime` before)
 
 {- | Stops a thread where a 'LiveProgram' is being executed.
 

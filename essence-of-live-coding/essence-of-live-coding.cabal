@@ -84,6 +84,7 @@ library
     , syb >= 0.7
     , vector-sized >= 1.2
     , foreign-store >= 0.2
+    , time >= 1.9
   hs-source-dirs:      src
   default-language:    Haskell2010
   default-extensions: StrictData
