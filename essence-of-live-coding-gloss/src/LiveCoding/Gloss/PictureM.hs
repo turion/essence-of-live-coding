@@ -1,6 +1,8 @@
 module LiveCoding.Gloss.PictureM where
 
 -- transformers
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Writer
 
 -- gloss
@@ -10,15 +12,28 @@ import Graphics.Gloss.Interface.IO.Game
 -- essence-of-live-coding
 import LiveCoding
 
-type PictureM = WriterT Picture IO
+{- | The monad transformer that captures the effects of gloss,
+which are reading events and writing pictures.
 
-runPictureM :: GlossCell -> Cell IO [Event] Picture
-runPictureM = hoistCellOutput $ fmap massageWriterOutput . runWriterT
+You can call these effects for example by...
 
-massageWriterOutput (((), s), pic) = (pic, s)
+* ...using 'ask' to read the events that occurred,
+* ...composing a cell with 'addPicture' to paint a picture.
+-}
+type PictureT m = ReaderT [Event] (WriterT Picture m)
 
--- TODO Rhine integration instead of fixed sample size
-type GlossCell = Cell PictureM [Event] ()
+-- | 'PictureT' specialised to the 'IO' monad.
+type PictureM = PictureT IO
 
-addPicture :: Cell PictureM Picture ()
-addPicture = arrM tell
+-- | Run the effects of the gloss monad stack by explicitly passing events and pictures.
+runPictureT
+  :: Monad m
+  => Cell (PictureT m) a b
+  -> Cell m ([Event], a) (Picture, b)
+runPictureT = hoistCellOutput (fmap massageWriterOutput . runWriterT) . runReaderC'
+  where
+    massageWriterOutput :: ((b, s), pic) -> ((pic, b), s)
+    massageWriterOutput ((b, s), pic) = ((pic, b), s)
+
+addPicture :: Monad m => Cell (PictureT m) Picture ()
+addPicture = arrM $ lift . tell

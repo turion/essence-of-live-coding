@@ -13,8 +13,9 @@ import Prelude hiding (Bounded)
 -- transformers
 import Control.Monad.Trans.Accum
 
-import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Class
+import Control.Monad.Trans.Reader (ask)
+import Control.Monad.Trans.State.Strict (StateT)
 import Control.Monad.Trans.Writer
 
 -- syb
@@ -31,15 +32,37 @@ import LiveCoding
 import LiveCoding.Gloss hiding (statePicture, every, translate)
 
 main :: IO ()
-main = playCellForeground glossCell
+main = runHandlingStateT $ foreground liveProgram
 
-glossCell' :: GlossCell
-glossCell' = arr (const ()) >>> sine 3 >>> arr realToFrac >>> arr circleThing >>> addPicture
+liveProgram :: LiveProgram (HandlingStateT IO)
+liveProgram = liveCell $ glossWrapC defaultSettings glossCell
+
+glossCell' :: Cell PictureM () ()
+glossCell'
+  = speed
+  >>> integrate
+  >>> arr sin
+  >>> arr (*10)
+  >>> arr realToFrac
+  >>> arr circleThing
+  >>> addPicture
   where
-    circleThing x = Gloss.translate (x * 10 - 90) 0 myCircle
-    myCircle = color white $ thickCircle 10 20
+    circleThing x
+      = (Gloss.translate (x * 10 - 90) 0 $ color green $ thickCircle 10 20)
+      <> (Gloss.translate (-x * 10 - 90) (-40) $ color red $ thickCircle 10 20)
 
-glossCell :: GlossCell
+speed ::  Cell PictureM () Float
+speed = proc () -> do
+  events <- arrM (const ask) -< ()
+  sumC -< sum $ isEventMouseClick <$> events
+
+isEventMouseClick :: Event -> Float
+isEventMouseClick (EventKey (MouseButton LeftButton) _ _ _) = 1
+isEventMouseClick (EventKey (MouseButton RightButton) _ _ _) = -1
+isEventMouseClick _ = 0
+
+
+glossCell :: Cell PictureM () ()
 glossCell = withDebuggerC glossCell' glossDebugger
 
 -- * To be ported to essence-of-live-coding-gloss (and delete the Arrows)
@@ -163,7 +186,7 @@ compPic (Composition (s1, s2))
   | otherwise = stateBoundedPic s1 `addRight` stateBoundedPic s2
 
 glossDebugger :: Debugger PictureM
-glossDebugger = Debugger $ liveCell $ every 100 >>> keep blank >>> arrM (lift . tell)
+glossDebugger = Debugger $ liveCell $ every 100 >>> keep blank >>> arrM (lift . lift . tell)
 
 every :: Data s => Integer -> Cell (StateT s PictureM) () (Maybe Picture)
 every maxN = proc () -> do
