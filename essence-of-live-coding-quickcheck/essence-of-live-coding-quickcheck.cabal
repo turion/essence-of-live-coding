@@ -39,10 +39,10 @@ library
   build-depends:
       base >= 4.11 && < 5
     , essence-of-live-coding >= 0.2.0.0
-    , transformers == 0.5.*
-    , syb == 0.7.*
+    , transformers >= 0.5
+    , syb >= 0.7
     , QuickCheck >= 2.12
-    , boltzmann-samplers == 0.1.*
+    , boltzmann-samplers >= 0.1
   hs-source-dirs:      src
   default-language:    Haskell2010
   default-extensions:  StrictData
