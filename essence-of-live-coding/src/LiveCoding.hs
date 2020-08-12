@@ -3,6 +3,7 @@ module LiveCoding
   where
 
 -- base
+import Control.Arrow as X hiding (app)
 import Data.Data as X
 
 -- essence-of-live-coding
