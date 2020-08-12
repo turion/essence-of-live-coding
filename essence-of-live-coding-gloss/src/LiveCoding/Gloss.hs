@@ -54,6 +54,7 @@ data GlossSettings = GlossSettings
   { displaySetting  :: Display      -- ^ Display mode (e.g. 'InWindow' or 'FullScreen').
   , backgroundColor :: Color        -- ^ Background color.
   , stepsPerSecond  :: Int          -- ^ Number of simulation steps per second of real time.
+  , debugEvents     :: Bool         -- ^ Print all incoming events to the console.
   }
 
 defaultSettings :: GlossSettings
@@ -61,6 +62,7 @@ defaultSettings = GlossSettings
   { displaySetting  = InWindow "Essence of live coding" (600, 800) (20, 20)
   , backgroundColor = black
   , stepsPerSecond  = 30
+  , debugEvents     = False
   }
 
 -- | Will create a handle for communication with the gloss thread,
@@ -74,7 +76,7 @@ glossHandle GlossSettings { .. } = Handle
       glossExitRef <- newIORef False
       let glossVars = GlossVars { .. }
       glossThread <- forkIO
-        $ playIO displaySetting backgroundColor stepsPerSecond glossVars getPicture handleEvent stepGloss
+        $ playIO displaySetting backgroundColor stepsPerSecond glossVars getPicture (handleEvent debugEvents) stepGloss
       return GlossHandle { .. }
   , destroy = \GlossHandle { glossVars = GlossVars { .. }, .. } -> writeIORef glossExitRef True
   }
@@ -82,8 +84,9 @@ glossHandle GlossSettings { .. } = Handle
 getPicture :: GlossVars -> IO Picture
 getPicture GlossVars { .. } = readIORef glossPicRef
 
-handleEvent :: Event -> GlossVars -> IO GlossVars
-handleEvent event vars@GlossVars { .. } = do
+handleEvent :: Bool -> Event -> GlossVars -> IO GlossVars
+handleEvent debugEvents event vars@GlossVars { .. } = do
+  when debugEvents $ print event
   modifyIORef glossEventsRef (event :)
   return vars
 
