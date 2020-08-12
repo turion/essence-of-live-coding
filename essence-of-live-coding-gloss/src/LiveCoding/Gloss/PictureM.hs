@@ -1,8 +1,11 @@
-module LiveCoding.Gloss.PictureM where
+module LiveCoding.Gloss.PictureM
+  ( module LiveCoding.Gloss.PictureM
+  , module X
+  ) where
 
 -- transformers
 import Control.Monad.Trans.Class
-import Control.Monad.Trans.Reader
+import Control.Monad.Trans.Reader as X
 import Control.Monad.Trans.Writer
 
 -- gloss
