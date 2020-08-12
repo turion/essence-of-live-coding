@@ -3,7 +3,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
 -- base
-import Control.Arrow hiding (left, right)
 import qualified Control.Arrow as Arrow
 
 import Data.Data
@@ -26,7 +25,7 @@ import Graphics.Gloss hiding (translate)
 import qualified Graphics.Gloss as Gloss
 
 -- essence-of-live-coding
-import LiveCoding
+import LiveCoding hiding (left, right)
 
 -- essence-of-live-coding-gloss
 import LiveCoding.Gloss hiding (statePicture, every, translate)
