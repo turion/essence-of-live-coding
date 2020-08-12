@@ -4,7 +4,8 @@
 module Handle where
 
 -- base
-import Control.Arrow (arr, (>>>))
+import Control.Arrow
+import Data.Functor
 import Data.Functor.Identity
 
 -- transformers
@@ -36,6 +37,12 @@ testHandle = Handle
   , destroy = const $ put 10000
   }
 
+testUnitHandle :: Handle (State Int) ()
+testUnitHandle = Handle
+  { create = return ()
+  , destroy = const $ put 20000
+  }
+
 cellWithAction
   :: forall a b . (State Int b)
   -> Cell Identity a (String, Int)
@@ -43,15 +50,49 @@ cellWithAction action = flip runStateC 0 $ runHandlingStateC $ handling testHand
 
 test = testGroup "Handle"
   [ testProperty "Preserve Handles" CellMigrationSimulation
-    { cell1 = cellWithAction $ do
-        n <- get
-        let n' = n + 1
-        put n'
+    { cell1 = cellWithAction $ modify (+ 1)
     , cell2 = cellWithAction $ return ()
     , input1 = replicate 3 ()
     , input2 = replicate 3 ()
     , output1 = ("Handle #0", ) <$> [1, 2, 3]
     , output2 = ("Handle #0", ) <$> [3, 3, 3]
+    }
+  , testProperty "Initialise Handles upon migration" CellMigrationSimulation
+    { cell1 = flip runStateC 0 $ constM $ modify (+ 1) >> return ""
+    , cell2 = cellWithAction $ return ()
+    , input1 = replicate 3 ()
+    , input2 = replicate 3 ()
+    , output1 = ("", ) <$> [1, 2, 3]
+    , output2 = ("Handle #3", ) <$> [3, 3, 3]
+    }
+  , testProperty "Preserve Handles in more complex migration" CellMigrationSimulation
+    { cell1 = flip runStateC 22
+        $ constM (modify (+ 1)) >>> runHandlingStateC (handling testHandle)
+    , cell2 = cellWithAction $ return ()
+    , input1 = replicate 3 ()
+    , input2 = replicate 3 ()
+    , output1 = ("Handle #23", ) <$> [23, 24, 25]
+    , output2 = ("Handle #23", ) <$> replicate 3 25
+    }
+  , testProperty "Reinitialise Handles in too complex migration" CellMigrationSimulation
+    { cell1 = flip runStateC 22
+        $   constM (modify (+ 1))
+        >>> constM get >>> sumC >>> sumC
+        >>> runHandlingStateC (handling testHandle)
+    , cell2 = cellWithAction $ return ()
+    , input1 = replicate 3 ()
+    , input2 = replicate 3 ()
+    , output1 = ("Handle #23", ) <$> [23, 24, 25]
+    , output2 = ("Handle #25", ) <$> replicate 3 25
+    }
+  , testProperty "Doesn't crash when handle is introspected by migration" CellMigrationSimulation
+    { cell1 = cellWithAction $ return ()
+    , cell2 = flip runStateC 0 $ runHandlingStateC
+        $ handling testUnitHandle >>> arr (const "")
+    , input1 = replicate 3 ()
+    , input2 = replicate 3 ()
+    , output1 = ("Handle #0", ) <$> replicate 3 0
+    , output2 = ("", ) <$> replicate 3 10000
     }
   , testProperty "Trigger destructors" CellMigrationSimulation
     { cell1 = cellWithAction $ return ()
