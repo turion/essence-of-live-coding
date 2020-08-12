@@ -1,5 +1,5 @@
 name:                essence-of-live-coding
-version:             0.1.0.3
+version:             0.2.0.0
 synopsis: General purpose live coding framework
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -30,7 +30,7 @@ source-repository head
 source-repository this
   type:     git
   location: git@github.com:turion/essence-of-live-coding.git
-  tag:      v0.1.0.3
+  tag:      v0.2.0.0
 
 
 library
@@ -79,11 +79,11 @@ library
   other-extensions:    DeriveDataTypeable
   build-depends:
       base >= 4.11 && < 5
-    , transformers == 0.5.*
+    , transformers >= 0.5
     , containers >= 0.6
-    , syb == 0.7.*
+    , syb >= 0.7
     , vector-sized >= 1.2
-    , foreign-store
+    , foreign-store >= 0.2
   hs-source-dirs:      src
   default-language:    Haskell2010
   default-extensions: StrictData
@@ -103,13 +103,13 @@ test-suite test
   hs-source-dirs: test
   build-depends:
       base >= 4.11 && < 5
-    , syb == 0.7.*
+    , syb >= 0.7
     , transformers >= 0.5
     , containers >= 0.6
     , mtl >= 2.2
     , essence-of-live-coding
-    , test-framework == 0.8.*
-    , test-framework-quickcheck2 == 0.3.*
+    , test-framework >= 0.8
+    , test-framework-quickcheck2 >= 0.3
     , QuickCheck >= 2.12
   default-language:    Haskell2010
 
@@ -119,7 +119,7 @@ executable TestExceptions
   build-depends:
       base >= 4.11 && < 5
     , essence-of-live-coding
-    , transformers == 0.5.*
+    , transformers >= 0.5
   default-language:    Haskell2010
 
 executable TestNonBlocking

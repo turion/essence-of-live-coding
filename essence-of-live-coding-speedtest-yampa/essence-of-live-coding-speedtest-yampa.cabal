@@ -1,5 +1,5 @@
 name:                essence-of-live-coding-speedtest-yampa
-version:             0.1.0.3
+version:             0.2.0.0
 synopsis: General purpose live coding framework - Yampa speedtest
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -41,7 +41,7 @@ executable SpeedTest
   build-depends:
       base >= 4.11 && < 5
     , essence-of-live-coding
-    , transformers == 0.5.*
+    , transformers >= 0.5
   default-extensions: StrictData
 
 executable SpeedTestYampa

@@ -1,5 +1,5 @@
 name:                essence-of-live-coding-gloss
-version:             0.1.0.3
+version:             0.2.0.0
 synopsis: General purpose live coding framework - Gloss backend
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -41,11 +41,11 @@ library
     LiveCoding.Gloss.PictureM
   build-depends:
       base >= 4.11 && < 5
-    , syb
-    , transformers
-    , essence-of-live-coding
-    , foreign-store
-    , gloss
+    , syb >= 0.7
+    , transformers >= 0.5
+    , essence-of-live-coding >= 0.2.0.0
+    , foreign-store >= 0.2
+    , gloss >= 1.13
   hs-source-dirs:      src
   default-language:    Haskell2010
   default-extensions: StrictData
