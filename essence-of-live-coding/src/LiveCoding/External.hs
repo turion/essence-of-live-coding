@@ -31,7 +31,7 @@ runWriterC Cell { .. } = Cell
   , ..
   }
 
-concurrently :: MonadIO m => ExternalCell m eIn eOut a b -> IO (Cell m a b, ExternalLoop eIn eOut)
+concurrently :: (MonadIO m, Monoid eOut) => ExternalCell m eIn eOut a b -> IO (Cell m a b, ExternalLoop eIn eOut)
 concurrently externalCell = do
   inVar  <- newEmptyMVar
   outVar <- newEmptyMVar

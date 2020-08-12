@@ -59,9 +59,7 @@ runReaderC r = hoistCell $ flip runReaderT r
 
 -- | Supply a 'ReaderT' environment live
 runReaderC'
-  :: Cell (ReaderT r m) a b
+  :: Monad m
+  => Cell (ReaderT r m) a b
   -> Cell m (r, a) b
-runReaderC' Cell { .. } = Cell
-  { cellStep = \state (r, a) -> runReaderT (cellStep state a) r
-  , ..
-  }
+runReaderC' = hoistCellKleisli_ $ \action (r, a) -> runReaderT (action a) r
