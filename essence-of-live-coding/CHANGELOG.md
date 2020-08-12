@@ -1,7 +1,8 @@
 # Revision history for essence-of-live-coding
 
-## Upcoming
+## 0.2.0.0
 
+* Adapted gloss backend to handles and refactored
 * Added a mechanism to make cells nonblocking
 * Added handles for nonserialisable values like threads, concurrent variables & device handles
 
