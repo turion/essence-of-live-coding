@@ -34,7 +34,7 @@ main :: IO ()
 main = runHandlingStateT $ foreground liveProgram
 
 liveProgram :: LiveProgram (HandlingStateT IO)
-liveProgram = liveCell $ glossWrapC defaultSettings glossCell
+liveProgram = liveCell $ glossWrapC defaultSettings { debugEvents = True } glossCell
 
 glossCell' :: Cell PictureM () ()
 glossCell'
