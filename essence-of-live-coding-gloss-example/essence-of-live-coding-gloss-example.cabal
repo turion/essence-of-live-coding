@@ -41,8 +41,8 @@ executable essence-of-live-coding-gloss-example
       base >= 4.11 && < 5
     , transformers
     , gloss
-    , essence-of-live-coding
-    , essence-of-live-coding-gloss
+    , essence-of-live-coding >= 0.2.0.0
+    , essence-of-live-coding-gloss >= 0.2.0.0
     , syb
   hs-source-dirs:      app
   default-language:    Haskell2010

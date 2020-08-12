@@ -38,7 +38,7 @@ library
   exposed-modules:     LiveCoding.QuickCheck
   build-depends:
       base >= 4.11 && < 5
-    , essence-of-live-coding
+    , essence-of-live-coding >= 0.2.0.0
     , transformers == 0.5.*
     , syb == 0.7.*
     , QuickCheck >= 2.12

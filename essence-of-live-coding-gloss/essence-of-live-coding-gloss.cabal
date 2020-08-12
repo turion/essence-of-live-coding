@@ -43,7 +43,7 @@ library
       base >= 4.11 && < 5
     , syb
     , transformers
-    , essence-of-live-coding
+    , essence-of-live-coding >= 0.2.0.0
     , foreign-store
     , gloss
   hs-source-dirs:      src
