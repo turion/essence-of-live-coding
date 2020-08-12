@@ -9,6 +9,7 @@ myPkgs.shellFor {
     p.warp
   ];
   buildInputs = with myPkgs; [
+    ghcid
     ghcide
     hlint
   ];
