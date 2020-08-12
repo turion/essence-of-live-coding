@@ -103,6 +103,7 @@ withDebuggerC (Cell state step) (Debugger (LiveProgram dbgState dbgStep)) = Cell
       (b, state') <- step state a
       states <- runStateT (dbgStep dbgState) state'
       return (b, uncurry (flip Debugging) states)
+withDebuggerC noCell debugger = withDebuggerC (toCell noCell) debugger
 \end{code}
 \end{comment}
 Again, let us understand the function through its state type:
