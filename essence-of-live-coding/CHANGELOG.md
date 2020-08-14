@@ -1,5 +1,14 @@
 # Revision history for essence-of-live-coding
 
+## 0.2.1
+
+* Adapted pulse backend to handles and refactored
+
+## 0.2.0.1
+
+* Bug fixes
+* Version bounds
+
 ## 0.2.0.0
 
 * Adapted gloss backend to handles and refactored
