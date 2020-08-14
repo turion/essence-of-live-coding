@@ -19,9 +19,16 @@ import LiveCoding
 
 type PulseCell a b = Cell IO a (Float, b)
 
+-- | Globally fix the sample rate to 48000 samples per second.
 sampleRate :: Num a => a
 sampleRate = 48000
 
+{- | Create a pulse server backend handle.
+
+Currently, this is always mono,
+but with a future release of @pulse-simple@,
+this might be configurable.
+-}
 pulseHandle :: Handle IO Simple
 pulseHandle = Handle
   { create = simpleNew
@@ -36,7 +43,20 @@ pulseHandle = Handle
   , destroy = simpleFree
   }
 
-pulseWrapC :: Int -> PulseCell a b -> Cell (HandlingStateT IO) a [b]
+{- | Run a 'PulseCell' with a started pulse backend.
+
+Currently, this is synchronous and blocking,
+i.e. the resulting cell will block until the backend buffer is nearly empty.
+
+This performs several steps of your cell at a time,
+replicating the input so many times.
+-}
+pulseWrapC
+  :: Int
+  -- ^ Specifies how many steps of your 'PulseCell' should be performed in one step of 'pulseWrapC'.
+  -> PulseCell a b
+  -- ^ Your cell that produces samples.
+  -> Cell (HandlingStateT IO) a [b]
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
   samplesAndBs <- resampleList $ liftCell cell -< replicate bufferSize a
@@ -44,7 +64,11 @@ pulseWrapC bufferSize cell = proc a -> do
   arrM $ lift . uncurry simpleWrite -< samples `seq` bs `seq` (simple, samples)
   returnA -< bs
 
--- Returns the sum between -1 and 1
+{- | Returns the sum of all incoming values,
+and wraps it between -1 and 1.
+
+This is to prevent floating number imprecision when the sum gets too large.
+-}
 wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
 wrapSum = Cell
   { cellState = 0
@@ -54,6 +78,7 @@ wrapSum = Cell
     in return (accum', accum')
   }
 
+-- | Like 'wrapSum', but as an integral, assuming the PulseAudio 'sampleRate'.
 wrapIntegral :: (Monad m, Data a, RealFloat a) => Cell m a a
 wrapIntegral = arr (/ sampleRate) >>> wrapSum
 
@@ -67,16 +92,25 @@ modSum denominator = Cell
 clamp :: (Ord a, Num a) => a -> a -> a -> a
 clamp lower upper a = min upper $ max lower a
 
+-- | A sine oscillator.
+--   Supply the frequency via the 'ReaderT' environment.
+--   See 'osc'' and 'oscAt'.
 osc :: (Data a, RealFloat a, MonadFix m) => Cell (ReaderT a m) () a
 osc = proc _ -> do
   f <- constM ask -< ()
   phase <- wrapIntegral -< f
   returnA -< sin $ 2 * pi * phase
 
+-- | A sine oscillator, at a frequency that can be specified live.
 osc' :: (Data a, RealFloat a, MonadFix m) => Cell m a a
 osc' = proc a -> do
   runReaderC' osc -< (a, ())
 
+{- | A basic musical note (western traditional notation, german nomenclature).
+
+Assumes equal temperament and removes enharmonic equivalents,
+i.e. there is only Dis (= D sharp) but not Eb (= E flat).
+-}
 data Note
   = A
   | Bb
@@ -92,8 +126,11 @@ data Note
   | Gis
   deriving (Enum, Show)
 
+-- | Calculate the frequency of a note,
+--   with 'A' corresponding to 220 Hz.
 f :: Note -> Float
 f note = 220 * (2 ** (fromIntegral (fromEnum note) / 12))
 
+-- | Transpose a frequency an octave higher, i.e. multiply by 2.
 o :: Float -> Float
 o = (* 2)
