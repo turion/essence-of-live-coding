@@ -19,6 +19,9 @@ import LiveCoding
 
 type PulseCell a b = Cell IO a (Float, b)
 
+sampleRate :: Num a => a
+sampleRate = 48000
+
 pulseHandle :: Handle IO Simple
 pulseHandle = Handle
   { create = simpleNew
@@ -27,7 +30,7 @@ pulseHandle = Handle
       Play
       Nothing
       "this is an example application"
-      (SampleSpec (F32 LittleEndian) 44100 1)
+      (SampleSpec (F32 LittleEndian) sampleRate 1)
       Nothing
       Nothing
   , destroy = simpleFree
@@ -51,6 +54,9 @@ wrapSum = Cell
     in return (accum', accum')
   }
 
+wrapIntegral :: (Monad m, Data a, RealFloat a) => Cell m a a
+wrapIntegral = arr (/ sampleRate) >>> wrapSum
+
 modSum :: (Monad m, Data a, Integral a) => a -> Cell m a a
 modSum denominator = Cell
   { cellState = 0
@@ -64,7 +70,7 @@ clamp lower upper a = min upper $ max lower a
 osc :: (Data a, RealFloat a, MonadFix m) => Cell (ReaderT a m) () a
 osc = proc _ -> do
   f <- constM ask -< ()
-  phase <- wrapSum -< f / 44100
+  phase <- wrapIntegral -< f
   returnA -< sin $ 2 * pi * phase
 
 osc' :: (Data a, RealFloat a, MonadFix m) => Cell m a a
