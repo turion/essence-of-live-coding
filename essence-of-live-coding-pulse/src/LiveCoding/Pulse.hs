@@ -74,7 +74,7 @@ wrapSum = Cell
   { cellState = 0
   , cellStep  = \accum a ->
     let
-        (_, accum')  = properFraction $ accum + a
+        (_, accum') = properFraction $ accum + a
     in return (accum', accum')
   }
 
@@ -87,7 +87,6 @@ modSum denominator = Cell
   { cellState = 0
   , cellStep  = \accum a -> let accum' = (accum + a) `mod` denominator in return (accum', accum')
   }
-
 
 clamp :: (Ord a, Num a) => a -> a -> a -> a
 clamp lower upper a = min upper $ max lower a
