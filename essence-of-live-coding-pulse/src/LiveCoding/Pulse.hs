@@ -6,10 +6,12 @@ import Control.Arrow as X
 import Control.Concurrent
 import Control.Monad (forever)
 import Control.Monad.Fix
+import Data.Monoid (getSum, Sum(Sum))
 
 -- transformers
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import Control.Monad.Trans.Reader
+import Control.Monad.Trans.Writer.Strict
 
 -- pulse-simple
 import Sound.Pulse.Simple
@@ -17,7 +19,13 @@ import Sound.Pulse.Simple
 -- essence-of-live-coding
 import LiveCoding
 
-type PulseCell a b = Cell IO a (Float, b)
+type PulseT m = WriterT (Sum Float) m
+
+type PulseCell m a b = Cell (PulseT m) a b
+
+-- | Compose with this cell to play a sound sample.
+addSample :: Monad m => PulseCell m Float ()
+addSample = arr Sum >>> arrM tell
 
 -- | Globally fix the sample rate to 48000 samples per second.
 sampleRate :: Num a => a
@@ -54,14 +62,15 @@ replicating the input so many times.
 pulseWrapC
   :: Int
   -- ^ Specifies how many steps of your 'PulseCell' should be performed in one step of 'pulseWrapC'.
-  -> PulseCell a b
+  -> PulseCell IO a b
   -- ^ Your cell that produces samples.
   -> Cell (HandlingStateT IO) a [b]
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
-  samplesAndBs <- resampleList $ liftCell cell -< replicate bufferSize a
+  samplesAndBs <- resampleList $ liftCell $ runWriterC cell -< replicate bufferSize a
   let (samples, bs) = unzip samplesAndBs
-  arrM $ lift . uncurry simpleWrite -< samples `seq` bs `seq` (simple, samples)
+      samples' = getSum <$> samples
+  arrM $ lift . uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
   returnA -< bs
 
 {- | Returns the sum of all incoming values,

@@ -66,10 +66,11 @@ cycleThrough bs cycleLength = let vector = Vector.fromList (NonEmpty.toList bs) 
   n <- modSum (cycleLength * length bs) -< 1
   returnA -< vector ! (n `div` cycleLength)
 
+frequencies' :: Monad m => Cell m () Float
 frequencies' = cycleThrough (NonEmpty.fromList $ [f D, f G, o $ f Bb]) 8000
 
-pulseCell :: PulseCell () ()
-pulseCell = frequencies' >>> osc' >>> arr (, ())
+pulseCell :: Monad m => PulseCell m () ()
+pulseCell = frequencies' >>> osc' >>> addSample
 
 liveProgram :: LiveProgram (HandlingStateT IO)
 liveProgram = liveCell $ pulseWrapC 1024 pulseCell >>> arr (const ())
