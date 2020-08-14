@@ -94,14 +94,14 @@ clamp lower upper a = min upper $ max lower a
 -- | A sine oscillator.
 --   Supply the frequency via the 'ReaderT' environment.
 --   See 'osc'' and 'oscAt'.
-osc :: (Data a, RealFloat a, MonadFix m) => Cell (ReaderT a m) () a
+osc :: (Data a, RealFloat a, Monad m) => Cell (ReaderT a m) () a
 osc = proc _ -> do
   f <- constM ask -< ()
   phase <- wrapIntegral -< f
   returnA -< sin $ 2 * pi * phase
 
 -- | A sine oscillator, at a frequency that can be specified live.
-osc' :: (Data a, RealFloat a, MonadFix m) => Cell m a a
+osc' :: (Data a, RealFloat a, Monad m) => Cell m a a
 osc' = proc a -> do
   runReaderC' osc -< (a, ())
 
