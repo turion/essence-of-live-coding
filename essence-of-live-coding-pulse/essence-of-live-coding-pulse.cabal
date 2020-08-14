@@ -1,5 +1,5 @@
 name:                essence-of-live-coding-pulse
-version:             0.2.0.1
+version:             0.2.1
 synopsis: General purpose live coding framework - pulse backend
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -30,7 +30,7 @@ library
     LiveCoding.Pulse
   build-depends:
       base >= 4.11 && < 5
-    , essence-of-live-coding >= 0.2.0.1
+    , essence-of-live-coding >= 0.2.1
     , transformers >= 0.5
     , pulse-simple >= 0.1
     , foreign-store >= 0.2
