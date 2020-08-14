@@ -1,5 +1,5 @@
 name:                essence-of-live-coding-gloss
-version:             0.2.0.1
+version:             0.2.1
 synopsis: General purpose live coding framework - Gloss backend
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -32,7 +32,7 @@ source-repository head
 source-repository this
   type:     git
   location: git@github.com:turion/essence-of-live-coding.git
-  tag:      v0.2.0.1
+  tag:      v0.2.1
 
 library
   exposed-modules:
@@ -43,7 +43,7 @@ library
       base >= 4.11 && < 5
     , syb >= 0.7
     , transformers >= 0.5
-    , essence-of-live-coding >= 0.2.0.1
+    , essence-of-live-coding >= 0.2.1
     , foreign-store >= 0.2
     , gloss >= 1.13
   hs-source-dirs:      src

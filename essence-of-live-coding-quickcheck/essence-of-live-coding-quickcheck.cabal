@@ -1,5 +1,5 @@
 name:                essence-of-live-coding-quickcheck
-version:             0.2.0.1
+version:             0.2.1
 synopsis: General purpose live coding framework - QuickCheck integration
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -31,14 +31,14 @@ source-repository head
 source-repository this
   type:     git
   location: git@github.com:turion/essence-of-live-coding.git
-  tag:      v0.2.0.1
+  tag:      v0.2.1
 
 
 library
   exposed-modules:     LiveCoding.QuickCheck
   build-depends:
       base >= 4.11 && < 5
-    , essence-of-live-coding >= 0.2.0.1
+    , essence-of-live-coding >= 0.2.1
     , transformers >= 0.5
     , syb >= 0.7
     , QuickCheck >= 2.12
