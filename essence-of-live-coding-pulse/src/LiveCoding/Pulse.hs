@@ -100,6 +100,10 @@ osc = proc _ -> do
   phase <- wrapIntegral -< f
   returnA -< sin $ 2 * pi * phase
 
+-- | A sine oscillator, at a fixed frequency.
+oscAt :: (Data a, RealFloat a, Monad m) => a -> Cell m () a
+oscAt = flip runReaderC osc
+
 -- | A sine oscillator, at a frequency that can be specified live.
 osc' :: (Data a, RealFloat a, Monad m) => Cell m a a
 osc' = proc a -> do
@@ -133,3 +137,7 @@ f note = 220 * (2 ** (fromIntegral (fromEnum note) / 12))
 -- | Transpose a frequency an octave higher, i.e. multiply by 2.
 o :: Float -> Float
 o = (* 2)
+
+-- | Transpose a frequency an octave lower, i.e. divide by 2.
+oB :: Float -> Float
+oB = (/ 2)
