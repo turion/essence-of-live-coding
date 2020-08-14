@@ -33,12 +33,13 @@ pulseHandle = Handle
   , destroy = simpleFree
   }
 
-pulseWrapC :: PulseCell a b -> Cell (HandlingStateT IO) a b
-pulseWrapC cell = proc a -> do
+pulseWrapC :: Int -> PulseCell a b -> Cell (HandlingStateT IO) a [b]
+pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
-  (sample, b) <- liftCell cell -< a
-  arrM $ lift . uncurry simpleWrite -< (simple, [sample])
-  returnA -< b
+  samplesAndBs <- resampleList $ liftCell cell -< replicate bufferSize a
+  let (samples, bs) = unzip samplesAndBs
+  arrM $ lift . uncurry simpleWrite -< samples `seq` bs `seq` (simple, samples)
+  returnA -< bs
 
 -- Returns the sum between -1 and 1
 wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
