@@ -14,7 +14,7 @@ import Control.Monad.IO.Class
 
 -- transformers
 import Control.Monad.Trans.Reader
-import Control.Monad.Trans.Writer
+import Control.Monad.Trans.Writer.Strict
 
 -- essence-of-live-coding
 import LiveCoding.Cell
@@ -25,12 +25,6 @@ type ExternalCell m eIn eOut a b = Cell (ReaderT eIn (WriterT eOut m)) a b
 
 type ExternalLoop eIn eOut = Cell IO eIn eOut
 
-runWriterC :: Monad m => Cell (WriterT w m) a b -> Cell m a (b, w)
-runWriterC Cell { .. } = Cell
-  { cellStep = \state a -> fmap (\((b, w), s) -> ((b, s), w)) $ runWriterT $ cellStep state a
-  , ..
-  }
-
 concurrently :: (MonadIO m, Monoid eOut) => ExternalCell m eIn eOut a b -> IO (Cell m a b, ExternalLoop eIn eOut)
 concurrently externalCell = do
   inVar  <- newEmptyMVar
@@ -38,7 +32,7 @@ concurrently externalCell = do
   let
     cell = proc a -> do
       eIn       <- constM (liftIO $ takeMVar inVar)      -< ()
-      (b, eOut) <- runWriterC (runReaderC' externalCell) -< (eIn, a)
+      (eOut, b) <- runWriterC (runReaderC' externalCell) -< (eIn, a)
       arrM (liftIO . putMVar outVar)                     -< eOut
       returnA                                            -< b
     externalLoop = arrM (putMVar inVar) >>> constM (takeMVar outVar)

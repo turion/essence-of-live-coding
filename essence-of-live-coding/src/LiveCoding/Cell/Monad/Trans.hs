@@ -12,6 +12,7 @@ import Data.Data (Data)
 -- transformers
 import Control.Monad.Trans.Reader (runReaderT, ReaderT)
 import Control.Monad.Trans.State.Strict (StateT (..), runStateT, evalStateT)
+import Control.Monad.Trans.Writer.Strict
 
 -- essence-of-live-coding
 import LiveCoding.Cell
@@ -63,3 +64,10 @@ runReaderC'
   => Cell (ReaderT r m) a b
   -> Cell m (r, a) b
 runReaderC' = hoistCellKleisli_ $ \action (r, a) -> runReaderT (action a) r
+
+-- | Run the effects of the 'WriterT' monad,
+--   collecting all its output in the second element of the tuple.
+runWriterC :: (Monoid w, Monad m) => Cell (WriterT w m) a b -> Cell m a (w, b)
+runWriterC = hoistCellOutput $ fmap reorder . runWriterT
+  where
+    reorder ((b, s), w) = ((w, b), s)

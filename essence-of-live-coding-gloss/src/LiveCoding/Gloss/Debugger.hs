@@ -6,7 +6,7 @@ import Control.Arrow
 import Data.Data
 
 -- transformers
-import Control.Monad.Trans.Writer
+import Control.Monad.Trans.Writer.Strict
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State.Strict
 

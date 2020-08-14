@@ -15,7 +15,7 @@ import Control.Monad.Trans.Accum
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader (ask)
 import Control.Monad.Trans.State.Strict (StateT)
-import Control.Monad.Trans.Writer
+import Control.Monad.Trans.Writer.Strict
 
 -- syb
 import Data.Generics.Aliases (ext2Q)
