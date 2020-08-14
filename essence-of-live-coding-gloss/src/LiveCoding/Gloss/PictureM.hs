@@ -6,7 +6,7 @@ module LiveCoding.Gloss.PictureM
 -- transformers
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader as X
-import Control.Monad.Trans.Writer
+import Control.Monad.Trans.Writer.Strict
 
 -- gloss
 import Graphics.Gloss
@@ -33,10 +33,7 @@ runPictureT
   :: Monad m
   => Cell (PictureT m) a b
   -> Cell m ([Event], a) (Picture, b)
-runPictureT = hoistCellOutput (fmap massageWriterOutput . runWriterT) . runReaderC'
-  where
-    massageWriterOutput :: ((b, s), pic) -> ((pic, b), s)
-    massageWriterOutput ((b, s), pic) = ((pic, b), s)
+runPictureT = runWriterC . runReaderC'
 
 addPicture :: Monad m => Cell (PictureT m) Picture ()
 addPicture = arrM $ lift . tell
