@@ -1,0 +1,61 @@
+name:                essence-of-live-coding-warp
+version:             0.2.1
+synopsis: General purpose live coding framework
+description:
+  essence-of-live-coding is a general purpose and type safe live coding framework.
+  .
+  You can run programs in it, and edit, recompile and reload them while they're running.
+  Internally, the state of the live program is automatically migrated when performing hot code swap.
+  .
+  The library also offers an easy to use FRP interface.
+  It is parametrized by its side effects,
+  separates data flow cleanly from control flow,
+  and allows to develop live programs from reusable, modular components.
+  There are also useful utilities for debugging and quickchecking.
+  .
+  This library contains a single-threaded interface to the WARP web server.
+  WAI applications can be run this way.
+
+license:             BSD3
+license-file:        LICENSE
+author:              Manuel Bärenz
+maintainer:          programming@manuelbaerenz.de
+homepage:            https://www.manuelbaerenz.de/#computerscience
+category:            FRP, Live coding
+build-type:          Simple
+extra-source-files:  CHANGELOG.md
+cabal-version:       >=1.10
+
+source-repository head
+  type:     git
+  location: git@github.com:turion/essence-of-live-coding.git
+
+source-repository this
+  type:     git
+  location: git@github.com:turion/essence-of-live-coding.git
+  tag:      v0.2.1
+
+library
+  exposed-modules:
+      LiveCoding.Warp
+  other-extensions:    DeriveDataTypeable
+  build-depends:
+      base >= 4.11 && < 5
+    , http-types >= 0.12.3
+    , wai >= 3.2.2.1
+    , warp >= 3.3.13
+    , essence-of-live-coding >= 0.2.1
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  default-extensions:  StrictData
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  hs-source-dirs: test
+  build-depends:
+      base >= 4.11 && < 5
+    , http-client >= 0.7.1
+    , essence-of-live-coding >= 0.2.1
+    , essence-of-live-coding-warp
+  default-language:    Haskell2010
