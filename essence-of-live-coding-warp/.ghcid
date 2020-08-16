@@ -1,0 +1,1 @@
+--command="cabal repl essence-of-live-coding-warp:test:test" --test main
