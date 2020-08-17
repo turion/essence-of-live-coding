@@ -5,6 +5,10 @@ import Control.Arrow
 import Control.Monad (void)
 import Control.Monad.IO.Class
 import Data.IORef
+import Data.Maybe (fromMaybe)
+
+-- time
+import Data.Time.Clock
 
 -- essence-of-live-coding
 import LiveCoding
@@ -20,6 +24,7 @@ glossCell = withDebuggerC glossCell' statePlay
 
 glossCell' :: Cell PictureM (IORef Float) ()
 glossCell' = proc ref -> do
+  -- hoistCell liftIO $ printFPS "glossCell: " -< ()
   gearAngle <- integrate             -< 30
   addPicture                         -< gear gearAngle
   arrM $ liftIO . uncurry writeIORef -< (ref, gearAngle)
@@ -71,6 +76,19 @@ getAngleEvery maxCount = proc ref -> do
   angle <- keep 0 -< mAngle
   returnA         -< round angle
 
+-- | Output an estimate of the number of ticks per second
+fps :: Cell IO () Float
+fps = Cell
+  { cellState = Nothing
+  , cellStep = \lastTimestampMaybe () -> do
+      now <- getCurrentTime
+      let last = fromMaybe now lastTimestampMaybe
+      return (1 / realToFrac (now `diffUTCTime` last), Just now)
+  }
+
+printFPS :: MonadIO m => String -> Cell m () ()
+printFPS msg = hoistCell liftIO fps >>> arr (show >>> (msg ++)) >>> arrM (liftIO . putStrLn)
+
 liveProgram :: LiveProgram (HandlingStateT IO)
 liveProgram = liveCell mainCell
 
@@ -79,6 +97,7 @@ mainCell = proc () -> do
   handle <- handling $ ioRefHandle 0   -< ()
   pulseWrapC 1600 pulseCell            -< handle
   glossWrapC defaultSettings glossCell -< handle
+  printFPS "mainCell" -< ()
   returnA                              -< ()
 
 main :: IO ()
