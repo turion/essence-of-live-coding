@@ -93,16 +93,23 @@ fps = Cell
 printFPS :: MonadIO m => String -> Cell m () ()
 printFPS msg = hoistCell liftIO fps >>> arr (show >>> (msg ++)) >>> arrM (liftIO . putStrLn)
 
+printTime :: MonadIO m => String -> Cell m () ()
+printTime msg = constM $ liftIO $ putStrLn =<< ((msg ++) . show) <$> getCurrentTime
+
 liveProgram :: LiveProgram (HandlingStateT IO)
 liveProgram = liveCell mainCell
 
 mainCell :: Cell (HandlingStateT IO) () ()
 mainCell = proc () -> do
   handle <- handling $ ioRefHandle 0   -< ()
-  pulseWrapC 1600 pulseCell            -< handle
-  glossWrapC defaultSettings glossCell -< handle
-  printFPS "mainCell" -< ()
-  arrM $ lift . threadDelay                               -< 100 -- TODO Tweak for better performance
+  -- printTime "mainCell      : " -< ()
+  g <- glossWrapC defaultSettings glossCell -< handle
+  p <- pulseWrapC 1500 pulseCell            -< handle
+  -- printTime "mainCell pulse: " -< ()
+  -- arrM $ liftIO . print -< (p, g)
+  -- printFPS "mainCell" -< ()
+  -- printTime "mainCell gloss: " -< ()
+  arrM $ lift . threadDelay                               -< 1000 -- TODO Tweak for better performance
   returnA                              -< ()
 
 main :: IO ()

@@ -11,6 +11,11 @@ module LiveCoding.Cell.NonBlocking
 import Control.Concurrent
 import Control.Monad ((>=>), void, when)
 import Data.Data
+import Debug.Trace
+import GHC.Exts
+
+-- time
+import Data.Time.Clock
 
 -- essence-of-live-coding
 import LiveCoding.Cell
@@ -22,6 +27,10 @@ threadVarHandle = Handle
   { create = newEmptyMVar
   , destroy = tryTakeMVar >=> mapM_ killThread
   }
+
+printTime :: String -> IO ()
+printTime msg = return ()
+-- printTime msg = putStrLn =<< (((take 16 msg) ++) . show) <$> getCurrentTime
 
 {- | Wrap a cell in a non-blocking way.
 Every incoming sample of @nonBlocking cell@ results in an immediate output,
@@ -42,14 +51,20 @@ nonBlocking abort Cell { .. } = proc aMaybe -> do
   liftCell Cell { cellStep = nonBlockingStep, .. } -< (aMaybe, threadVar, resultVar)
     where
       nonBlockingStep s (Nothing, threadVar, resultVar) = do
+        printTime "Try take result "
         bsMaybe <- tryTakeMVar resultVar
+        printTime "Maybe took result "
         case bsMaybe of
           Just (!b, !s') -> do
+            printTime "Taking threadId "
             threadId <- takeMVar threadVar
+            printTime "Killing thread  "
             killThread threadId
+            printTime "Killed thread   "
             return (Just b, s')
           Nothing -> return (Nothing, s)
       nonBlockingStep s (Just a, threadVar, resultVar) = do
+        printTime "Is noThreadRunning?"
         noThreadRunning <- if abort
             -- Abort the current computation if it is still running
           then do
@@ -57,10 +72,17 @@ nonBlocking abort Cell { .. } = proc aMaybe -> do
             mapM_ killThread maybeThreadId
             return True
           -- No computation currently running
-          else isEmptyMVar threadVar
+          else do
+            printTime "Checking isEmpty"
+            isEmptyMVar threadVar
+        -- print noThreadRunning
+        printTime "Done noThreadRunning"
         when noThreadRunning $ do
-          threadId <- forkIO $ putMVar resultVar =<< cellStep s a
+          printTime "Forking new     "
+          threadId <- forkIO $ putMVar resultVar =<< (lazy $ cellStep s a)
+          printTime "Putting threadVar"
           putMVar threadVar threadId
+        printTime "Returning to Nothing"
         nonBlockingStep s (Nothing, threadVar, resultVar)
 
 -- It would have been nice to refactor this with 'hoistCellKleisli',

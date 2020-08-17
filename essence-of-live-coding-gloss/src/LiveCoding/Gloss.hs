@@ -93,7 +93,7 @@ handleEvent debugEvents event vars@GlossVars { .. } = do
 
 stepGloss :: Float -> GlossVars -> IO GlossVars
 stepGloss dTime vars@GlossVars { .. } = do
-  -- threadDelay $ round $ dTime * 1000
+  threadDelay $ round $ dTime * 1000
   putMVar glossDTimeVar dTime
   exitNow <- readIORef glossExitRef
   when exitNow exitSuccess
@@ -115,5 +115,5 @@ glossWrapC glossSettings cell = proc a -> do
       events <- arrM $ flip atomicModifyIORef ([], ) -< glossEventsRef
       (picture, b) <- runPictureT cell               -< (events, a)
       arrM (uncurry writeIORef)                      -< (glossPicRef, picture)
-      arrM threadDelay                               -< 100 -- TODO Tweak for better performance
+      -- arrM threadDelay                               -< 100 -- TODO Tweak for better performance
       returnA                                        -< b
