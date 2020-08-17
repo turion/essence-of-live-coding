@@ -111,7 +111,7 @@ tests =
     , Monad.test
     , Feedback.test
     ]
-    , Monad.Trans.test
+  , Monad.Trans.test
   ]
 
 countFrom :: Monad m => Int -> Cell m () Int
