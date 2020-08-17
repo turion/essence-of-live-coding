@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 module LiveCoding.Migrate.Cell where
 
@@ -9,176 +10,109 @@ import Data.Generics.Aliases
 
 -- essence-of-live-coding
 import LiveCoding.Cell
+import LiveCoding.Cell.Feedback
 import LiveCoding.Exceptions
 import LiveCoding.Migrate.Migration
+import Control.Applicative (Alternative((<|>)))
 
--- * Migrations involving sequential compositions of cells
+-- * Migrations to and from pairs
 
-maybeMigrateToComposition1
-  :: (Typeable state1', Typeable state1)
-  => Composition state1 state2
-  -> state1'
-  -> Maybe (Composition state1 state2)
-maybeMigrateToComposition1 (Composition (_, state2)) state1' = do
-  state1 <- cast state1'
-  return $ Composition (state1, state2)
+-- ** Generic migration functions
 
--- | Migrate @cell1@ to @cell1 >>> cell2@.
-migrationToComposition1 :: Migration
-migrationToComposition1 = migrationTo2 maybeMigrateToComposition1
+-- | Builds the migration function for a pair, or product type,
+--   such as tuples, but customisable to your own products.
+--   You need to pass it the equivalents of 'fst', 'snd', and '(,)'.
+--   Tries to migrate the value into the first element, then into the second.
+maybeMigrateToPair
+  :: (Typeable a, Typeable b, Typeable c)
+  => (t a b -> a)
+  -- ^ The accessor of the first element
+  -> (t a b -> b)
+  -- ^ The accessor of the second element
+  -> (a -> b -> t a b)
+  -- ^ The constructor
+  -> t a b
+  -- ^ The pair
+  -> c
+  -- ^ The new value for the first or second element
+  -> Maybe (t a b)
+maybeMigrateToPair fst snd cons pair c = do
+  flip cons (snd pair) <$> cast c <|> cons (fst pair) <$> cast c
 
-maybeMigrateFromComposition1
-  :: (Typeable state1', Typeable state1)
-  => Composition state1 state2
-  -> Maybe       state1'
-maybeMigrateFromComposition1 (Composition (state1, _)) = cast state1
+-- | Like 'maybeMigrateToPair', but in the other direction.
+--   Again, it is biased with respect to the first element of the pair.
+maybeMigrateFromPair
+  :: (Typeable a, Typeable b, Typeable c)
+  => (t a b -> a)
+  -- ^ The accessor of the first element
+  -> (t a b -> b)
+  -- ^ The accessor of the second element
+  -> t a b
+  -> Maybe c
+maybeMigrateFromPair fst snd pair = cast (fst pair) <|> cast (snd pair)
 
--- | Migrate to @cell1@ from @cell1 >>> cell2@.
-migrationFromComposition1 :: Migration
-migrationFromComposition1 = constMigrationFrom2 maybeMigrateFromComposition1
+-- ** Migrations involving sequential compositions of cells
 
-maybeMigrateToComposition2
-  :: (Typeable state2', Typeable state2)
-  => Composition state1 state2
-  -> state2'
-  -> Maybe (Composition state1 state2)
-maybeMigrateToComposition2 (Composition (state1, _)) state2' = do
-  state2 <- cast state2'
-  return $ Composition (state1, state2)
+-- | Migrate @cell@ to @cell >>> cell'@, and if this fails, to @cell' >>> cell@.
+migrationToComposition :: Migration
+migrationToComposition = migrationTo2 $ maybeMigrateToPair state1 state2 Composition
 
--- | Migrate @cell2@ to @cell1 >>> cell2@.
-migrationToComposition2 :: Migration
-migrationToComposition2 = migrationTo2 maybeMigrateToComposition2
 
-maybeMigrateFromComposition2
-  :: (Typeable state2', Typeable state2)
-  => Composition state1 state2
-  -> Maybe              state2'
-maybeMigrateFromComposition2 (Composition (_, state2)) = cast state2
+-- | Migrate @cell1 >>> cell2@ to @cell1@, and if this fails, to @cell2@.
+migrationFromComposition :: Migration
+migrationFromComposition = constMigrationFrom2 $ maybeMigrateFromPair state1 state2
 
--- | Migrate to @cell2@ from @cell1 >>> cell2@.
-migrationFromComposition2 :: Migration
-migrationFromComposition2 = constMigrationFrom2 maybeMigrateFromComposition2
-
--- | Combines all migrations related to composition, favouring the first argument.
+-- | Combines all migrations related to composition, favouring migration to compositions.
 migrationComposition :: Migration
 migrationComposition
-  =  migrationToComposition1
-  <> migrationFromComposition1
-  <> migrationToComposition2
-  <> migrationFromComposition2
+  =  migrationToComposition
+  <> migrationFromComposition
 
--- * Migrations involving parallel compositions of cells
+-- ** Migrations involving parallel compositions of cells
 
-maybeMigrateToParallel1
-  :: (Typeable state1', Typeable state1)
-  => Parallel state1 state2
-  -> state1'
-  -> Maybe (Parallel state1 state2)
-maybeMigrateToParallel1 (Parallel (_, state2)) state1' = do
-  state1 <- cast state1'
-  return $ Parallel (state1, state2)
+-- | Migrate @cell@ to @cell *** cell'@, and if this fails, to @cell' *** cell@.
+migrationToParallel :: Migration
+migrationToParallel = migrationTo2 $ maybeMigrateToPair stateP1 stateP2 Parallel
 
--- | Migrate @cell1@ to @cell1 *** cell2@.
-migrationToParallel1 :: Migration
-migrationToParallel1 = migrationTo2 maybeMigrateToParallel1
+-- | Migrate from @cell1 *** cell2@ to @cell1@, and if this fails, to @cell2@.
+migrationFromParallel :: Migration
+migrationFromParallel = constMigrationFrom2 $ maybeMigrateFromPair stateP1 stateP2
 
-maybeMigrateFromParallel1
-  :: (Typeable state1', Typeable state1)
-  => Parallel state1 state2
-  -> Maybe    state1'
-maybeMigrateFromParallel1 (Parallel (state1, _)) = cast state1
-
--- | Migrate to @cell1@ from @cell1 *** cell2@.
-migrationFromParallel1 :: Migration
-migrationFromParallel1 = constMigrationFrom2 maybeMigrateFromParallel1
-
-maybeMigrateToParallel2
-  :: (Typeable state2', Typeable state2)
-  => Parallel state1 state2
-  -> state2'
-  -> Maybe (Parallel state1 state2)
-maybeMigrateToParallel2 (Parallel (state1, _)) state2' = do
-  state2 <- cast state2'
-  return $ Parallel (state1, state2)
-
--- | Migrate @cell2@ to @cell1 *** cell2@.
-migrationToParallel2 :: Migration
-migrationToParallel2 = migrationTo2 maybeMigrateToParallel2
-
-maybeMigrateFromParallel2
-  :: (Typeable state2', Typeable state2)
-  => Parallel state1 state2
-  -> Maybe           state2'
-maybeMigrateFromParallel2 (Parallel (_, state2)) = cast state2
-
--- | Migrate to @cell2@ from @cell1 *** cell2@.
-migrationFromParallel2 :: Migration
-migrationFromParallel2 = constMigrationFrom2 maybeMigrateFromParallel2
-
--- | Combines all migrations related to parallel composition, favouring the first argument.
+-- | Combines all migrations related to parallel composition, favouring migration to parallel composition.
 migrationParallel :: Migration
 migrationParallel
-  =  migrationToParallel1
-  <> migrationFromParallel1
-  <> migrationToParallel2
-  <> migrationFromParallel2
+  =  migrationToParallel
+  <> migrationFromParallel
 
--- * Migration involving 'ArrowChoice'
+-- ** Migration involving 'ArrowChoice'
 
-maybeMigrateToChoice1
-  :: (Typeable stateLeft', Typeable stateLeft)
-  => Choice stateLeft stateRight
-  -> stateLeft'
-  -> Maybe (Choice stateLeft stateRight)
-maybeMigrateToChoice1 Choice { .. } choiceLeft' = do
-  choiceLeft <- cast choiceLeft'
-  return Choice { .. }
+-- | Migrate @cell@ to @cell ||| cell'@, and if this fails, to @cell' ||| cell@.
+migrationToChoice :: Migration
+migrationToChoice = migrationTo2 $ maybeMigrateToPair choiceLeft choiceRight Choice
 
--- | Migrate @cell1@ to @cell1 ||| cell2@.
-migrationToChoice1 :: Migration
-migrationToChoice1 = migrationTo2 maybeMigrateToChoice1
+-- | Migrate from @cell1 ||| cell2@ to @cell1@, and if this fails, to @cell2@.
+migrationFromChoice :: Migration
+migrationFromChoice = constMigrationFrom2 $ maybeMigrateFromPair choiceLeft choiceRight
 
-maybeMigrateFromChoice1
-  :: (Typeable stateLeft', Typeable stateLeft)
-  => Choice stateLeft stateRight
-  -> Maybe  stateLeft'
-maybeMigrateFromChoice1 Choice { .. } = cast choiceLeft
-
--- | Migrate to @cell1@ from @cell1 ||| cell2@.
-migrationFromChoice1 :: Migration
-migrationFromChoice1 = constMigrationFrom2 maybeMigrateFromChoice1
-
-maybeMigrateToChoice2
-  :: (Typeable stateRight', Typeable stateRight)
-  => Choice stateLeft stateRight
-  -> stateRight'
-  -> Maybe (Choice stateLeft stateRight)
-maybeMigrateToChoice2 Choice { .. } choiceRight' = do
-  choiceRight <- cast choiceRight'
-  return Choice { .. }
-
--- | Migrate @cell2@ to @cell1 ||| cell2@.
-migrationToChoice2 :: Migration
-migrationToChoice2 = migrationTo2 maybeMigrateToChoice2
-
-maybeMigrateFromChoice2
-  :: (Typeable stateRight', Typeable stateRight)
-  => Choice stateLeft stateRight
-  -> Maybe            stateRight'
-maybeMigrateFromChoice2 Choice { .. } = cast choiceRight
-
--- | Migrate to @cell2@ from @cell1 ||| cell2@.
-migrationFromChoice2 :: Migration
-migrationFromChoice2 = constMigrationFrom2 maybeMigrateFromChoice2
-
--- | Combines all migrations related to choice.
+-- | Combines all migrations related to choice, favouring migration to choice.
 migrationChoice :: Migration
 migrationChoice
-  =  migrationToChoice1
-  <> migrationFromChoice1
-  <> migrationToChoice2
-  <> migrationFromChoice2
+  =  migrationToChoice
+  <> migrationFromChoice
+
+-- ** Feedback
+
+-- | Migrate from @cell@ to @feedback s cell@, and if this fails, to @feedback (cellState cell) cell'@.
+migrationToFeedback :: Migration
+migrationToFeedback = migrationTo2 $ maybeMigrateToPair sPrevious sAdditional Feedback
+
+-- | Migrate from @feedback s cell@ to @cell@, and if this fails, to @Cell { cellState = s, .. }@.
+migrationFromFeedback :: Migration
+migrationFromFeedback = constMigrationFrom2 $ maybeMigrateFromPair sPrevious sAdditional
+
+-- | Combines all migrations related to feedback, favouring migration to feedback.
+migrationFeedback :: Migration
+migrationFeedback = migrationToFeedback <> migrationFromFeedback
 
 -- * Control flow
 
@@ -218,3 +152,4 @@ migrationCell
   <> migrationParallel
   <> migrationChoice
   <> migrationExceptState
+  <> migrationFeedback
