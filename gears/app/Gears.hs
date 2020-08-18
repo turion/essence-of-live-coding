@@ -23,17 +23,20 @@ import LiveCoding.Gloss
 -- essence-of-live-coding-pulse
 import LiveCoding.Pulse
 
-glossCell :: Cell PictureM (IORef Float) ()
+glossCell :: Cell PictureM () Float
 glossCell = withDebuggerC glossCell' statePlay
 
-glossCell' :: Cell PictureM (IORef Float) ()
-glossCell' = proc ref -> do
+glossCell' :: Cell PictureM () Float
+glossCell' = proc () -> do
   -- hoistCell liftIO $ printFPS "glossCell: " -< ()
-  gearAngle <- integrate             -< 30
-  addPicture                         -< gear gearAngle
-  arrM $ liftIO . uncurry writeIORef -< (ref, gearAngle)
-  phase     <- integrate             -< 5
-  addPicture                         -< rotate gearAngle $ blinker phase
+  gearAngle <- integrate -< 30
+  addPicture -< gear gearAngle
+  phase <- integrate -< 5
+  addPicture -< rotate gearAngle $ blinker phase
+  returnA -< gearAngle
+
+-- Note that ghcid and cabal repl have very different performance! But only sometimes. Sometimes cabal repl is good or bad as well.
+-- Is it that disk IO simply interrupts everything?
 
 blinker :: Float -> Picture
 blinker phase
@@ -58,12 +61,11 @@ gear angle = scale 3 3 $ rotate angle $ pictures
 
 tones = [A, C, E]
 
-pulseCell :: PulseCell IO (IORef Float) ()
-pulseCell = proc ref -> do
-  angle <- liftCell $ getAngleEvery 10 -< ref
-  pulse <- osc'                        -< cycleTones angle
-  addSample                            -< atan pulse ** 3
-  returnA                              -< ()
+pulseCell :: PulseCell IO Float ()
+pulseCell = proc angle -> do
+  pulse <- osc' -< cycleTones $ round angle
+  addSample     -< atan pulse ** 3
+  returnA       -< ()
 
 cycleTones :: Int -> Float
 cycleTones angle = f
@@ -101,10 +103,10 @@ liveProgram = liveCell mainCell
 
 mainCell :: Cell (HandlingStateT IO) () ()
 mainCell = proc () -> do
-  handle <- handling $ ioRefHandle 0   -< ()
   -- printTime "mainCell      : " -< ()
-  g <- glossWrapC defaultSettings glossCell -< handle
-  p <- pulseWrapC 1500 pulseCell            -< handle
+  phaseMaybe <- glossWrapC defaultSettings glossCell -< ()
+  phase <- keep 0 -< phaseMaybe
+  pulseWrapC 1500 pulseCell -< phase
   -- printTime "mainCell pulse: " -< ()
   -- arrM $ liftIO . print -< (p, g)
   -- printFPS "mainCell" -< ()
