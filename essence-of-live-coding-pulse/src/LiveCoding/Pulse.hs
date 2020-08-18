@@ -53,7 +53,7 @@ pulseHandle = Handle
       (SampleSpec (F32 LittleEndian) sampleRate 1)
       Nothing
       -- Nothing
-      (Just (BufferAttr Nothing (Just 1000) Nothing Nothing Nothing))
+      (Just (BufferAttr Nothing (Just 4000) Nothing Nothing Nothing))
       -- (Just (BufferAttr Nothing (Just 2048) Nothing Nothing (Just 2048)))
   , destroy = \simple -> putStrLn "Destroying pulse" >> simpleFree simple
   }
