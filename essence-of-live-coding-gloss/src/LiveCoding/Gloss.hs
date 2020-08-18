@@ -107,7 +107,7 @@ glossWrapC :: Typeable b => GlossSettings -> Cell PictureM a b -> Cell (StateT (
 glossWrapC glossSettings cell = proc a -> do
   GlossHandle { .. } <- handling $ glossHandle glossSettings -< ()
   bMaybe <- nonBlocking False pump -< Just (glossVars, a)
-  arrM $ lift . threadDelay                               -< 100 -- TODO Tweak for better performance
+  -- arrM $ lift . threadDelay                               -< 100 -- TODO Tweak for better performance
   returnA -< bMaybe
   where
     pump = proc (GlossVars { .. }, a) -> do

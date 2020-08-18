@@ -111,8 +111,8 @@ mainCell = proc () -> do
   -- arrM $ liftIO . print -< (p, g)
   -- printFPS "mainCell" -< ()
   -- printTime "mainCell gloss: " -< ()
-  arrM $ lift . threadDelay                               -< 1000 -- TODO Tweak for better performance
-  returnA                              -< ()
+  -- arrM $ lift . threadDelay -< 100 -- TODO Tweak for better performance
+  returnA -< ()
 
 main :: IO ()
 main = runHandlingStateT $ foreground liveProgram

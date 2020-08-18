@@ -77,8 +77,8 @@ pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
   -- FIXME It remains to test whether sound actually works that way
   bsMaybe <- nonBlocking False $ calcAndPushSamples bufferSize cell -< Just (simple, a)
-  arrM $ lift . threadDelay -< 100
-  -- arrM $ lift . threadDelay                  -< round $ int2Float bufferSize * 1000000 / 2000 / int2Float sampleRate -- TODO Tweak for better performance
+  -- arrM $ lift . threadDelay -< 100
+  -- arrM $ lift . threadDelay                  -< round $ int2Float bufferSize * 1000000 / 10 / int2Float sampleRate -- TODO Tweak for better performance
   returnA -< fromMaybe [] bsMaybe
 
 calcAndPushSamples :: Int -> PulseCell IO a b -> Cell IO (Simple, a) [b]
