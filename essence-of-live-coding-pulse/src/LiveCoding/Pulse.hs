@@ -1,12 +1,17 @@
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE RecordWildCards #-}
 module LiveCoding.Pulse where
 
 -- base
 import Control.Arrow as X
 import Control.Concurrent
-import Control.Monad (forever)
+import Control.Monad (void, forever)
 import Control.Monad.Fix
+import Data.Maybe (fromMaybe)
 import Data.Monoid (getSum, Sum(Sum))
+import qualified Data.List.NonEmpty as Unzip
+import GHC.Float (int2Float)
 
 -- transformers
 import Control.Monad.Trans.Class (MonadTrans(lift))
@@ -47,8 +52,10 @@ pulseHandle = Handle
       "this is an example application"
       (SampleSpec (F32 LittleEndian) sampleRate 1)
       Nothing
-      Nothing
-  , destroy = simpleFree
+      -- Nothing
+      (Just (BufferAttr Nothing (Just 4000) Nothing Nothing Nothing))
+      -- (Just (BufferAttr Nothing (Just 2048) Nothing Nothing (Just 2048)))
+  , destroy = \simple -> putStrLn "Destroying pulse" >> simpleFree simple
   }
 
 {- | Run a 'PulseCell' with a started pulse backend.
@@ -60,17 +67,26 @@ This performs several steps of your cell at a time,
 replicating the input so many times.
 -}
 pulseWrapC
-  :: Int
+  :: Typeable b
+  => Int
   -- ^ Specifies how many steps of your 'PulseCell' should be performed in one step of 'pulseWrapC'.
   -> PulseCell IO a b
-  -- ^ Your cell that produces samples.
+  -- ^ Your cell that writes samples.
   -> Cell (HandlingStateT IO) a [b]
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
-  samplesAndBs <- resampleList $ liftCell $ runWriterC cell -< replicate bufferSize a
+  -- FIXME It remains to test whether sound actually works that way
+  bsMaybe <- nonBlocking False $ calcAndPushSamples bufferSize cell -< Just (simple, a)
+  -- arrM $ lift . threadDelay -< 100
+  -- arrM $ lift . threadDelay                  -< round $ int2Float bufferSize * 1000000 / 10 / int2Float sampleRate -- TODO Tweak for better performance
+  returnA -< fromMaybe [] bsMaybe
+
+calcAndPushSamples :: Int -> PulseCell IO a b -> Cell IO (Simple, a) [b]
+calcAndPushSamples bufferSize cell = proc (simple, a) -> do
+  samplesAndBs <- resampleList $ runWriterC cell -< replicate bufferSize a
   let (samples, bs) = unzip samplesAndBs
       samples' = getSum <$> samples
-  arrM $ lift . uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
+  arrM $ uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
   returnA -< bs
 
 {- | Returns the sum of all incoming values,
@@ -82,8 +98,7 @@ wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
 wrapSum = Cell
   { cellState = 0
   , cellStep  = \accum a ->
-    let
-        (_, accum') = properFraction $ accum + a
+    let (_, !accum') = properFraction $ accum + a
     in return (accum', accum')
   }
 
@@ -105,8 +120,8 @@ clamp lower upper a = min upper $ max lower a
 --   See 'osc'' and 'oscAt'.
 osc :: (Data a, RealFloat a, Monad m) => Cell (ReaderT a m) () a
 osc = proc _ -> do
-  f <- constM ask -< ()
-  phase <- wrapIntegral -< f
+  !f <- constM ask -< ()
+  !phase <- wrapIntegral -< f
   returnA -< sin $ 2 * pi * phase
 
 -- | A sine oscillator, at a fixed frequency.
@@ -116,7 +131,7 @@ oscAt = flip runReaderC osc
 -- | A sine oscillator, at a frequency that can be specified live.
 osc' :: (Data a, RealFloat a, Monad m) => Cell m a a
 osc' = proc a -> do
-  runReaderC' osc -< (a, ())
+  runReaderC' osc -< a `seq` (a, ())
 
 {- | A basic musical note (western traditional notation, german nomenclature).
 

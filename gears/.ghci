@@ -1,5 +1,5 @@
 :set -package gears
-:m + LiveCoding.GHCi Control.Concurrent
+:m + LiveCoding.GHCi Control.Concurrent LiveCoding
 :def liveinit liveinit
 :def livestep livestep
 :def livereload livereload

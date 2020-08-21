@@ -38,6 +38,7 @@ executable gears
   main-is:             Gears.hs
   build-depends:
       base >= 4.11 && < 5
+    , time >= 1.9
     , gloss
     , transformers
     , essence-of-live-coding

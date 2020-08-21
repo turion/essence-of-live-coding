@@ -70,7 +70,12 @@ frequencies' :: Monad m => Cell m () Float
 frequencies' = cycleThrough (NonEmpty.fromList $ [f D, f G, o $ f Bb]) 8000
 
 pulseCell :: Monad m => PulseCell m () ()
-pulseCell = frequencies' >>> osc' >>> addSample
+pulseCell = proc _ -> do
+  freq <- frequencies' -< ()
+  melody <- osc' -< freq
+  bass <- osc' -< f D / 4
+  addSample -< atan $ 0.7 * melody + 0.3 * bass
+  returnA -< ()
 
 liveProgram :: LiveProgram (HandlingStateT IO)
 liveProgram = liveCell $ pulseWrapC 1024 pulseCell >>> arr (const ())
