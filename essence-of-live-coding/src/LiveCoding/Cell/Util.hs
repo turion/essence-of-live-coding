@@ -4,7 +4,11 @@ module LiveCoding.Cell.Util where
 
 -- base
 import Control.Arrow
+import Control.Monad.IO.Class
 import Data.Data (Data)
+
+-- time
+import Data.Time.Clock
 
 -- essence-of-live-coding
 import LiveCoding.Cell
@@ -26,3 +30,13 @@ foldC :: (Data b, Monad m) => (a -> b -> b) -> b -> Cell m a b
 foldC step cellState = Cell { .. }
   where
     cellStep b a = let b' = step a b in return (b, b')
+
+-- * Debugging utilities
+
+-- | Print the current UTC time, prepended with the first 8 characters of the given message.
+printTime :: MonadIO m => String -> m ()
+printTime msg = liftIO $ putStrLn =<< ((take 8 msg) ++) . show <$> getCurrentTime
+
+-- | Like 'printTime', but as a cell.
+printTimeC :: MonadIO m => String -> Cell m () ()
+printTimeC msg = constM $ printTime msg
