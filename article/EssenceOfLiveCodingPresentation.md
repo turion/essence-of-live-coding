@@ -23,7 +23,7 @@ incremental: true
 Explain what we're going to code briefly
 
 :::
-![](gears.png){style="height: 400px;"}
+![](tutorial_screenshot.png){style="height: 400px;"}
 
 # How does it work?
 
@@ -181,18 +181,59 @@ data Cell m a b = forall s . Data s => Cell
   }
 ```
 
-## Cells
-
-* `Category`:
+## `Category`
 ![CategoryId](CategoryId.png){.fragment .fade-in style="border: none"}
 ![CategoryCompose](CategoryCompose.png){.fragment .fade-in style="border: none"}
-* `Arrow`:
+
+``` {.haskell .literate .fragment .fade-in}
+id :: Cell m a a
+```
+
+
+``` {.haskell .literate .fragment .fade-in}
+(>>>)
+  :: Monad m
+  => Cell  m a b
+  -> Cell  m   b c
+  -> Cell  m a   c
+```
+
+## `Arrow`
+
 ![ArrowArr](ArrowArr.png){.fragment .fade-in style="border: none"}
 ![ArrowCompose](ArrowCompose.png){.fragment .fade-in style="border: none"}
-* `ArrowChoice`: (Transient) control flow
 
+``` {.haskell .literate .fragment .fade-in}
+arr
+  ::       (a -> b)
+  -> Cell m a    b
+```
 
-[`liveCell:: Cell m () () -> LiveProgram m`]{.fragment .fade-in}
+``` {.haskell .literate .fragment .fade-in}
+(***)
+  :: Monad m
+  => Cell  m  a      b
+  -> Cell  m     c      d
+  -> Cell  m (a, c) (b, d)
+```
+
+## Composing cells to live programs
+
+``` {.haskell .literate .fragment .fade-in}
+sensor    :: Cell IO () a
+signalFun :: Cell m     a b
+actuator  :: Cell IO      b ()
+```
+
+``` {.haskell .literate .fragment .fade-in}
+liveCell :: Cell m () () -> LiveProgram m
+```
+
+``` {.haskell .literate .fragment .fade-in}
+mainProgram :: LiveProgram IO
+mainProgram = liveCell
+  $ sensor >>> signalFun >>> actuator
+```
 
 ## Wait... I've seen this before!?
 
@@ -220,23 +261,66 @@ sumC = Cell { .. } where
 ```
 
 ``` {.haskell .literate .fragment .fade-in}
-stepRate = 100
+stepRate = 30
 integrate = arr (/ stepRate) >>> sumC
 ```
 
-::: notes
-
-Syntactic sugar: Arrow notation
-
-:::
+## Arrow notation
 
 ``` {.haskell .literate .fragment .fade-in}
-glossCell :: GlossCell
-glossCell = proc _events -> do
-  gearAngle <- integrate -< 30
-  addPicture             -< gear gearAngle
-  phase     <- integrate -< 5
-  addPicture             -< rotate gearAngle $ blinker phase
+freeFall
+  =   arr (const (0, -9.81))
+  >>> (   (integrate >>> integrate)
+      *** (integrate >>> integrate))
+```
+
+``` {.haskell .literate .fragment .fade-in}
+freeFall = proc () -> do
+  let (accX, accY) = (0, -9.81)
+  velX <- integrate -< accX
+  posX <- integrate -< velX
+  velY <- integrate -< accY
+  posY <- integrate -< velY
+  returnA           -< (posX, posY)
+```
+
+## More Arrow perks
+
+* `ArrowChoice`: (Transient) control flow
+* `ArrowLoop`: Recursion (but beware!)
+
+``` {.haskell .literate .fragment .fade-in}
+  let (accX, accY) = (0, -9.81)
+  velX <- integrate -< accX
+  posX <- integrate -< velX
+  rec
+    velY <- if posY >= 0
+      then do
+        integrate -< accY
+      else
+        returnA   -< 0
+    posY <- integrate -< velY
+  returnA           -< (posX, posY)
+```
+
+## Gloss backend
+
+* `PictureM`: Retrieve events, IO, add pictures
+
+``` {.haskell .literate .fragment .fade-in}
+glossCell :: Cell PictureM () ()
+glossCell = proc () -> do
+  events <- constM ask  -< ()
+  arrM $ liftIO . print -< events
+  ball <- ballSim       -< events
+  addPicture            -< ballPic ball
+```
+
+* `HandlingStateT`: Handle Gloss thread
+
+``` {.haskell .literate .fragment .fade-in}
+glossRunCell :: Cell (HandlingStateT IO) () ()
+glossRunCell = glossWrapC glossSettings glossCell
 ```
 
 ## Monadic control flow
@@ -306,7 +390,7 @@ withDebugger
 
 ## Example: Gloss debugger
 
-![Gloss debugger](debugger.png)
+![Gloss debugger](tutorial_screenshot_debugger.png)
 
 # Outlook
 

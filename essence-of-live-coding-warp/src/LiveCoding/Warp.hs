@@ -46,28 +46,27 @@ waiHandle port = Handle
 {- | Run a 'Cell' as a WARP application.
 
 1. Starts a WARP application on the given port in a background thread
-2. Block until the next request arrives
+2. Waits until the next request arrives, outputting 'Nothing' in the meantime
 3. Supplies the cell with the input and the current request
 4. Serve the response and return the output
-
-Keep in mind that the resulting cell is blocking.
-For a non-blocking cell, use 'LiveCoding.NonBlocking'.
 -}
 
 runWarpC
   :: Port
   -> Cell IO (a, Request) (b, Response)
-  -> Cell (HandlingStateT IO) a b
+  -> Cell (HandlingStateT IO) a (Maybe b)
 runWarpC port cell = proc a -> do
   WaiHandle { .. } <- handling $ waiHandle port -< ()
-  request <- arrM $ liftIO . takeMVar           -< requestVar
-  (b, response) <- liftCell cell                     -< (a, request)
-  arrM $ liftIO . uncurry putMVar               -< (responseVar, response)
-  returnA                                       -< b
-
+  requestMaybe <- arrM $ liftIO . tryTakeMVar   -< requestVar
+  case requestMaybe of
+    Just request -> do
+      (b, response) <- liftCell cell  -< (a, request)
+      arrM $ liftIO . uncurry putMVar -< (responseVar, response)
+      returnA                         -< Just b
+    Nothing -> returnA -< Nothing
 
 runWarpC_
   :: Port
   -> Cell IO Request Response
   -> Cell (HandlingStateT IO) () ()
-runWarpC_ port cell = runWarpC port $ arr snd >>> cell >>> arr ((), )
+runWarpC_ port cell = runWarpC port (arr snd >>> cell >>> arr ((), )) >>> arr (const ())
