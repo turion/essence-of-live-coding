@@ -1,5 +1,9 @@
 # Revision history for essence-of-live-coding
 
+## 0.2.2
+
+* Added feedback migration
+
 ## 0.2.1
 
 * Adapted pulse backend to handles and refactored
