@@ -66,7 +66,7 @@ mainCell :: Cell (HandlingStateT IO) () ()
 mainCell = proc () -> do
   angleMaybe <- glossWrapC defaultSettings glossCell -< ()
   angle <- keep 0                                    -< angleMaybe
-  pulseWrapC 1600 pulseCell                          -< angle
+  pulseWrapC 800 pulseCell                           -< angle
   returnA                                            -< ()
 
 main :: IO ()
