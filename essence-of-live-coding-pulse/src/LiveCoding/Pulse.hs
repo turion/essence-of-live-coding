@@ -91,6 +91,11 @@ wrapSum = Cell
 wrapIntegral :: (Monad m, Data a, RealFloat a) => Cell m a a
 wrapIntegral = arr (/ sampleRate) >>> wrapSum
 
+-- | A sawtooth, or triangle wave, generator,
+--   outputting a sawtooth wave with the given input as frequency.
+sawtooth :: (Monad m, Data a, RealFloat a) => Cell m a a
+sawtooth = wrapIntegral
+
 modSum :: (Monad m, Data a, Integral a) => a -> Cell m a a
 modSum denominator = Cell
   { cellState = 0
