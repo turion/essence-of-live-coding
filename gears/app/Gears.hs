@@ -4,7 +4,6 @@
 import Control.Arrow
 import Control.Monad (void)
 import Control.Monad.IO.Class
-import Data.IORef
 
 -- essence-of-live-coding
 import LiveCoding
@@ -15,16 +14,16 @@ import LiveCoding.Gloss
 -- essence-of-live-coding-pulse
 import LiveCoding.Pulse
 
-glossCell :: Cell PictureM (IORef Float) ()
+glossCell :: Cell PictureM () Float
 glossCell = withDebuggerC glossCell' statePlay
 
-glossCell' :: Cell PictureM (IORef Float) ()
-glossCell' = proc ref -> do
-  gearAngle <- integrate             -< 30
-  addPicture                         -< gear gearAngle
-  arrM $ liftIO . uncurry writeIORef -< (ref, gearAngle)
-  phase     <- integrate             -< 5
-  addPicture                         -< rotate gearAngle $ blinker phase
+glossCell' :: Cell PictureM () Float
+glossCell' = proc () -> do
+  gearAngle <- integrate -< 30
+  addPicture             -< gear gearAngle
+  phase     <- integrate -< 5
+  addPicture             -< rotate gearAngle $ blinker phase
+  returnA                -< gearAngle
 
 blinker :: Float -> Picture
 blinker phase
@@ -49,12 +48,10 @@ gear angle = scale 3 3 $ rotate angle $ pictures
 
 tones = [D, F, A]
 
-pulseCell :: PulseCell IO (IORef Float) ()
-pulseCell = proc ref -> do
-  angle <- liftCell $ getAngleEvery 1024 -< ref
-  pulse <- osc'                          -< cycleTones angle
-  addSample                              -< pulse
-  returnA                                -< ()
+pulseCell :: PulseCell IO Float ()
+pulseCell = proc angle -> do
+  pulse <- sawtooth -< cycleTones $ round angle
+  addSample         -< pulse
 
 cycleTones :: Int -> Float
 cycleTones angle = f
@@ -62,24 +59,15 @@ cycleTones angle = f
   $ (`mod` length tones)
   $ angle `div` (60 `div` length tones)
 
-getAngleEvery :: Int -> Cell IO (IORef Float) Int
-getAngleEvery maxCount = proc ref -> do
-  count <- sumC   -< 1
-  mAngle <- if count `mod` maxCount == 0
-    then arr Just <<< arrM readIORef -< ref
-    else returnA                     -< Nothing
-  angle <- keep 0 -< mAngle
-  returnA         -< round angle
-
 liveProgram :: LiveProgram (HandlingStateT IO)
 liveProgram = liveCell mainCell
 
 mainCell :: Cell (HandlingStateT IO) () ()
 mainCell = proc () -> do
-  handle <- handling $ ioRefHandle 0   -< ()
-  pulseWrapC 1600 pulseCell            -< handle
-  glossWrapC defaultSettings glossCell -< handle
-  returnA                              -< ()
+  angleMaybe <- glossWrapC defaultSettings glossCell -< ()
+  angle <- keep 0                                    -< angleMaybe
+  pulseWrapC 800 pulseCell                           -< angle
+  returnA                                            -< ()
 
 main :: IO ()
 main = runHandlingStateT $ foreground liveProgram

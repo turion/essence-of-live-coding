@@ -92,25 +92,37 @@ handleEvent debugEvents event vars@GlossVars { .. } = do
 
 stepGloss :: Float -> GlossVars -> IO GlossVars
 stepGloss dTime vars@GlossVars { .. } = do
-  threadDelay $ round $ dTime * 1000
   putMVar glossDTimeVar dTime
   exitNow <- readIORef glossExitRef
   when exitNow exitSuccess
   return vars
 
--- | Given a cell in the gloss monad 'PictureM',
---   start the gloss backend and connect the cell to it.
---   This introduces 'Handle's, which need to be taken care of by calling 'runHandlingState'
---   or a similar function.
-glossWrapC :: GlossSettings -> Cell PictureM a b -> Cell (StateT (HandlingState IO) IO) a b
+{- | Given a cell in the gloss monad 'PictureM',
+start the gloss backend and connect the cell to it.
+
+This introduces 'Handle's containing the gloss background thread,
+which need to be taken care of by calling 'runHandlingState'
+or a similar function.
+
+The resulting cell never blocks,
+but returns 'Nothing' if there currently is no gloss tick.
+-}
+glossWrapC
+  :: GlossSettings
+  -> Cell PictureM a b
+  -> Cell (HandlingStateT IO) a (Maybe b)
 glossWrapC glossSettings cell = proc a -> do
   GlossHandle { .. } <- handling $ glossHandle glossSettings -< ()
   liftCell pump -< (glossVars, a)
   where
     pump = proc (GlossVars { .. }, a) -> do
-      _      <- arrM takeMVar                        -< glossDTimeVar
-      events <- arrM $ flip atomicModifyIORef ([], ) -< glossEventsRef
-      (picture, b) <- runPictureT cell               -< (events, a)
-      arrM (uncurry writeIORef)                      -< (glossPicRef, picture)
-      arrM threadDelay                               -< 10000 -- TODO Tweak for better performance
-      returnA                                        -< b
+      timeMaybe <- arrM tryTakeMVar                        -< glossDTimeVar
+      case timeMaybe of
+        Just _ -> do
+          events <- arrM $ flip atomicModifyIORef ([], ) -< glossEventsRef
+          (picture, b) <- runPictureT cell               -< (events, a)
+          arrM (uncurry writeIORef)                      -< (glossPicRef, picture)
+          returnA                                        -< Just b
+        Nothing -> do
+          arrM threadDelay       -< 100 -- Prevent too much CPU load
+          returnA                -< Nothing
