@@ -1,5 +1,9 @@
 # Revision history for essence-of-live-coding-gloss
 
-## 0.1.0.0 -- YYYY-mm-dd
+## 0.2.3
 
-* First version. Released on an unsuspecting world.
+* glossWrapC is now nonblocking.
+
+## Earlier versions
+
+See in essence-of-live-coding/CHANGELOG.md.
