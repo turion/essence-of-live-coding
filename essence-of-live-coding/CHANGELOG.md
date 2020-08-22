@@ -1,5 +1,9 @@
 # Revision history for essence-of-live-coding
 
+## 0.2.3
+
+* Added printTimeC debugging utility
+
 ## 0.2.2
 
 * Added feedback migration
