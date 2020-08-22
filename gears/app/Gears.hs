@@ -52,7 +52,7 @@ tones = [D, F, A]
 pulseCell :: PulseCell IO (IORef Float) ()
 pulseCell = proc ref -> do
   angle <- liftCell $ getAngleEvery 1024 -< ref
-  pulse <- osc'                          -< cycleTones angle
+  pulse <- sawtooth                      -< cycleTones angle
   addSample                              -< pulse
   returnA                                -< ()
 
