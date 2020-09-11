@@ -81,7 +81,7 @@ executable DemoWai
   hs-source-dirs: app
   build-depends:
       base >= 4.11 && < 5
-    , essence-of-live-coding >= 0.2.3
+    , essence-of-live-coding >= 0.2.4
     , transformers >= 0.5
     , wai  >= 3.2
     , warp >= 3.2
