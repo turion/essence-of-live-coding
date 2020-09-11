@@ -20,11 +20,13 @@ import Test.QuickCheck
 import qualified Feedback
 import qualified Handle
 import qualified Monad
+import qualified Monad.Trans
+
 import LiveCoding
 
-import qualified Monad.Trans
 import qualified TestData.Foo1 as Foo1
 import qualified TestData.Foo2 as Foo2
+
 import Util
 
 intToInteger :: Int -> Integer

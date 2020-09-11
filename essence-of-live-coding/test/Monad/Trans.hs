@@ -20,6 +20,6 @@ test = testGroup "Monad.Trans"
     $ \(stateT :: Int) (stateInternal :: Int)
       -> State { .. } === migrate State { stateInternal = 23, .. } stateInternal
   , testProperty "Migrates from runStateL"
-  $ \(stateT :: Int) (stateInternal :: Int)
-    -> stateInternal === migrate 42 State { .. }
+    $ \(stateT :: Int) (stateInternal :: Int)
+      -> stateInternal === migrate 42 State { .. }
   ]
