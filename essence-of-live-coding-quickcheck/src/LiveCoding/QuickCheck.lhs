@@ -66,22 +66,21 @@ But let it be remarked that we will be able to test cells with actual side effec
 \fxwarning{Test in IO}
 %Given a faulty cell, it is impossible to predict how often it must be stepped until it returns an invalid value.
 %The number of successive inputs has to be variable in a test.
-%We therefore 
+%We therefore
 We
 begin by running a cell repeatedly against a list of inputs, collecting its outputs:
-\fxerror{Shortening candidate}
 \begin{code}
 embed
   :: Monad m
   =>        [a]
   -> Cell  m a b
   ->       m  [b]
-embed [] _ = return []
-embed (a : as) cell = do
-  (b, cell') <- step cell a
-  bs <- embed as cell'
-  return $ b : bs
 \end{code}
+\begin{comment}
+\begin{code}
+embed as cell = fst <$> steps cell as
+\end{code}
+\end{comment}
 If the input type \mintinline{haskell}{a} can be generated arbitrarily,
 then so can a list of \mintinline{haskell}{a}s.
 After running the cell with all inputs,
@@ -216,8 +215,8 @@ quickCheckDebugger
   -> Debugger
 quickCheckDebugger testCell
   = Debugger_ $ \s -> do
-    let Cell { .. } = 
-    testCell <- 
+    let Cell { .. } =
+    testCell <-
 \end{spec}
 \end{comment}
 \fxwarning{Could use quickcheck `counterexamples` on `gshow cellState` somehow}

@@ -17,14 +17,17 @@ import Test.Framework.Providers.QuickCheck2
 import Test.QuickCheck
 
 -- essence-of-live-coding
+import qualified Cell
 import qualified Feedback
 import qualified Handle
 import qualified Monad
+import qualified Monad.Trans
+
 import LiveCoding
 
-import qualified Monad.Trans
 import qualified TestData.Foo1 as Foo1
 import qualified TestData.Foo2 as Foo2
+
 import Util
 
 intToInteger :: Int -> Integer
@@ -107,6 +110,7 @@ tests =
         , output2 = [23, 24, 25]
         }
       ]
+    , Cell.test
     , Handle.test
     , Monad.test
     , Feedback.test

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RecordWildCards #-}
 module Util where
 
@@ -50,3 +51,33 @@ simulateCellMigration cell1 cell2 as1 as2 = do
   let cell2' = hotCodeSwapCell cell2 cell1'
   (bs2, _) <- steps cell2' as2
   return (bs1, bs2)
+
+-- FIXME move to essence-of-live-coding-quickcheck
+-- https://github.com/turion/essence-of-live-coding/issues/36
+instance (Arbitrary a, Testable prop) => Testable (Cell Identity a prop) where
+  property cell = property $ do
+    as <- arbitrary
+    let (props, _) = runIdentity $ steps cell as
+    return $ conjoin props
+
+-- | Helper to unify cells to the 'Identity' monad.
+inIdentityT :: Cell Identity a prop -> Cell Identity a prop
+inIdentityT = id
+
+-- | Basic unit test for 'Cell's.
+--   Check whether a given 'input' to your 'cell' results in a given 'output'.
+data CellSimulation a b = CellSimulation
+  { cell :: Cell Identity a b
+  , input :: [a]
+  , output :: [b]
+  }
+
+instance (Eq b, Show b) => Testable (CellSimulation a b) where
+  property CellSimulation { .. } = property CellMigrationSimulation
+    { cell1 = cell
+    , cell2 = cell
+    , input1 = input
+    , input2 = []
+    , output1 = output
+    , output2 = []
+    }

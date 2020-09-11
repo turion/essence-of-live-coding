@@ -124,5 +124,5 @@ glossWrapC glossSettings cell = proc a -> do
           arrM (uncurry writeIORef)                      -< (glossPicRef, picture)
           returnA                                        -< Just b
         Nothing -> do
-          arrM threadDelay       -< 100 -- Prevent too much CPU load
+          arrM threadDelay       -< 1000 -- Prevent too much CPU load
           returnA                -< Nothing
