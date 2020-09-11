@@ -17,6 +17,7 @@ import Test.Framework.Providers.QuickCheck2
 import Test.QuickCheck
 
 -- essence-of-live-coding
+import qualified Cell
 import qualified Feedback
 import qualified Handle
 import qualified Monad
@@ -109,6 +110,7 @@ tests =
         , output2 = [23, 24, 25]
         }
       ]
+    , Cell.test
     , Handle.test
     , Monad.test
     , Feedback.test
