@@ -1,5 +1,5 @@
 name:                essence-of-live-coding-gloss
-version:             0.2.3
+version:             0.2.4
 synopsis: General purpose live coding framework - Gloss backend
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -43,7 +43,7 @@ library
       base >= 4.11 && < 5
     , syb >= 0.7
     , transformers >= 0.5
-    , essence-of-live-coding >= 0.2.3
+    , essence-of-live-coding >= 0.2.4
     , foreign-store >= 0.2
     , gloss >= 1.13
   hs-source-dirs:      src

@@ -1,5 +1,10 @@
 # Revision history for essence-of-live-coding
 
+## 0.2.4
+
+* Extended testing utilities
+* Extended LiveCoding.Cell.Util by buffer, edge, boundedFIFO and other utilities
+
 ## 0.2.3
 
 * Added printTimeC debugging utility
