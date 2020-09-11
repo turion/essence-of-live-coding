@@ -29,6 +29,8 @@ data WaiHandle = WaiHandle
   , appThread   :: ThreadId
   }
 
+-- I believe there is a bug here where a request is missed if the app blocks because the requestVar isn't emptied, or the response not filled.
+
 waiHandle :: Port -> Handle IO WaiHandle
 waiHandle port = Handle
   { create = do
@@ -63,7 +65,9 @@ runWarpC port cell = proc a -> do
       (b, response) <- liftCell cell  -< (a, request)
       arrM $ liftIO . uncurry putMVar -< (responseVar, response)
       returnA                         -< Just b
-    Nothing -> returnA -< Nothing
+    Nothing -> do
+      arrM $ liftIO . threadDelay     -< 1000 -- Prevent too much CPU load
+      returnA                         -< Nothing
 
 runWarpC_
   :: Port
