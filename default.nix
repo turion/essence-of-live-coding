@@ -1,5 +1,5 @@
 { compiler ? "ghc884"
-, nixpkgs ? import <nixpkgs> {}
+, nixpkgs ? import (builtins.fetchTarball "https://github.com/NixOS/nixpkgs/archive/2a35f664394.tar.gz") {}
 , doBenchmark ? false
 }:
 
