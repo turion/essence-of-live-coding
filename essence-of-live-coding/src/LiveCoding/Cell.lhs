@@ -258,8 +258,13 @@ data Composition state1 state2 = Composition
 The step function executes the steps of both cells after each other.
 They only touch their individual state variable,
 the state stays encapsulated.
+The custom data\-type is isomorphic to an ordinary Haskell tuple \mintinline{haskell}{(state1, state2)}.
+Yet it is beneficial to introduce it,
+since it allows us to extend the migration function easily such that it correctly handles the common case where we live change a cell \mintinline[style=bw]{haskell}{cellMiddle} to a composition,
+such as \mintinline[style=bw]{haskell}{cellLeft >>> cellMiddle},
+or to \mintinline[style=bw]{haskell}{cellMiddle >>> cellRight}.
 
-\fxwarning{Reuse Sensor, SF and Actuator later?}
+\paragraph{The sensor-SF-actuator-pattern}
 Composing \mintinline{haskell}{Cell}s sequentially allows us to form live programs out of \emph{sensors}, pure signal functions and \emph{actuators}:
 \begin{code}
 type Sensor   a   = Cell   IO         () a
@@ -275,13 +280,11 @@ buildLiveProg
 buildLiveProg sensor sf actuator = liveCell
   $ sensor >>> sf >>> actuator
 \end{code}
-This (optional) division of the reactive program into three such parts is inspired by Yampa \cite{Yampa}.
+This (optional) division of the reactive program into three such parts is inspired by Yampa \cite{Yampa},
+and was formulated in this way in \cite[Section 7.1.2]{Dunai}.
 We conveniently build a whole live program from smaller components.
 It is never necessary to specify a big state type manually,
 it will be composed from basic building blocks like \mintinline{haskell}{Composition}.
-
-The migration function is easily extended such that it correctly handles the common cases where we extend a cell \mintinline{haskell}{cellMiddle} to the composition \mintinline{haskell}{cellLeft >>> cellMiddle},
-or to \mintinline{haskell}{cellMiddle >>> cellRight}.
 
 \paragraph{Arrowized FRP}
 \mintinline{haskell}{Cell}s can be made an instance of the \mintinline{haskell}{Arrow} type class,
@@ -449,7 +452,13 @@ instance ArrowLoop (Cell Identity) where
 \end{comment}
 
 \subsection{A sine generator}
-Making use of the \mintinline{haskell}{Arrows} syntax extension,
+Making use of the \mintinline{haskell}{Arrows} syntax extension\footnote{%
+Arrow notation -- or \mintinline{haskell}{proc .. do} notation --
+is similar to monadic \mintinline{haskell}{do} notation,
+except that not only is there a dedicated binder \mintinline{haskell}{<-} for output values,
+but also an application operator \mintinline{haskell}{-<} for \emph{input} values.
+The notation is desugared into the arrow operators,
+such as \mintinline{haskell}{arr} and the composition \mintinline{haskell}{>>>}.},
 we can implement a harmonic oscillator that will produce a sine wave with amplitude 10 and given period length:
 \fxwarning{Comment on rec and ArrowFix}
 \fxerror{I want to add a delay for numerical stability}
@@ -487,7 +496,7 @@ printEverySecond = proc string -> do
     else returnA       -< ()
 \end{code}
 Our first live program
-written in FRP is ready:
+written in FRP is assembled using the pattern of sensor, signal function and actuator:
 \begin{code}
 printSine :: Double -> LiveProgram IO
 printSine t = liveCell
@@ -531,15 +540,14 @@ the branching is reevaluated (and the previous choice forgotten) every step.
 We are lacking permanent \emph{control flow}.
 
 The primeval arrowized FRP framework Yampa \cite{Yampa} caters for this requirement by means of switching from a signal function to another if an event occurs.
+Such mechanisms are well studied, e.g. in \cite{WinogradHudak2014settable}.
 \fxwarning{Possibly I've mentioned both earlier}
 Dunai \cite[Section 5.3]{Dunai}, taking the monadic aspect seriously,
 \fxwarning{Dunai, Yampa -> \texttt{Dunai} etc.?}
 rediscovers switching as effect handling in the \mintinline{haskell}{Either} monad.
-\begin{comment}
-We shall see that,
-although the state of a \mintinline{haskell}{Cell} is strongly restricted by the \mintinline{haskell}{Data} type class,
-we can get very close to this powerful approach to control flow.
-\end{comment}
+Although the state of a \mintinline{haskell}{Cell} is strongly restricted by the \mintinline{haskell}{Data} type class,
+we can reimplement this powerful approach to control flow with few alterations,
+and make typical control flow patterns such as exception handling and looping amenable to live coding without further effort.
 
 \begin{comment}
 \begin{code}

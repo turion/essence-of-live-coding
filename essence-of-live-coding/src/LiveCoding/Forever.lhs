@@ -54,8 +54,8 @@ sinesForever' = do
 It typechecks, but it does \emph{not} execute correctly.
 \fxerror{Why does it hang? Does it really hang?}
 As the initial state is built up,
-the definition of \mintinline{haskell}{sinesForever'} inquires about the initial state of all cells in the \mintinline{haskell}{do}-expression,
-but last one is again \mintinline{haskell}{foo},
+this definition inquires about the initial state of all cells in the \mintinline{haskell}{do}-expression,
+but the last one is again \mintinline{haskell}{sinesForever'},
 and thus already initialising such a cell hangs in an infinite loop.
 Using the standard function \mintinline{haskell}{forever :: Applicative f => f a -> f ()} has the same deficiency,
 \fxerror{Have we tested that?}
@@ -71,9 +71,8 @@ foreverE
   -> Cell                        m   a b
 \end{code}
 The loop function receives as arguments an initial exception,
-and a cell that is to be executed forever\footnote{%
+and a cell that is to be executed forever.
 Of course, the monad \mintinline{haskell}{m} may again contain exceptions that can be used to break from this loop.
-}.
 \begin{comment}
 \begin{code}
 foreverE e (Cell state step) = Cell { .. }

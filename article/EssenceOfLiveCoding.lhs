@@ -59,6 +59,21 @@ and strongly typed user-side libraries
 exist,
 but the user is restricted to a domain specific language.
 
+In dynamic languages like SmallTalk \cite{ingalls2020evolutionofsmalltalk},
+\fxfatal{Cite SmallTalk. Is it interpreted?}
+new avenues to live coding open by interacting with the interpreter,
+which holds the whole program in memory.
+In a statically compiled language lacking a comparable depth of reflection,
+this not directly possible, so one must abstract the program and its state into data structures,
+and implement hot code swap.
+One end of the design space are concurrent references to program components which can be exchanged,
+\cite{HyperHaskell, apfelmus2019functors, murphy2016livecoding}
+which are somewhat closer to an interpreted environment.
+Let us restrict to the other end, though,
+where the possible data and control states are known at compile time,
+constraining the resulting framework slightly,
+but allowing for a very smooth development experience.
+
 In this article, we implement a lightweight general purpose live coding framework in Haskell from scratch.
 It is not only type-safe, but also type-driven, in that boilerplate code for state migrations
 (which is hard to get right without a static type checker)
@@ -107,13 +122,15 @@ which heavily draws inspiration from Dunai,
 a monadic arrowized FRP framework;
 and from Caspi's and Pouzet's work on synchronous stream functions \cite{CaspiPouzet}.
 After having implemented the data flow aspects of our framework,
-we turn to control flow in Section \ref{sec:control flow}.
+we turn to control flow in Section \ref{sec:control flow},
+and encode it completely algebraically within the program state,
+automatically getting a grip on exception handling and loops.
 A monadic interface to our live programs is presented.
 In Section \ref{sec:tooling}, several useful tools such as debuggers and quickchecking utilities are shown.
 
 This article is written in literate Haskell and supplies the library presented here.
 The source code is available at \href{https://github.com/turion/essence-of-live-coding}{https://github.com/turion/essence-of-live-coding},
-while additional resources such as a presentation can be found at \href{https://www.manuelbaerenz.de/#computerscience}{https://www.manuelbaerenz.de/#computerscience}.
+while additional resources such as a presentation can be found at \href{https://www.manuelbaerenz.de/#computerscience}{https://www.manuelbaerenz.de/\#{}computerscience}.
 
 \input{../essence-of-live-coding/src/LiveCoding/LiveProgram.lhs}
 \fxerror{I believe this is even easier with Servant because it has simple functions!}
@@ -142,10 +159,10 @@ Coincidentally, but naturally, we will end up with a coalgebraic presentation of
 \fxwarning{Shortening candidate, together with previous paragraph}
 %Section \ref{sec:msfs and final coalgebras} showed that \mintinline{haskell}{Cell}s and Dunai's monadic stream functions are very much alike,
 %and it makes sense to adopt its approach to control flow.
-In Dunai, we can switch from executing one stream function to another by \emph{throwing an exception}.
-Whenever we wish to hand over control to another component,
-we throw an exception as an effect in the \mintinline{haskell}{ExceptT} monad
-(which is simply the \mintinline{haskell}{Either} monad beefed up as a monad transformer).
+% In Dunai, we can switch from executing one stream function to another by \emph{throwing an exception}.
+As in Dunai, whenever we wish to hand over control to another component,
+we \emph{throw an exception} as an effect in the \mintinline{haskell}{ExceptT} monad
+(which is simply the \mintinline{haskell}{Either} monad generalised to a monad transformer).
 This exception has to be handled by choosing a new component based on the exception value.
 The type checker can verify at the end that all exceptions have been handled.
 
@@ -212,7 +229,7 @@ It would be a great enrichment to generalise automatic migration to such a type 
 \medskip
 
 The author thanks Iván Pérez for his work on Yampa, Dunai, and numerous other projects in the FRP world;
-the reviewers of the Haskell Symposium for very helpful comments that enriched and streamlined this work;
+the reviewers of Haskell Symposium 2018 and REBLS 2020 for very helpful comments that enriched and streamlined this work;
 Paolo Capriotti for the initial idea that led to monadic exception control flow;
 and the sonnen VPP team, especially Fabian Linges,
 for helpful discussions about hot code swap in Erlang.

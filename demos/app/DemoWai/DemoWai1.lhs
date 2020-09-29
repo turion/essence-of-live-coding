@@ -9,10 +9,6 @@ module DemoWai.DemoWai1 where
 -- base
 import Data.Data
 import Control.Concurrent.MVar
-import Prelude hiding (unlines)
-
--- bytestring
-import Data.ByteString.Lazy.Char8
 
 -- transformers
 import Control.Monad.Trans.Class
@@ -42,7 +38,7 @@ oldServer = LiveProgram
       lift $ putMVar responseVar $ unlines
         [ "This is Ye Olde Server."
         , "You are visitor #"
-        <> (pack $ show nVisitorsNew) <> "."
+        <> show nVisitorsNew <> "."
         ]
       return $ State nVisitorsNew
   }
