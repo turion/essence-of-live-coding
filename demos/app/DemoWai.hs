@@ -10,6 +10,9 @@ import Control.Concurrent.MVar
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
 
+-- bytestring
+import Data.ByteString.Lazy.Char8 (pack)
+
 -- wai
 import Network.HTTP.Types
 import Network.Wai
@@ -29,7 +32,7 @@ app Env { .. } request respond = do
   respond $ responseLBS
         status200
         [("Content-Type", "text/plain")]
-        response
+        $ pack response
 
 main :: IO ()
 main = do

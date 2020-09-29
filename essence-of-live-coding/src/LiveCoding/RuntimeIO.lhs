@@ -96,6 +96,7 @@ Again, we can reuse the function \mintinline{haskell}{launch}.
 Using \texttt{ghcid} (``GHCi as a daemon'' \cite{ghcid}),
 the launching and reloading operations can be automatically triggered upon starting \texttt{ghcid} and editing the code,
 allowing for a smooth live coding experience without any manual intervention.
+\fxerror{Update according to the latest sync function}
 
 In the next subsection,
 a full example is shown.

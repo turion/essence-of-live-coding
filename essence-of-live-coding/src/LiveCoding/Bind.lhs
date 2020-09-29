@@ -55,10 +55,8 @@ sineWait
   :: Double
   -> CellExcept IO () String Void
 sineWait t = do
-  try  $   arr (const "Waiting...")
-       >>> wait 2
-  safe $   sine t
-       >>> arr asciiArt
+  try $ arr (const "Waiting...") >>> wait 2
+  safe $ sine t >>> arr asciiArt
 \end{code}
 This \mintinline{haskell}{do}-block can be read intuitively.
 Initially, the first cell is executed,
