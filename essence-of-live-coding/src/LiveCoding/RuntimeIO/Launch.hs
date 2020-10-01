@@ -32,8 +32,8 @@ class Monad m => Launchable m where
 instance Launchable IO where
   runIO = id
 
-instance Launchable (StateT (HandlingState IO) IO) where
-  runIO = runHandlingState
+instance (Typeable m, Launchable m) => Launchable (StateT (HandlingState m) m) where
+  runIO = runIO . runHandlingState
 
 {- | The standard top level @main@ for a live program.
 
