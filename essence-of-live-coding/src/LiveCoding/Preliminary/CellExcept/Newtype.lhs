@@ -37,7 +37,7 @@ try
 try = CellExcept
 \end{code}
 And we can leave it safely once we have proven that there are no exceptions left to throw,
-i.e. the exception type is empty:
+i.e. the exception type is empty (represented in Haskell by \mintinline{haskell}{Void}):
 \begin{code}
 safely
   :: Monad      m
