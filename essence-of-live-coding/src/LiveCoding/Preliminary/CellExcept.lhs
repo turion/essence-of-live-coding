@@ -36,7 +36,7 @@ try
 try = CellExcept id
 \end{code}
 And we can leave it safely once we have proven that there are no exceptions left to throw,
-i.e. the exception type is empty:
+i.e. the exception type is empty (represented in Haskell by \mintinline{haskell}{Void}):
 \fxerror{I'm using runCellExcept which wasn't explained yet}
 \begin{code}
 safely
