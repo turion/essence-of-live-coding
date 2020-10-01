@@ -172,6 +172,9 @@ it's advisable to follow these patterns:
 * Wherever you write `Cell`s from scratch,
   or use `feedback`,
   use records and algebraic datatypes to structure your state.
+* Use `ghcid` in order to save yourself the hassle of having to reload manually all the time.
+  Vanilla [`.ghci`](https://downloads.haskell.org/ghc/latest/docs/html/users_guide/ghci.html) and [`.ghcid`](https://github.com/ndmitchell/ghcid) file templates can be found in the root directory,
+  and usually it suffices to copy these two files into your project and launch `ghcid` from there.
 * When the automatic migration would fail, there are _user migrations_ ([`LiveCoding.Migrate.Migration`](https://github.com/turion/essence-of-live-coding/blob/master/essence-of-live-coding/src/LiveCoding/Migrate/Migration.hs)).
   Often, it's good practice to wrap your state in a newtype first
   (migration to newtypes is automatic),
@@ -182,10 +185,13 @@ it's advisable to follow these patterns:
 
 ### Known limitations
 
-* For multiple backends, you currently need to write your own `.ghci` file, and store all `MVar`s in a single tuple.
 * For custom migrations, you currently need to write your own `.ghci` file.
 * If your program doesn't compile when you _enter_ GHCi,
   you will need to leave GHCi again and recompile.
   Otherwise the live coding infrastructure will not be loaded.
   After it has successfully compiled, you can reload from within GHCi,
   and further compilation errors do not affect the infrastructure.
+* The template `.ghci` and `.ghcid` files assume that you are using a recent version of `cabal`
+  (at least version 3).
+  If this is not the case for you,
+  consider updating, or adapt the files to use `new-`style commands.
