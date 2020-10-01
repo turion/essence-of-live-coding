@@ -84,9 +84,8 @@ update
   => LaunchedProgram m
   -> LiveProgram     m
   -> IO ()
-update LaunchedProgram { .. } newProg = do
-  oldProg <- takeMVar programVar
-  putMVar programVar $ hotCodeSwap (runIO newProg) oldProg
+update LaunchedProgram { .. } newProg = modifyMVarMasked_ programVar
+  $ return . hotCodeSwap (runIO newProg)
 
 {- | Stops a thread where a 'LiveProgram' is being executed.
 
@@ -128,4 +127,4 @@ stepLaunchedProgram
   :: (Monad m, Launchable m)
   => LaunchedProgram m
   -> IO ()
-stepLaunchedProgram LaunchedProgram { .. } = modifyMVar_ programVar stepProgram
+stepLaunchedProgram LaunchedProgram { .. } = modifyMVarMasked_ programVar stepProgram
