@@ -1,7 +1,1 @@
-:set -package essence-of-live-coding-gloss-example
-:m + LiveCoding.GHCi Control.Concurrent
-:def liveinit liveinit
-:def livestep livestep
-:def livereload livereload
-:def livelaunch livelaunch
-:def livestop livestop
+../templates/.ghci

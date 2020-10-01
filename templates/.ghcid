@@ -1,0 +1,1 @@
+--warnings --setup=:livelaunch --test=:livereload "--command=cabal repl"
