@@ -35,6 +35,12 @@ instance Launchable IO where
 instance Launchable (StateT (HandlingState IO) IO) where
   runIO = runHandlingState
 
+-- | Launch a 'LiveProgram' in the foreground thread (blocking).
+foreground :: Monad m => LiveProgram m -> m ()
+foreground liveProgram
+  =   stepProgram liveProgram
+  >>= foreground
+
 data LaunchedProgram (m :: * -> *) = LaunchedProgram
   { programVar :: MVar (LiveProgram IO)
   , threadId   :: ThreadId

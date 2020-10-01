@@ -17,7 +17,7 @@ import LiveCoding.LiveProgram
 import LiveCoding.LiveProgram.HotCodeSwap
 import LiveCoding.Debugger
 import LiveCoding.Migrate
-import LiveCoding.RuntimeIO.Launch
+import LiveCoding.RuntimeIO.Launch hiding (foreground)
 \end{code}
 \end{comment}
 
@@ -35,9 +35,9 @@ The runtime behaviour of a live program is defined by calling this function repe
 We could of course run the program in the foreground thread:
 \begin{code}
 foreground :: Monad m => LiveProgram m -> m ()
-foreground liveProgram
-  =   stepProgram liveProgram
-  >>= foreground
+foreground liveProgram = do
+  liveProgram' <- stepProgram liveProgram
+  foreground liveProgram'
 \end{code}
 But this would leave no possibility to exchange the program with a new one.
 %But this would then become the main loop,
