@@ -147,12 +147,14 @@ sumC = Cell { .. }
 We recover live programs as the special case of trivial input and output:
 \begin{code}
 liveCell
-  :: Functor     m
+  :: Monad       m
   => Cell        m () ()
   -> LiveProgram m
 liveCell Cell { .. } = LiveProgram
   { liveState = cellState
-  , liveStep  = fmap snd . flip cellStep ()
+  , liveStep  = \state -> do
+      (_, state') <- cellStep state ()
+      return state'
   }
 \end{code}
 \begin{comment}
