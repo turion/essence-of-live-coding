@@ -12,13 +12,16 @@ import Data.Data
 
 -- transformers
 import Control.Monad.Trans.State.Strict
+import Control.Monad.Trans.Except
 
 -- essence-of-live-coding
 import LiveCoding.Debugger
 import LiveCoding.Handle
 import LiveCoding.LiveProgram
+import LiveCoding.LiveProgram.Except
 import LiveCoding.LiveProgram.HotCodeSwap
 import LiveCoding.Cell.Monad.Trans
+import LiveCoding.Exceptions.Finite (Finite)
 
 {- | Monads in which live programs can be launched in 'IO',
 for example when you have special effects that have to be handled on every reload.
@@ -34,6 +37,11 @@ instance Launchable IO where
 
 instance (Typeable m, Launchable m) => Launchable (StateT (HandlingState m) m) where
   runIO = runIO . runHandlingState
+
+-- | Upon an exception, the program is restarted.
+--   To handle or log the exception, see "LiveCoding.LiveProgram.Except".
+instance (Data e, Finite e, Launchable m) => Launchable (ExceptT e m) where
+  runIO liveProgram = runIO $ foreverCLiveProgram $ try liveProgram
 
 {- | The standard top level @main@ for a live program.
 
