@@ -1,4 +1,0 @@
-:set -package essence-of-live-coding-pulse
-:m + LiveCoding.Pulse.GHCi Control.Concurrent
-:def livepulse livepulse
-:def livereloadpulse livereloadpulse
