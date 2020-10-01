@@ -212,17 +212,23 @@ Assume, for the sake of the example,
 that our webserver has become wildly popular,
 and \mintinline{haskell}{nVisitors} is close to \mintinline{haskell}{maxInt}.
 We need to migrate this value to an arbitrary precision \mintinline{haskell}{Integer}.
-It is easy to extend \mintinline{haskell}{migrate} by a special case provided by the user:
+It is easy to extend \mintinline{haskell}{migrate} by a special case provided by the user,
+shown in Figure \ref{fig:user migration}.
+\begin{figure}
 \begin{spec}
 userMigrate
   :: (Data a, Data b, Typeable c, Typeable d)
   => (c -> d)
   -> a -> b -> a
-
+\end{spec}
+\begin{spec}
 intToInteger :: Int -> Integer
 intToInteger = toInteger
 \end{spec}
-In our example, we would use \mintinline{haskell}{userMigrate intToInteger} to migrate the state.
+\caption{User migration}
+\label{fig:user migration}
+\end{figure}
+Here, we would use \mintinline{haskell}{userMigrate intToInteger} to migrate the state.
 \fxwarning{Show example. Extend runtime.}
 
 To use the automatic migration function,
