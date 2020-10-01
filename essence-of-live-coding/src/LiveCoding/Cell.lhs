@@ -312,7 +312,7 @@ but this will be deferred to future work.
 For simplicity and explicitness,
 assume that we will execute all \mintinline{haskell}{Cell}s at a certain fixed step rate,
 say, twenty five steps per second.
-Then an Euler integration cell can be defined:
+Then Euler integration can be defined:
 \begin{code}
 stepRate :: Num a => a
 stepRate = 25

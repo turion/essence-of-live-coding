@@ -43,11 +43,15 @@ safely
   :: Monad      m
   => CellExcept m a b Void
   -> Cell       m a b
+\end{code}
+\begin{comment}
+\begin{code}
 safely = hoistCell discardVoid . runCellExcept
   where
     discardVoid
       = fmap (either absurd id) . runExceptT
 \end{code}
+\end{comment}
 One way to prove the absence of further exceptions is,
 of course, to run an exception-free cell:
 \begin{code}
@@ -55,8 +59,12 @@ safe
   :: Monad      m
   => Cell       m a b
   -> CellExcept m a b Void
+\end{code}
+\begin{comment}
+\begin{code}
 safe cell = CellExcept $ liftCell cell
 \end{code}
+\end{comment}
 
 \paragraph{The return of the monad}
 Our new hope is to give \mintinline{haskell}{Functor}, \mintinline{haskell}{Applicative} and \mintinline{haskell}{Monad} instances to \mintinline{haskell}{CellExcept}.
