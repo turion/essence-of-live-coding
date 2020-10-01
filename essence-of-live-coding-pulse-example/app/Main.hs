@@ -76,4 +76,4 @@ liveProgram :: LiveProgram (HandlingStateT IO)
 liveProgram = liveCell $ pulseWrapC 1024 pulseCell >>> arr (const ())
 
 main :: IO ()
-main = runHandlingStateT $ foreground liveProgram
+main = liveMain liveProgram

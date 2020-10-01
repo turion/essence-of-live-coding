@@ -35,12 +35,29 @@ instance Launchable IO where
 instance Launchable (StateT (HandlingState IO) IO) where
   runIO = runHandlingState
 
+{- | The standard top level @main@ for a live program.
+
+Typically, you will define a top level 'LiveProgram' in some monad like @'HandlingStateT' 'IO'@,
+and then add these two lines of boiler plate:
+
+@
+main :: IO ()
+main = liveMain liveProgram
+@
+-}
+liveMain
+  :: Launchable m
+  => LiveProgram m
+  -> IO ()
+liveMain = foreground . runIO
+
 -- | Launch a 'LiveProgram' in the foreground thread (blocking).
 foreground :: Monad m => LiveProgram m -> m ()
 foreground liveProgram
   =   stepProgram liveProgram
   >>= foreground
 
+-- | A launched 'LiveProgram' and the thread in which it is running.
 data LaunchedProgram (m :: * -> *) = LaunchedProgram
   { programVar :: MVar (LiveProgram IO)
   , threadId   :: ThreadId

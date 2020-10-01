@@ -31,7 +31,7 @@ import LiveCoding hiding (left, right)
 import LiveCoding.Gloss hiding (statePicture, every, translate)
 
 main :: IO ()
-main = runHandlingStateT $ foreground liveProgram
+main = liveMain liveProgram
 
 liveProgram :: LiveProgram (HandlingStateT IO)
 liveProgram = liveCell $ glossWrapC defaultSettings { debugEvents = True } glossCell >>> arr (const ())
