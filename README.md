@@ -113,23 +113,30 @@ The steps are:
 * Create a new cabal project containing an executable
   (preferably in a single file),
   and add `essence-of-live-coding` as a dependency.
-* There are sound (PulseAudio) and 2d vector graphics (`gloss`) backend packages,
-  `essence-of-live-coding-pulse` and `essence-of-live-coding-gloss`,
-  respectively.
-  They will require external libraries.
-  If you use `stack` with `nix` integration,
-  those will be installed for you automatically.
-* There are custom [GHCi scripts](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/ghci.html#the-ghci-and-haskeline-files) that supply quick commands to start, reload and migrate the program automatically.
-  * If you use no backend, you can copy the `.ghci` file to your project from [`essence-of-live-coding-ghci`](https://github.com/turion/essence-of-live-coding/blob/master/essence-of-live-coding-ghci/.ghci),
-  and add that package to your dependencies.
-  * If you want to use PulseAudio or `gloss`, depend on the respective package and copy the `.ghci` file.
-  * For multiple backends, write your own `.ghci` file.
-* Write a main program called `liveProgram`
-* Launch `ghci` with e.g. `stack ghci`.
-* Run your program with `:liveinit` (or `:livegloss`, or `:livepulse` depending on your backend).
-* Edit your program, and reload with `:
+* There are backend packages available:
 
-### GHCi integration
+  | What? | Which backend? | Which library? |
+  | ----- | -------------- | -------------- |
+  | Sound | [PulseAudio](hackage.haskell.org/package/pulse-simple) | `essence-of-live-coding-pulse` |
+  | 2d vector graphics | [`gloss`](http://hackage.haskell.org/package/gloss) | `essence-of-live-coding-gloss` |
+  | Webserver | [WAI](https://hackage.haskell.org/package/wai) | `essence-of-live-coding-warp` |
+
+  Some will require external libraries to link properly.
+  The [tutorial project](https://github.com/turion/essence-of-live-coding-tutorial/) shows you how to install those using [Nix](https://nixos.org/).
+* There is a custom [GHCi script](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/ghci.html#the-ghci-and-haskeline-files) that supply quick commands to start, reload and migrate the program automatically.
+  You can usually copy it from the `templates` folder.
+* Write a main program called `liveProgram :: LiveProgram m`,
+  where `m` is a [`Launchable`](https://hackage.haskell.org/package/essence-of-live-coding-0.2.4/docs/LiveCoding.html#t:Launchable) monad, such as `IO`.
+* In a REPL:
+  * Launch `cabal repl`.
+  * Run your program with `:livelaunch`.
+  * Edit your program, and reload with `:livereload`.
+* Instead of reloading manually,
+  you can use [`ghcid`](https://github.com/ndmitchell/ghcid) to do this manually for you.
+  * Install `ghcid`.
+  * Copy `templates/.ghcid` into your project folder.
+  * Simply launch `ghcid` and your program will start.
+  * Simply edit your file and the changes will reload as soon as they compile.
 
 ### Examples
 
