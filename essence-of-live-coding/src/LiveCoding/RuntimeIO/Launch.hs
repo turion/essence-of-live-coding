@@ -8,6 +8,7 @@ module LiveCoding.RuntimeIO.Launch where
 -- base
 import Control.Concurrent
 import Control.Monad
+import Data.Data
 
 -- transformers
 import Control.Monad.Trans.State.Strict
@@ -18,7 +19,6 @@ import LiveCoding.Handle
 import LiveCoding.LiveProgram
 import LiveCoding.LiveProgram.HotCodeSwap
 import LiveCoding.Cell.Monad.Trans
-import Data.Data (Typeable)
 
 {- | Monads in which live programs can be launched in 'IO',
 for example when you have special effects that have to be handled on every reload.
