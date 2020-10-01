@@ -35,7 +35,8 @@ source-repository this
 
 library
   exposed-modules:
-      LiveCoding
+      Data.Data.Util
+    , LiveCoding
     , LiveCoding.Bind
     , LiveCoding.Cell
     , LiveCoding.Cell.Feedback
