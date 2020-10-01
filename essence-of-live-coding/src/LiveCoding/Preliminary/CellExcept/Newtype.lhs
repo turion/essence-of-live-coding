@@ -97,7 +97,9 @@ can be defined from the bind operator \mintinline{haskell}{>>=},
 it can also be defined from the \emph{live bind} operator \mintinline{haskell}{>>>=} introduced previously.
 As a technical tour-de-force,
 even a \mintinline{haskell}{Monad} instance for \mintinline{haskell}{CellExcept} can be derived with some modifications.
-This is shown at length in the appendix.
+This is shown at length in an appendix\footnote{%
+Available online at \href{https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingAppendix.pdf}{https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCodingAppendix.pdf}.
+}.
 
 But how can \mintinline{haskell}{Applicative} and \mintinline{haskell}{Monad} be put to use?
 The foreground value of \mintinline{haskell}{CellExcept} is the thrown exception.
