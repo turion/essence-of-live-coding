@@ -1,5 +1,8 @@
 \documentclass{essence}
 
+\addtolength{\textfloatsep}{-2ex}
+\addtolength{\abovecaptionskip}{-1ex}
+
 \begin{document}
 \title{The essence of live coding: Change the program, keep the state!}
 %\subtitle{Functional pearl}
