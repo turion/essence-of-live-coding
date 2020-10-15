@@ -456,16 +456,21 @@ instance ArrowLoop (Cell Identity) where
 \end{comment}
 
 \subsection{A sine generator}
-Making use of the \mintinline{haskell}{Arrows} syntax extension\footnote{%
-Arrow notation -- or \mintinline{haskell}{proc .. do} notation --
-is similar to monadic \mintinline{haskell}{do} notation,
-except that not only is there a dedicated binder \mintinline{haskell}{<-} for output values,
-but also an application operator \mintinline{haskell}{-<} for \emph{input} values.
-The notation is desugared into the arrow operators,
-such as \mintinline{haskell}{arr} and the composition \mintinline{haskell}{>>>}.},
-we can implement a harmonic oscillator that will produce a sine wave with amplitude 10 and given period length:
+We can implement a harmonic oscillator that will produce a sine wave with amplitude 10 and given period length:
 \fxwarning{Comment on rec and ArrowFix}
 \fxerror{I want to add a delay for numerical stability}
+\begin{code}
+sine'
+  :: MonadFix m
+  => Double -> Cell m () Double
+sine' t = loop $
+  arr (\((), pos) -> (- (2 * pi / t) ^ 2 * (pos - 10)))
+  >>> integrate >>> integrate >>> arr (\pos -> (pos, pos))
+\end{code}
+To elucidate what is happening, let us make use of Arrow notation,
+which is similar to monadic \mintinline{haskell}{do} notation,
+except that there is an application operator \mintinline{haskell}{-<} for \emph{input} values.
+The following is desugared into a cell equivalent to \mintinline{haskell}{sine'}:
 \begin{code}
 sine
   :: MonadFix m
