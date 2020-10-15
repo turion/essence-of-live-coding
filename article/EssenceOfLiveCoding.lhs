@@ -3,6 +3,15 @@
 \addtolength{\textfloatsep}{-2ex}
 \addtolength{\abovecaptionskip}{-1ex}
 
+
+\copyrightyear{2020}
+\acmYear{2020}
+\setcopyright{acmlicensed}\acmConference[REBLS '20]{Proceedings of the 7th ACM SIGPLAN International Workshop on Reactive and Event-Based Languages and Systems}{November 16, 2020}{Virtual, USA}
+\acmBooktitle{Proceedings of the 7th ACM SIGPLAN International Workshop on Reactive and Event-Based Languages and Systems (REBLS '20), November 16, 2020, Virtual, USA}
+\acmPrice{15.00}
+\acmDOI{10.1145/3427763.3428312}
+\acmISBN{978-1-4503-8188-8/20/11}
+
 \begin{document}
 \title{The essence of live coding: Change the program, keep the state!}
 %\subtitle{Functional pearl}
