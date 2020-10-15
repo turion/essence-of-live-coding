@@ -365,9 +365,9 @@ For example, we may eliminate a \mintinline{haskell}{ReaderT r} context by suppl
 or lift into a monad transformer:
 \begin{code}
 liftCell
-  :: (Monad m, MonadTrans t)
-  => Cell         m  a b
-  -> Cell      (t m) a b
+  :: (Monad  m, MonadTrans t)
+  => Cell    m  a b
+  -> Cell (t m) a b
 liftCell = hoistCell lift
 \end{code}
 As described in \cite[Section 4]{Dunai},

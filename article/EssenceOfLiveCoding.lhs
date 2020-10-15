@@ -194,8 +194,8 @@ but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 
 % \subsection{External main loops}
 
-\fxfatal{Can integrate into external main loops using \mintinline{haskell}{step} for cells or an equivalent \mintinline{haskell}{stepMVar}.}
-\fxfatal{Need to mention Handles and NonBlocking}
+\fxerror{Can integrate into external main loops using \mintinline{haskell}{step} for cells or an equivalent \mintinline{haskell}{stepMVar}.}
+\fxerror{Need to mention Handles and NonBlocking}
 
 \section{Conclusion}
 
