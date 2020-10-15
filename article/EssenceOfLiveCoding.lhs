@@ -1,7 +1,7 @@
 \documentclass{essence}
 
-\addtolength{\textfloatsep}{-2ex}
-\addtolength{\abovecaptionskip}{-1ex}
+\addtolength{\textfloatsep}{-3ex}
+\addtolength{\abovecaptionskip}{-2ex}
 
 
 \copyrightyear{2020}
@@ -110,8 +110,8 @@ Hot code swap in Erlang realises this motto,
 and
 similar views are expressed about live coding in Elm\footnote{%
 Compare \href{https://elm-lang.org/blog/interactive-programming}{https://elm-lang.org/blog/interactive-programming}.}
-(a domain specific web frontend language inspired by Haskell).
-What is new about this approach is the consequential application of this motto to create a general purpose, type-safe FRP framework\footnote{%
+(a web frontend DSL inspired by Haskell).
+What is new about this work is the consequential application of this motto to create a general purpose, type-safe FRP framework\footnote{%
 It shall be remarked that FRP is long past niche applications in the video and audio domains.
 It is possible to write web servers and frontends, simulations and games in it.
 %FRP can even be used for file batch processing.
@@ -133,7 +133,7 @@ we turn to control flow in Section \ref{sec:control flow},
 and encode it completely algebraically within the program state,
 automatically getting a grip on exception handling and loops.
 A monadic interface to our live programs is presented.
-In Section \ref{sec:tooling}, several useful tools such as debuggers and quickchecking utilities are shown.
+In Section \ref{sec:tooling}, several useful tools such as debuggers and quickcheck utilities are shown.
 
 This article is written in literate Haskell and supplies the library presented here.
 The source code is available at \href{https://github.com/turion/essence-of-live-coding}{https://github.com/turion/essence-of-live-coding},

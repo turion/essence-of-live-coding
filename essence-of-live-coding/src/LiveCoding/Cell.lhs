@@ -147,7 +147,7 @@ sumC = Cell { .. }
 We recover live programs as the special case of trivial input and output:
 \begin{code}
 liveCell
-  :: Monad       m
+  :: Monad m
   => Cell        m () ()
   -> LiveProgram m
 liveCell Cell { .. } = LiveProgram
@@ -295,9 +295,8 @@ it will be composed from basic building blocks like \mintinline{haskell}{Composi
 which allows us to lift pure functions to \mintinline{haskell}{Cell}s:
 \begin{spec}
 arr
-  :: Monad m
-  ->         (a -> b)
-  -> Cell  m  a    b
+  :: Monad m => (a -> b)
+  -> Cell  m     a    b
 \end{spec}
 \fxwarning{Would be nice to have the space to explain *** as well!}
 Together with the \mintinline{haskell}{ArrowChoice} and \mintinline{haskell}{ArrowLoop} classes
@@ -340,9 +339,8 @@ Beyond standard arrows, a \mintinline{haskell}{Cell} can encode effects in a mon
 so it is not surprising that Kleisli arrows can be lifted:
 \begin{spec}
 arrM
-  :: Monad m
-  ->         (a -> m b)
-  -> Cell  m  a      b
+  :: Monad m => (a -> m b)
+  -> Cell  m     a      b
 \end{spec}
 \begin{comment}
 Mere monadic actions become a special case thereof:
