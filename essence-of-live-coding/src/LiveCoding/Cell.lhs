@@ -179,12 +179,14 @@ toLiveCell LiveProgram { .. } = Cell
 \end{comment}
 
 \subsection{FRP for automata-based programming}
-Effectful Mealy machines, here cells,
-offer a wide variety of applications in FRP.
+Our cells are known in the literature as ``Effectful Mealy Machines'', ``transducers'' and ``resumptions''
+\cite{MILNER1975157}, \cite{pirog2014coinductive}, \cite[Section 7]{hasuo_jacobs_2011}, \cite[Section 5.4]{AbramskyHaghverdiScott}.
+They are known for their relevance to stream functions \cite{CaspiPouzet},
+suggesting that they offer a wide variety of applications in FRP.
 The essential parts of the API,
 which is heavily inspired by the FRP library \texttt{dunai}
 \cite{Dunai},
-is shown here.
+are shown here.
 %\mintinline{haskell}{Cell}s can be composed in three directions:
 %Sequentially and parallely in the data flow sense,
 %and sequentially in the control flow sense.
