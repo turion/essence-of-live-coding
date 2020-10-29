@@ -5,9 +5,9 @@ import Control.Arrow
 import LiveCoding
 
 t1 :: Num a => a
-t1 = 10
+t1 = 8
 t2 :: Num a => a
-t2 = 5
+t2 = 4
 
 printSineWait' t = liveCell
   $   safely (sineWait t)
