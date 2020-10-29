@@ -25,7 +25,7 @@ import LiveCoding.LiveProgram
 \end{code}
 \end{comment}
 
-\subsection{Exceptions forever}
+\subsection{Exceptions Forever}
 
 \fxwarning{Opportunity to call this an SF here (and elsewhere)}
 What if we want to change between the oscillator and a waiting period indefinitely?

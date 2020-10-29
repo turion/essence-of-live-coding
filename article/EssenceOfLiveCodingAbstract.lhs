@@ -70,7 +70,7 @@ The talk slides and a full article version are available at \href{https://www.ma
 The source repository containing the library and examples
 (console, audio, video, web servers) is available at \href{https://github.com/turion/essence-of-live-coding}{https://github.com/turion/essence-of-live-coding}.
 
-\section{Change the program. Keep the state (as far as possible).}
+\section{Change the Program. Keep the State (as Far as Possible).}
 
 Our model of a live program consists of a state and an effectful state transition (``step'') function,
 shown in Figure \ref{fig:LiveProgram}.

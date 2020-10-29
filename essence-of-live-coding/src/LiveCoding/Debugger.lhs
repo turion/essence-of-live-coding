@@ -28,7 +28,7 @@ import LiveCoding.Cell
 \end{code}
 \end{comment}
 
-\subsection{Debugging the live state}
+\subsection{Debugging the Live State}
 Having the complete state of the program in one place allows us to inspect and debug it in a central place.
 We might want to interact with the user,
 display aspects of the state

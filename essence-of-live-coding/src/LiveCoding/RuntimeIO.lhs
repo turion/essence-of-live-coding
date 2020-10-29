@@ -21,10 +21,10 @@ import LiveCoding.RuntimeIO.Launch hiding (foreground)
 \end{code}
 \end{comment}
 
-\section{The runtime}
+\section{The Runtime}
 \label{sec:runtime}
 
-\subsection{Hands on interaction}
+\subsection{Hands on Interaction}
 Enough declaration.
 Let us get semantic and run some live programs!
 In the preliminary version,
