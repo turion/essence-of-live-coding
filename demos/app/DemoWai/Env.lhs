@@ -22,10 +22,9 @@ and passed to the next step.
 
 We then modify\footnote{%
 The function \mintinline{haskell}{unpack} from the \texttt{bytestring} package converts between different kinds of strings.
-\mintinline{haskell}{requestHeaders} from the \texttt{wai} package extracts the HTTP headers,
+\mintinline{haskell}{requestHeaders} from the \texttt{wai} package extracts HTTP headers,
 such as the user agent name,
-from a request,
-as a list of tuples.}
+from a request.}
 the server logic as in Figure \ref{fig:DemoWai2}.
 Additionally to the number of visitors,
 we also store the last user agent name
