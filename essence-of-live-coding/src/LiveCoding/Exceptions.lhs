@@ -38,7 +38,7 @@ throwC
 throwC = arrM throwE
 \end{code}
 The above function simply throws the incoming exception.
-To do this only if a certain condition is satisfied,
+To do this only if a condition is satisfied,
 \mintinline{haskell}{if}-constructs can be used.
 For example, this cell forwards its input for a given number of seconds,
 and then throws an exception:

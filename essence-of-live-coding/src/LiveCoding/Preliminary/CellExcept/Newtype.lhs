@@ -105,5 +105,6 @@ But how can \mintinline{haskell}{Applicative} and \mintinline{haskell}{Monad} be
 The foreground value of \mintinline{haskell}{CellExcept} is the thrown exception.
 With \mintinline{haskell}{pure}, such values are created,
 and \mintinline{haskell}{Functor} allows us to perform computations with them.
-The classes \mintinline{haskell}{Applicative} and \mintinline{haskell}{Monad} allow us to \emph{chain} the execution of exception throwing cells:
+With \mintinline{haskell}{Applicative} and \mintinline{haskell}{Monad},
+we \emph{chain} the execution of exception throwing cells:
 \fxwarning{Comment on how Monad is even stronger than Applicative?}

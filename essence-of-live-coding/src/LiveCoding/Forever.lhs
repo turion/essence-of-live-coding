@@ -35,11 +35,8 @@ sinesWaitAndTry
   :: MonadFix   m
   => CellExcept m () String ()
 sinesWaitAndTry = do
-  try $   arr (const "Waiting...")
-      >>> wait 1
-  try $   sine 5
-      >>> arr asciiArt
-      >>> wait 5
+  try $ arr (const "Waiting...") >>> wait 1
+  try $ sine 5 >>> arr asciiArt  >>> wait 5
 \end{code}
 \fxwarning{wait is an unintuitive name. Sounds blocking. "forwardFor"?}
 The one temptation we have to resist is to recurse in the \mintinline{haskell}{CellExcept} context to prove the absence of exceptions:
@@ -59,7 +56,7 @@ but the last one is again \mintinline{haskell}{sinesForever'},
 and thus already initialising such a cell hangs in an infinite loop.
 Using the standard function \mintinline{haskell}{forever :: Applicative f => f a -> f ()} has the same deficiency,
 \fxerror{Have we tested that?}
-as it is defined in essentially the same way.
+as it is defined in the same way.
 
 The resolution is an explicit loop operator,
 and faith in the library user to remember to employ it.

@@ -206,12 +206,11 @@ hoistCell morph ArrM { .. } = ArrM
 \end{comment}
 
 \paragraph{Composition}
-By being an instance of the type class \mintinline{haskell}{Category}
-for any monad \mintinline{haskell}{m},
+By being an instance of the type class \mintinline{haskell}{Category},
+% for any monad \mintinline{haskell}{m},
 cells implement sequential composition:
 \begin{spec}
-(>>>)
-  :: Monad m
+(>>>) :: Monad m
   => Cell  m a b
   -> Cell  m   b c
   -> Cell  m a   c
@@ -276,12 +275,9 @@ type SF       a b = forall m . Cell m    a b
 type Actuator   b = Cell   IO              b ()
 \end{code}
 \begin{code}
-buildLiveProg
-  :: Sensor   a
-  -> SF       a b
-  -> Actuator   b
+buildProg :: Sensor a -> SF a b -> Actuator b
   -> LiveProgram IO
-buildLiveProg sensor sf actuator = liveCell
+buildProg sensor sf actuator = liveCell
   $ sensor >>> sf >>> actuator
 \end{code}
 This (optional) division of the reactive program into three such parts is inspired by Yampa \cite{Yampa},
@@ -291,7 +287,7 @@ It is never necessary to specify a big state type manually,
 it will be composed from basic building blocks like \mintinline{haskell}{Composition}.
 
 \paragraph{Arrowized FRP}
-\mintinline{haskell}{Cell}s can be made an instance of the \mintinline{haskell}{Arrow} type class,
+\mintinline{haskell}{Cell}s are an instance of the \mintinline{haskell}{Arrow} type class,
 which allows us to lift pure functions to \mintinline{haskell}{Cell}s:
 \begin{spec}
 arr
