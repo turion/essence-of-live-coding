@@ -66,7 +66,7 @@ we leave the \mintinline{haskell}{CellExcept} context and run the resulting prog
 \begin{code}
 printSineWait :: LiveProgram IO
 printSineWait = liveCell
-  $   safely (sineWait 10)
+  $   safely (sineWait 8)
   >>> printEverySecond
 \end{code}
 \verbatiminput{../demos/DemoSineWait.txt}

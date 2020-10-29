@@ -2,9 +2,9 @@
 import LiveCoding
 
 t1 :: Num a => a
-t1 = 6
+t1 = 4
 t2 :: Num a => a
-t2 = 10
+t2 = 8
 
 main = do
   (debugger, observer) <- countDebugger
