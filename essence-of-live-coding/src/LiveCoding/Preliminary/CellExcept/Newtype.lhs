@@ -15,7 +15,7 @@ import LiveCoding.Exceptions
 \end{code}
 \end{comment}
 
-\subsection{Control flow context}
+\subsection{Control Flow Context}
 \label{sec:control flow context}
 %\paragraph{Wrapping exceptions}
 Inspired by \cite[Section 2, "Control Flow through Exceptions"]{Rhine},
@@ -66,7 +66,7 @@ safe cell = CellExcept $ liftCell cell
 \end{code}
 \end{comment}
 
-\paragraph{The return of the monad}
+\paragraph{The Return of the Monad}
 Our new hope is to give \mintinline{haskell}{Functor}, \mintinline{haskell}{Applicative} and \mintinline{haskell}{Monad} instances to \mintinline{haskell}{CellExcept}.
 We will explore now how this allows for rich control flow.
 

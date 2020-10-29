@@ -28,7 +28,7 @@ import LiveCoding.Cell.Monad.Trans
 \end{code}
 \end{comment}
 
-\paragraph{Throwing exceptions}
+\paragraph{Throwing Exceptions}
 No new concepts beyond the function \mintinline{haskell}{throwE :: Monad m => e -> ExceptT e m a}
 from the package \texttt{transformers} \cite{jones1995functional, transformers} are needed:
 \begin{code}
@@ -67,7 +67,7 @@ throwIf_ condition = throwIf condition ()
 \end{code}
 \end{comment}
 
-\paragraph{Handling exceptions}
+\paragraph{Handling Exceptions}
 In usual Haskell, the \mintinline{haskell}{ExceptT} monad transformer is handled by running it:
 \begin{spec}
 runExceptT :: ExceptT e m b -> m (Either e b)

@@ -76,7 +76,7 @@ Data loss is not entirely preventable, though.
 If a column has to be deleted, its data will not be recoverable.
 In turn, if a column is created, one has to supply a sensible default value (often \verb|NULL| will suffice).
 
-\subsection{Migrating the state}
+\subsection{Migrating the State}
 
 We can straightforwardly adopt this solution by thinking of the program state as a small database table with a single row.
 Its schema is the type \mintinline{haskell}{s}.
@@ -119,7 +119,7 @@ In this generality, we cannot hope for any other solution.
 But in the following, we are going to see how to tweak the live program definition by only twenty characters,
 and arrive at an effective migration function.
 
-\subsection{Type-driven migrations}
+\subsection{Type-Driven Migrations}
 In many cases, knowing the old state and the new initial state is sufficient to derive the new, migrated state safely.
 As an example, imagine the internal state of a simple webserver that counts the number of visitors to a page.
 \fxwarning{Later show how migrate behaves on these examples}
@@ -284,7 +284,7 @@ instance Monad m => Monoid (LiveProgram m) where
 
 \input{../essence-of-live-coding/src/LiveCoding/RuntimeIO.lhs}
 
-\subsection{Live coding a webserver}
+\subsection{Live Coding a Webserver}
 
 \fxwarning{Consider redoing this as a GHCi session where we call the server from within Haskell, e.g. with the curl or a HTTP package}
 

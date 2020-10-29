@@ -2,7 +2,7 @@
 
 \addtolength{\textfloatsep}{-3ex}
 \addtolength{\abovecaptionskip}{-2ex}
-
+\sloppy
 
 \copyrightyear{2020}
 \acmYear{2020}
@@ -11,17 +11,58 @@
 \acmPrice{15.00}
 \acmDOI{10.1145/3427763.3428312}
 \acmISBN{978-1-4503-8188-8/20/11}
+\begin{CCSXML}
+<ccs2012>
+   <concept>
+       <concept_id>10003752.10003766</concept_id>
+       <concept_desc>Theory of computation~Formal languages and automata theory</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10010147.10010371.10010352</concept_id>
+       <concept_desc>Computing methodologies~Animation</concept_desc>
+       <concept_significance>100</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10010520.10010521.10010542.10010545</concept_id>
+       <concept_desc>Computer systems organization~Data flow architectures</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10010940.10010971.10010980.10010982</concept_id>
+       <concept_desc>Software and its engineering~State systems</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10011006.10011008.10011009.10011012</concept_id>
+       <concept_desc>Software and its engineering~Functional languages</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10011006.10011008.10011024.10011028</concept_id>
+       <concept_desc>Software and its engineering~Data types and structures</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+ </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[300]{Theory of computation~Formal languages and automata theory}
+\ccsdesc[100]{Computing methodologies~Animation}
+\ccsdesc[300]{Computer systems organization~Data flow architectures}
+\ccsdesc[300]{Software and its engineering~State systems}
+\ccsdesc[500]{Software and its engineering~Functional languages}
+\ccsdesc[300]{Software and its engineering~Data types and structures}
 
 \begin{document}
-\title{The essence of live coding: Change the program, keep the state!}
+\title{The Essence of Live Coding: Change the Program, Keep the State!}
 %\subtitle{Functional pearl}
 
-%\author{Manuel Bärenz}
+\author{Manuel Bärenz}
 %\orcid{0000-0003-1843-0773}             %% \orcid is optional
-%\affiliation{
-%  \institution{sonnen eServices GmbH}            %% \institution is required
+\affiliation{
+ \institution{sonnen eServices GmbH}            %% \institution is required
 %  \country{Deutschland}
-%}
+}
 %\email{programming@manuelbaerenz.de}
 
 \begin{abstract}
@@ -145,7 +186,7 @@ while additional resources such as a presentation can be found at \href{https://
 \input{../demos/app/DemoWai/DemoWai1.lhs}
 \input{../demos/app/DemoWai/DemoWai2.lhs}
 
-\section{Live coding as arrowized Functional Reactive Programming}
+\section{Live Coding as Arrowized Functional Reactive Programming}
 \label{sec:FRP}
 
 \fxwarning{Small overview paragraph here? And in the other corresponding places?}
@@ -211,7 +252,7 @@ The approach is extensible as debugging and testing methods can be added easily.
 
 \fxerror{Speedtest: Nearly double as fast as dunai. Could use Data to optimize the state even more? Or rather we'd use GADTs for that, I guess. We still have to speed up 3-4 times to reach Yampa.}
 
-\paragraph{Further directions}
+\paragraph{Further Directions}
 To use the framework in any setting beyond a toy application,
 wrappers have to be written that explicitly integrate it in the external loops of existing frameworks,
 such as web frontends and backends, OpenGL, \texttt{gloss} \cite{Gloss}, or audio libraries.

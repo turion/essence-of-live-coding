@@ -51,7 +51,8 @@ sineChangeE = do
 \end{comment}
 
 \begin{code}
-sineWait :: Double -> CellExcept IO () String Void
+sineWait
+  :: Double -> CellExcept IO () String Void
 sineWait t = do
   try $ arr (const "Waiting...") >>> wait 2
   safe $ sine t >>> arr asciiArt

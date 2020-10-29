@@ -178,7 +178,7 @@ toLiveCell LiveProgram { .. } = Cell
 \end{code}
 \end{comment}
 
-\subsection{FRP for automata-based programming}
+\subsection{FRP for Automata-Based Programming}
 Our cells are known in the literature as ``Effectful Mealy Machines'', ``transducers'' and ``resumptions''
 \cite{MILNER1975157}, \cite{pirog2014coinductive}, \cite[Section 7]{hasuo_jacobs_2011}, \cite[Section 5.4]{AbramskyHaghverdiScott}.
 They are known for their relevance to stream functions \cite{CaspiPouzet},
@@ -268,7 +268,7 @@ since it allows us to extend the migration function easily such that it correctl
 such as \mintinline[style=bw]{haskell}{cellLeft >>> cellMiddle},
 or to \mintinline[style=bw]{haskell}{cellMiddle >>> cellRight}.
 
-\paragraph{The sensor-SF-actuator-pattern}
+\paragraph{The Sensor-SF-Actuator-Pattern}
 Composing \mintinline{haskell}{Cell}s sequentially allows us to form live programs out of \emph{sensors}, pure signal functions and \emph{actuators}:
 \begin{code}
 type Sensor   a   = Cell   IO         () a
@@ -334,7 +334,7 @@ localTime = arr (const 1) >>> integrate
 
 \fxwarning{I cut a more detailed discussion about ArrowChoice and ArrowLoop here. Put in the appendix?}
 
-\paragraph{Monads and their morphisms}
+\paragraph{Monads and Their Morphisms}
 Beyond standard arrows, a \mintinline{haskell}{Cell} can encode effects in a monad,
 so it is not surprising that Kleisli arrows can be lifted:
 \begin{spec}
@@ -453,7 +453,7 @@ instance ArrowLoop (Cell Identity) where
 \end{code}
 \end{comment}
 
-\subsection{A sine generator}
+\subsection{A Sine Generator}
 Making use of the \mintinline{haskell}{Arrows} syntax extension\footnote{%
 Arrow notation -- or \mintinline{haskell}{proc .. do} notation --
 is similar to monadic \mintinline{haskell}{do} notation,
@@ -532,7 +532,7 @@ we can retune it without hearing a glitch;
 if we use it in a video application,
 the widget will smoothly change its oscillating velocity without a jolt.
 
-\section{Control flow}
+\section{Control Flow}
 \label{sec:control flow}
 \fxerror{Show only stuff where I can show most of the implementation. Reimplement, in a separate file, the API for the newtype, show its code and explain it.}
 Although we now have the tools to build big signal pathways from single cells,
