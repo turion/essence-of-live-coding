@@ -1,7 +1,7 @@
 \documentclass{essence}
 
-\addtolength{\textfloatsep}{-3ex}
-\addtolength{\abovecaptionskip}{-2ex}
+\addtolength{\textfloatsep}{-1ex}
+\addtolength{\abovecaptionskip}{-1ex}
 \sloppy
 
 \copyrightyear{2020}
