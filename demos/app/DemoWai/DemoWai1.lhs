@@ -36,8 +36,7 @@ oldServer = LiveProgram
       _ <- lift $ takeMVar requestVar
       let nVisitorsNew = nVisitors + 1
       lift $ putMVar responseVar $ unlines
-        [ "This is Ye Olde Server."
-        , "You are visitor #"
+        [ "Ye Olde Server greets visitor #"
         <> show nVisitorsNew <> "."
         ]
       return $ State nVisitorsNew

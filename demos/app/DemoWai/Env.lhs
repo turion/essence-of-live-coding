@@ -47,15 +47,12 @@ and switch to the new one during execution.
 From a console, we access the running server:
 \begin{verbatim}
 $ curl localhost:8080
-This is Ye Olde Server.
-You are visitor #1.
+Ye Olde Server greets visitor #1.
 $ curl localhost:8080
-This is Fancy Nu $3rv3r!
-You are visitor #2.
+Fancy Nu $3rv3r says HI to #2.
 $ curl localhost:8080
-This is Fancy Nu $3rv3r!
-You are visitor #3.
-Last agent: curl/7.64.0
+Fancy Nu $3rv3r says HI to #3.
+Last agent: curl/7.72.0
 \end{verbatim}
 It correctly remembered the number of past visitors upon reload and initialised the last user agent with the value \mintinline{haskell}{Nothing}.
 When accessing the new server again,
