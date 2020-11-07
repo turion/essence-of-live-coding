@@ -52,8 +52,7 @@ newServer = LiveProgram
             $ lookup "User-Agent"
             $ requestHeaders request
       lift $ putMVar responseVar $ unlines $
-        [ "This is Fancy Nu $3rv3r!"
-        , "You are visitor #"
+        [ "Fancy Nu $3rv3r says HI to #"
         <> show nVisitorsNew <> "."
         ] ++ lastAgentStrings
       return $ State nVisitorsNew lastAgentNew
