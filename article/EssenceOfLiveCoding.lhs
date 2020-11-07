@@ -6,7 +6,8 @@
 
 \copyrightyear{2020}
 \acmYear{2020}
-\setcopyright{acmlicensed}\acmConference[REBLS '20]{Proceedings of the 7th ACM SIGPLAN International Workshop on Reactive and Event-Based Languages and Systems}{November 16, 2020}{Virtual, USA}
+\setcopyright{acmlicensed}
+\acmConference[REBLS '20]{Proceedings of the 7th ACM SIGPLAN International Workshop on Reactive and Event-Based Languages and Systems}{November 16, 2020}{Virtual, USA}
 \acmBooktitle{Proceedings of the 7th ACM SIGPLAN International Workshop on Reactive and Event-Based Languages and Systems (REBLS '20), November 16, 2020, Virtual, USA}
 \acmPrice{15.00}
 \acmDOI{10.1145/3427763.3428312}
@@ -53,6 +54,8 @@
 \ccsdesc[500]{Software and its engineering~Functional languages}
 \ccsdesc[300]{Software and its engineering~Data types and structures}
 
+\keywords{Livecoding, Functional Reactive Programming}
+
 \begin{document}
 \title{The Essence of Live Coding: Change the Program, Keep the State!}
 %\subtitle{Functional pearl}
@@ -61,7 +64,7 @@
 %\orcid{0000-0003-1843-0773}             %% \orcid is optional
 \affiliation{
  \institution{sonnen eServices GmbH}            %% \institution is required
-%  \country{Deutschland}
+ \country{Deutschland}
 }
 %\email{programming@manuelbaerenz.de}
 
