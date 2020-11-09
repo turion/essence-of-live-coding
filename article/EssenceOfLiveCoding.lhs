@@ -64,7 +64,7 @@
 %\orcid{0000-0003-1843-0773}             %% \orcid is optional
 \affiliation{
  \institution{sonnen eServices GmbH}            %% \institution is required
- \country{Deutschland}
+ \country{Germany}
 }
 %\email{programming@manuelbaerenz.de}
 
