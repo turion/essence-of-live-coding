@@ -70,4 +70,4 @@ mainCell = proc () -> do
   returnA                                            -< ()
 
 main :: IO ()
-main = runHandlingStateT $ foreground liveProgram
+main = liveMain liveProgram
