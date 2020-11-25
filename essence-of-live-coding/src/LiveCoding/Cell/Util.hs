@@ -47,7 +47,7 @@ foldC' step cellState = Cell { .. }
 
 -- | Initialise with a value 'a'.
 --   If the input is 'Nothing', @keep a@ will output the stored indefinitely.
---   A new value can be stored by inputting 'Maybe a'.
+--   A new value can be stored by inputting @'Just' a@.
 keep :: (Data a, Monad m) => a -> Cell m (Maybe a) a
 keep a = feedback a $ proc (ma, aOld) -> do
   let aNew = fromMaybe aOld ma
@@ -80,7 +80,7 @@ edge = proc b -> do
 
 -- | Print the current UTC time, prepended with the first 8 characters of the given message.
 printTime :: MonadIO m => String -> m ()
-printTime msg = liftIO $ putStrLn =<< ((take 8 msg) ++) . show <$> getCurrentTime
+printTime msg = liftIO $ putStrLn . (take 8 msg ++) . show =<< getCurrentTime
 
 -- | Like 'printTime', but as a cell.
 printTimeC :: MonadIO m => String -> Cell m () ()

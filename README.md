@@ -1,7 +1,7 @@
 # README
 --------
 
-essence-of-live-coding is a general purpose and type safe live coding framework in Haskell.
+`essence-of-live-coding` is a general purpose and type safe live coding framework in Haskell.
 You can run programs in it, and edit, recompile and reload them _while_ they're running.
 Internally, the state of the live program is automatically migrated when performing hot code swap.
 
@@ -107,7 +107,8 @@ There is also support for monadic control flow based on exceptions.
 
 ### Setup and GHCi integration
 
-For the full fledged setup, have a look at the [`gears`](https://github.com/turion/essence-of-live-coding/tree/master/gears) example.
+For the full fledged setup, have a look at the [`gears`](https://github.com/turion/essence-of-live-coding/tree/master/gears) example,
+or the [tutorial project](https://github.com/turion/essence-of-live-coding-tutorial/).
 The steps are:
 
 * Create a new cabal project containing an executable
@@ -140,6 +141,7 @@ The steps are:
 
 ### Examples
 
+* The [tutorial project](https://github.com/turion/essence-of-live-coding-tutorial/).
 * The [`gears`](https://github.com/turion/essence-of-live-coding/tree/master/gears) example uses [`gloss`](http://gloss.ouroborus.net/) for graphics and PulseAudio for sound.
 * There is a demo using the [WAI](https://www.stackage.org/package/wai) web server [`demos/app/DemoWai`](https://github.com/turion/essence-of-live-coding/blob/master/demos/app/DemoWai.hs).
 * The [article](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCoding.pdf#section.4) contains numerous examples,
@@ -179,6 +181,7 @@ it's advisable to follow these patterns:
 * Wherever you write `Cell`s from scratch,
   or use `feedback`,
   use records and algebraic datatypes to structure your state.
+  (Not just tuples and `Either`.)
 * Use `ghcid` in order to save yourself the hassle of having to reload manually all the time.
   Vanilla [`.ghci`](https://downloads.haskell.org/ghc/latest/docs/html/users_guide/ghci.html) and [`.ghcid`](https://github.com/ndmitchell/ghcid) file templates can be found in the root directory,
   and usually it suffices to copy these two files into your project and launch `ghcid` from there.
@@ -187,8 +190,14 @@ it's advisable to follow these patterns:
   (migration to newtypes is automatic),
   and then migrate this newtype.
 * Use exceptions for control flow.
-  (Section 5 in the [article](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCoding.pdf#section.5)
+  (Section 5 in the [article](https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCoding.pdf#section.5))
   That way, you can keep the _control state_ of your program when migrating.
+* Don't keep state in concurrent variables such as `MVar`s, `IORef`s, and so on, if you don't need to.
+  It cannot be migrated well.
+  (During a migration, the variable might be deleted, garbage collected, and reinitialised.)
+  Instead, all migratable state should be inside `Cell`s.
+  The only use case for such a variable is an external device, resource, or thread,
+  and in this case you should use a `LiveCoding.Handle`.
 
 ### Known limitations
 

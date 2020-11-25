@@ -8,6 +8,7 @@ module LiveCoding.RuntimeIO.Launch where
 -- base
 import Control.Concurrent
 import Control.Monad
+import Data.Data
 
 -- transformers
 import Control.Monad.Trans.State.Strict
@@ -18,7 +19,6 @@ import LiveCoding.Handle
 import LiveCoding.LiveProgram
 import LiveCoding.LiveProgram.HotCodeSwap
 import LiveCoding.Cell.Monad.Trans
-import Data.Data (Typeable)
 
 {- | Monads in which live programs can be launched in 'IO',
 for example when you have special effects that have to be handled on every reload.
@@ -32,8 +32,8 @@ class Monad m => Launchable m where
 instance Launchable IO where
   runIO = id
 
-instance Launchable (StateT (HandlingState IO) IO) where
-  runIO = runHandlingState
+instance (Typeable m, Launchable m) => Launchable (StateT (HandlingState m) m) where
+  runIO = runIO . runHandlingState
 
 {- | The standard top level @main@ for a live program.
 
