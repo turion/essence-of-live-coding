@@ -16,6 +16,14 @@ incremental: true
 * Modular FRP DSL
 * Type-driven, automatic, extensible state migration
 
+## Why Haskell?
+
+* General purpose language
+* Can implement live coding _without_ changing language and tooling
+  * (Compare Supercollider, Tidal, ...)
+* Compiles to native code _and_ JavaScript
+* Rich type system actually _help_ during live coding
+
 ## Change the program, keep the state!
 
 ::: notes
