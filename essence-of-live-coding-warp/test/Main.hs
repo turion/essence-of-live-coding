@@ -16,9 +16,12 @@ import LiveCoding.Warp
 response :: Response
 response = responseLBS status200 [("Content-Type", "text/plain")] "hai"
 
+liveProgram :: LiveProgram (HandlingStateT IO)
+liveProgram = liveCell $ runWarpC_ 8080 $ arr $ const response
+
 main :: IO ()
 main = do
-  launch $ liveCell $ runHandlingStateC $ runWarpC_ 8080 $ arr $ const response
+  launch liveProgram
   manager <- newManager $ defaultManagerSettings
   request <- parseRequest "http://localhost:8080"
   response <- httpLbs request manager
