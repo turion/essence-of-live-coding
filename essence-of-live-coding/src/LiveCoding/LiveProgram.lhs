@@ -19,7 +19,11 @@ import Data.Data
 \fxerror{Split up even more into the individual modules and integrate more with the code}
 
 Our model of a live program will consist of a state and an effectful state transition function.
-A preliminary version is shown in Figure \ref{fig:LiveProgramPreliminary}.
+A preliminary version is shown in Figure \ref{fig:LiveProgramPreliminary}\footnote{%
+The notation \mintinline{haskell}{$} may be unfamiliar.
+It can be read as "apply brackets until the end of the following expression".
+For example, \mintinline{haskell}{f $ g $ h a b c} is essentially the same as \mintinline{haskell}{f (g (h a b c))}.
+}.
 \input{../essence-of-live-coding/src/LiveCoding/Preliminary/LiveProgram/LiveProgramPreliminary.lhs}
 The program is initialised at a certain state,
 and from there its behaviour is defined by repeatedly applying the function \mintinline{haskell}{liveStep} to advance the state and produce effects.
@@ -56,7 +60,9 @@ But let us return to Haskell,
 where we have such a typechecker.
 It immediately points out the unsafety of the migration:
 There is no guarantee that the new transition function will typecheck with the old state!
-In fact, in many situations, the state type needs to be extended or modified.
+In fact, in many situations, the state type needs to be modified,
+and there is no function of type \mintinline{haskell}{LiveProgram m s -> LiveProgram m s'}
+already because there is no function of type \mintinline{haskell}{s -> s'}.
 
 This kind of problem is not unknown.
 In the world of databases,
@@ -70,13 +76,15 @@ Data loss is not entirely preventable, though.
 If a column has to be deleted, its data will not be recoverable.
 In turn, if a column is created, one has to supply a sensible default value (often \verb|NULL| will suffice).
 
-\subsection{Migrating the state}
+\subsection{Migrating the State}
 
 We can straightforwardly adopt this solution by thinking of the program state as a small database table with a single row.
 Its schema is the type \mintinline{haskell}{s}.
 Given a \emph{type migration} function,
 we can perform hot code swap,
 as shown in Figure \ref{fig:hot code swap}.
+We need to supply the old live program, the new live program,
+and a suitable migration function.
 \input{../essence-of-live-coding/src/LiveCoding/Preliminary/LiveProgram/HotCodeSwap.lhs}
 This may be an acceptable solution to perform a planned, well-prepared intervention,
 but it does spoil the fun in a musical live coding performance if the programmer has to write a migration function after every single edit.
@@ -111,7 +119,7 @@ In this generality, we cannot hope for any other solution.
 But in the following, we are going to see how to tweak the live program definition by only twenty characters,
 and arrive at an effective migration function.
 
-\subsection{Type-driven migrations}
+\subsection{Type-Driven Migrations}
 In many cases, knowing the old state and the new initial state is sufficient to derive the new, migrated state safely.
 As an example, imagine the internal state of a simple webserver that counts the number of visitors to a page.
 \fxwarning{Later show how migrate behaves on these examples}
@@ -204,17 +212,23 @@ Assume, for the sake of the example,
 that our webserver has become wildly popular,
 and \mintinline{haskell}{nVisitors} is close to \mintinline{haskell}{maxInt}.
 We need to migrate this value to an arbitrary precision \mintinline{haskell}{Integer}.
-It is easy to extend \mintinline{haskell}{migrate} by a special case provided by the user:
+It is easy to extend \mintinline{haskell}{migrate} by a special case provided by the user,
+shown in Figure \ref{fig:user migration}.
+\begin{figure}
 \begin{spec}
 userMigrate
   :: (Data a, Data b, Typeable c, Typeable d)
   => (c -> d)
   -> a -> b -> a
-
+\end{spec}
+\begin{spec}
 intToInteger :: Int -> Integer
 intToInteger = toInteger
 \end{spec}
-In our example, we would use \mintinline{haskell}{userMigrate intToInteger} to migrate the state.
+\caption{User migration}
+\label{fig:user migration}
+\end{figure}
+Here, we would use \mintinline{haskell}{userMigrate intToInteger} to migrate the state.
 \fxwarning{Show example. Extend runtime.}
 
 To use the automatic migration function,
@@ -270,7 +284,7 @@ instance Monad m => Monoid (LiveProgram m) where
 
 \input{../essence-of-live-coding/src/LiveCoding/RuntimeIO.lhs}
 
-\subsection{Live coding a webserver}
+\subsection{Live Coding a Webserver}
 
 \fxwarning{Consider redoing this as a GHCi session where we call the server from within Haskell, e.g. with the curl or a HTTP package}
 

@@ -17,14 +17,14 @@ import LiveCoding.LiveProgram
 import LiveCoding.LiveProgram.HotCodeSwap
 import LiveCoding.Debugger
 import LiveCoding.Migrate
-import LiveCoding.RuntimeIO.Launch
+import LiveCoding.RuntimeIO.Launch hiding (foreground)
 \end{code}
 \end{comment}
 
-\section{The runtime}
+\section{The Runtime}
 \label{sec:runtime}
 
-\subsection{Hands on interaction}
+\subsection{Hands on Interaction}
 Enough declaration.
 Let us get semantic and run some live programs!
 In the preliminary version,
@@ -35,9 +35,9 @@ The runtime behaviour of a live program is defined by calling this function repe
 We could of course run the program in the foreground thread:
 \begin{code}
 foreground :: Monad m => LiveProgram m -> m ()
-foreground liveProgram
-  =   stepProgram liveProgram
-  >>= foreground
+foreground liveProgram = do
+  liveProgram' <- stepProgram liveProgram
+  foreground liveProgram'
 \end{code}
 But this would leave no possibility to exchange the program with a new one.
 %But this would then become the main loop,
@@ -96,6 +96,7 @@ Again, we can reuse the function \mintinline{haskell}{launch}.
 Using \texttt{ghcid} (``GHCi as a daemon'' \cite{ghcid}),
 the launching and reloading operations can be automatically triggered upon starting \texttt{ghcid} and editing the code,
 allowing for a smooth live coding experience without any manual intervention.
+\fxerror{Update according to the latest sync function}
 
 In the next subsection,
 a full example is shown.

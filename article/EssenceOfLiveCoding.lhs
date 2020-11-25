@@ -1,15 +1,71 @@
 \documentclass{essence}
 
+\addtolength{\textfloatsep}{-1ex}
+\addtolength{\abovecaptionskip}{-1ex}
+\sloppy
+
+\copyrightyear{2020}
+\acmYear{2020}
+\setcopyright{acmlicensed}
+\acmConference[REBLS '20]{Proceedings of the 7th ACM SIGPLAN International Workshop on Reactive and Event-Based Languages and Systems}{November 16, 2020}{Virtual, USA}
+\acmBooktitle{Proceedings of the 7th ACM SIGPLAN International Workshop on Reactive and Event-Based Languages and Systems (REBLS '20), November 16, 2020, Virtual, USA}
+\acmPrice{15.00}
+\acmDOI{10.1145/3427763.3428312}
+\acmISBN{978-1-4503-8188-8/20/11}
+\begin{CCSXML}
+<ccs2012>
+   <concept>
+       <concept_id>10003752.10003766</concept_id>
+       <concept_desc>Theory of computation~Formal languages and automata theory</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10010147.10010371.10010352</concept_id>
+       <concept_desc>Computing methodologies~Animation</concept_desc>
+       <concept_significance>100</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10010520.10010521.10010542.10010545</concept_id>
+       <concept_desc>Computer systems organization~Data flow architectures</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10010940.10010971.10010980.10010982</concept_id>
+       <concept_desc>Software and its engineering~State systems</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10011006.10011008.10011009.10011012</concept_id>
+       <concept_desc>Software and its engineering~Functional languages</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10011006.10011008.10011024.10011028</concept_id>
+       <concept_desc>Software and its engineering~Data types and structures</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+ </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[300]{Theory of computation~Formal languages and automata theory}
+\ccsdesc[100]{Computing methodologies~Animation}
+\ccsdesc[300]{Computer systems organization~Data flow architectures}
+\ccsdesc[300]{Software and its engineering~State systems}
+\ccsdesc[500]{Software and its engineering~Functional languages}
+\ccsdesc[300]{Software and its engineering~Data types and structures}
+
+\keywords{Livecoding, Functional Reactive Programming}
+
 \begin{document}
-\title{The essence of live coding: Change the program, keep the state!}
+\title{The Essence of Live Coding: Change the Program, Keep the State!}
 %\subtitle{Functional pearl}
 
-%\author{Manuel Bärenz}
+\author{Manuel Bärenz}
 %\orcid{0000-0003-1843-0773}             %% \orcid is optional
-%\affiliation{
-%  \institution{sonnen eServices GmbH}            %% \institution is required
-%  \country{Deutschland}
-%}
+\affiliation{
+ \institution{sonnen eServices GmbH}            %% \institution is required
+ \country{Germany}
+}
 %\email{programming@manuelbaerenz.de}
 
 \begin{abstract}
@@ -29,10 +85,6 @@
 \maketitle
 
 \section{Introduction}
-
-\fxfatal{Lots of literature on "transducers" and "resumptions" that should be at least acknowledged:
-Milner's 1975 paper "Processes: a mathematical model of computing agents" (https://www.sciencedirect.com/science/article/pii/S0049237X08719487), for which I can't find a free pdf. They typically went by the name "resumption", e.g. https://group-mmm.org/~ichiro/papers/component-trace.pdf Section 7, https://www.cs.ox.ac.uk/files/6660/crm.pdf, https://www.researchgate.net/publication/220173613_Geometry_of_Interaction_and_Linear_Combinatory_Algebras Section 5.4.
-}
 
 Live coding has come to denote various concepts,
 from hot code swap on a production server to artistic performances with code that is written, executed and updated live.
@@ -58,6 +110,20 @@ and strongly typed user-side libraries
 (such as Tidal \cite{mclean2014tidal} for audio applications)
 exist,
 but the user is restricted to a domain specific language.
+
+In dynamic languages like SmallTalk \cite{ingalls2020evolutionofsmalltalk},
+new avenues to live coding open by interacting with the interpreter,
+which holds the whole program in memory.
+In a statically compiled language lacking a comparable depth of reflection,
+this not directly possible, so one must abstract the program and its state into data structures,
+and implement hot code swap.
+One end of the design space are concurrent references to program components which can be exchanged,
+\cite{HyperHaskell, apfelmus2019functors, murphy2016livecoding}
+which are somewhat closer to an interpreted environment.
+Let us restrict to the other end, though,
+where the possible data and control states are known at compile time,
+constraining the resulting framework slightly,
+but allowing for a very smooth development experience.
 
 In this article, we implement a lightweight general purpose live coding framework in Haskell from scratch.
 It is not only type-safe, but also type-driven, in that boilerplate code for state migrations
@@ -88,8 +154,8 @@ Hot code swap in Erlang realises this motto,
 and
 similar views are expressed about live coding in Elm\footnote{%
 Compare \href{https://elm-lang.org/blog/interactive-programming}{https://elm-lang.org/blog/interactive-programming}.}
-(a domain specific web frontend language inspired by Haskell).
-What is new about this approach is the consequential application of this motto to create a general purpose, type-safe FRP framework\footnote{%
+(a web frontend DSL inspired by Haskell).
+What is new about this work is the consequential application of this motto to create a general purpose, type-safe FRP framework\footnote{%
 It shall be remarked that FRP is long past niche applications in the video and audio domains.
 It is possible to write web servers and frontends, simulations and games in it.
 %FRP can even be used for file batch processing.
@@ -107,13 +173,15 @@ which heavily draws inspiration from Dunai,
 a monadic arrowized FRP framework;
 and from Caspi's and Pouzet's work on synchronous stream functions \cite{CaspiPouzet}.
 After having implemented the data flow aspects of our framework,
-we turn to control flow in Section \ref{sec:control flow}.
+we turn to control flow in Section \ref{sec:control flow},
+and encode it completely algebraically within the program state,
+automatically getting a grip on exception handling and loops.
 A monadic interface to our live programs is presented.
-In Section \ref{sec:tooling}, several useful tools such as debuggers and quickchecking utilities are shown.
+In Section \ref{sec:tooling}, several useful tools such as debuggers and quickcheck utilities are shown.
 
 This article is written in literate Haskell and supplies the library presented here.
 The source code is available at \href{https://github.com/turion/essence-of-live-coding}{https://github.com/turion/essence-of-live-coding},
-while additional resources such as a presentation can be found at \href{https://www.manuelbaerenz.de/#computerscience}{https://www.manuelbaerenz.de/#computerscience}.
+while additional resources such as a presentation can be found at \href{https://www.manuelbaerenz.de/#computerscience}{https://www.manuelbaerenz.de/\#{}computerscience}.
 
 \input{../essence-of-live-coding/src/LiveCoding/LiveProgram.lhs}
 \fxerror{I believe this is even easier with Servant because it has simple functions!}
@@ -121,7 +189,7 @@ while additional resources such as a presentation can be found at \href{https://
 \input{../demos/app/DemoWai/DemoWai1.lhs}
 \input{../demos/app/DemoWai/DemoWai2.lhs}
 
-\section{Live coding as arrowized Functional Reactive Programming}
+\section{Live Coding as Arrowized Functional Reactive Programming}
 \label{sec:FRP}
 
 \fxwarning{Small overview paragraph here? And in the other corresponding places?}
@@ -142,10 +210,10 @@ Coincidentally, but naturally, we will end up with a coalgebraic presentation of
 \fxwarning{Shortening candidate, together with previous paragraph}
 %Section \ref{sec:msfs and final coalgebras} showed that \mintinline{haskell}{Cell}s and Dunai's monadic stream functions are very much alike,
 %and it makes sense to adopt its approach to control flow.
-In Dunai, we can switch from executing one stream function to another by \emph{throwing an exception}.
-Whenever we wish to hand over control to another component,
-we throw an exception as an effect in the \mintinline{haskell}{ExceptT} monad
-(which is simply the \mintinline{haskell}{Either} monad beefed up as a monad transformer).
+% In Dunai, we can switch from executing one stream function to another by \emph{throwing an exception}.
+As in Dunai, whenever we wish to hand over control to another component,
+we \emph{throw an exception} as an effect in the \mintinline{haskell}{ExceptT} monad
+(which is simply the \mintinline{haskell}{Either} monad generalised to a monad transformer).
 This exception has to be handled by choosing a new component based on the exception value.
 The type checker can verify at the end that all exceptions have been handled.
 
@@ -170,8 +238,8 @@ but the \mintinline{haskell}{Monad} instance will be quite a high bar to clear.
 
 % \subsection{External main loops}
 
-\fxfatal{Can integrate into external main loops using \mintinline{haskell}{step} for cells or an equivalent \mintinline{haskell}{stepMVar}.}
-\fxfatal{Need to mention Handles and NonBlocking}
+\fxerror{Can integrate into external main loops using \mintinline{haskell}{step} for cells or an equivalent \mintinline{haskell}{stepMVar}.}
+\fxerror{Need to mention Handles and NonBlocking}
 
 \section{Conclusion}
 
@@ -187,7 +255,7 @@ The approach is extensible as debugging and testing methods can be added easily.
 
 \fxerror{Speedtest: Nearly double as fast as dunai. Could use Data to optimize the state even more? Or rather we'd use GADTs for that, I guess. We still have to speed up 3-4 times to reach Yampa.}
 
-\paragraph{Further directions}
+\paragraph{Further Directions}
 To use the framework in any setting beyond a toy application,
 wrappers have to be written that explicitly integrate it in the external loops of existing frameworks,
 such as web frontends and backends, OpenGL, \texttt{gloss} \cite{Gloss}, or audio libraries.
@@ -212,7 +280,7 @@ It would be a great enrichment to generalise automatic migration to such a type 
 \medskip
 
 The author thanks Iván Pérez for his work on Yampa, Dunai, and numerous other projects in the FRP world;
-the reviewers of the Haskell Symposium for very helpful comments that enriched and streamlined this work;
+the reviewers of Haskell Symposium 2018 and REBLS 2020 for very helpful comments that enriched and streamlined this work;
 Paolo Capriotti for the initial idea that led to monadic exception control flow;
 and the sonnen VPP team, especially Fabian Linges,
 for helpful discussions about hot code swap in Erlang.

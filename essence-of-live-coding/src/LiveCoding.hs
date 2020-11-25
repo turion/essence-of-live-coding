@@ -32,4 +32,4 @@ import LiveCoding.Migrate as X
 import LiveCoding.Migrate.Debugger as X
 import LiveCoding.Migrate.Migration as X
 import LiveCoding.RuntimeIO as X hiding (update)
-import LiveCoding.RuntimeIO.Launch as X
+import LiveCoding.RuntimeIO.Launch as X hiding (foreground)

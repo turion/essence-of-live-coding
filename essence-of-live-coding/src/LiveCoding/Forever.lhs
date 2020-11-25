@@ -25,7 +25,7 @@ import LiveCoding.LiveProgram
 \end{code}
 \end{comment}
 
-\subsection{Exceptions forever}
+\subsection{Exceptions Forever}
 
 \fxwarning{Opportunity to call this an SF here (and elsewhere)}
 What if we want to change between the oscillator and a waiting period indefinitely?
@@ -35,11 +35,8 @@ sinesWaitAndTry
   :: MonadFix   m
   => CellExcept m () String ()
 sinesWaitAndTry = do
-  try $   arr (const "Waiting...")
-      >>> wait 1
-  try $   sine 5
-      >>> arr asciiArt
-      >>> wait 5
+  try $ arr (const "Waiting...") >>> wait 1
+  try $ sine 5 >>> arr asciiArt  >>> wait 5
 \end{code}
 \fxwarning{wait is an unintuitive name. Sounds blocking. "forwardFor"?}
 The one temptation we have to resist is to recurse in the \mintinline{haskell}{CellExcept} context to prove the absence of exceptions:
@@ -54,12 +51,12 @@ sinesForever' = do
 It typechecks, but it does \emph{not} execute correctly.
 \fxerror{Why does it hang? Does it really hang?}
 As the initial state is built up,
-the definition of \mintinline{haskell}{sinesForever'} inquires about the initial state of all cells in the \mintinline{haskell}{do}-expression,
-but last one is again \mintinline{haskell}{foo},
+this definition inquires about the initial state of all cells in the \mintinline{haskell}{do}-expression,
+but the last one is again \mintinline{haskell}{sinesForever'},
 and thus already initialising such a cell hangs in an infinite loop.
 Using the standard function \mintinline{haskell}{forever :: Applicative f => f a -> f ()} has the same deficiency,
 \fxerror{Have we tested that?}
-as it is defined in essentially the same way.
+as it is defined in the same way.
 
 The resolution is an explicit loop operator,
 and faith in the library user to remember to employ it.
@@ -71,9 +68,8 @@ foreverE
   -> Cell                        m   a b
 \end{code}
 The loop function receives as arguments an initial exception,
-and a cell that is to be executed forever\footnote{%
+and a cell that is to be executed forever.
 Of course, the monad \mintinline{haskell}{m} may again contain exceptions that can be used to break from this loop.
-}.
 \begin{comment}
 \begin{code}
 foreverE e (Cell state step) = Cell { .. }

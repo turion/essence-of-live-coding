@@ -116,7 +116,7 @@ A large class of properties can be tested this way.
 We can unit test all components of a new version of our live program before reloading it.
 To go further, one could set up \emph{stateful property-based testing} \cite{ProperTesting} for the live coding environment.
 
-\paragraph{Migration tests}
+\paragraph{Migration Tests}
 Even better, we can test \emph{before reloading}
 whether the newly migrated state would be valid.
 Given some tests on intermediate values in the computation,

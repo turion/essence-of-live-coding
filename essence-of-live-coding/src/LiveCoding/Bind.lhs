@@ -52,13 +52,10 @@ sineChangeE = do
 
 \begin{code}
 sineWait
-  :: Double
-  -> CellExcept IO () String Void
+  :: Double -> CellExcept IO () String Void
 sineWait t = do
-  try  $   arr (const "Waiting...")
-       >>> wait 2
-  safe $   sine t
-       >>> arr asciiArt
+  try $ arr (const "Waiting...") >>> wait 2
+  safe $ sine t >>> arr asciiArt
 \end{code}
 This \mintinline{haskell}{do}-block can be read intuitively.
 Initially, the first cell is executed,
@@ -70,7 +67,7 @@ we leave the \mintinline{haskell}{CellExcept} context and run the resulting prog
 \begin{code}
 printSineWait :: LiveProgram IO
 printSineWait = liveCell
-  $   safely (sineWait 10)
+  $   safely (sineWait 8)
   >>> printEverySecond
 \end{code}
 \verbatiminput{../demos/DemoSineWait.txt}

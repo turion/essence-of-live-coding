@@ -10,14 +10,13 @@ module DemoWai.DemoWai2 where
 import Control.Concurrent.MVar
 import Data.Data
 import Data.Maybe (maybeToList)
-import Prelude hiding (unlines)
-
--- bytestring
-import Data.ByteString.Lazy.Char8
 
 -- transformers
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
+
+-- bytestring
+import Data.ByteString.Char8 (unpack)
 
 -- wai
 import Network.Wai
@@ -35,7 +34,7 @@ import DemoWai.Env
 \begin{code}
 data State = State
   { nVisitors :: Integer
-  , lastAgent :: Maybe ByteString
+  , lastAgent :: Maybe String
   } deriving Data
 \end{code}
 \begin{code}
@@ -46,15 +45,16 @@ newServer = LiveProgram
       Env { .. } <- ask
       request <- lift $ takeMVar requestVar
       let nVisitorsNew = nVisitors + 1
-          lastAgentNew = fmap fromStrict
+          lastAgentStrings = case lastAgent of
+            Nothing -> []
+            Just str -> ["Last agent: " <> str]
+          lastAgentNew = fmap unpack
             $ lookup "User-Agent"
             $ requestHeaders request
       lift $ putMVar responseVar $ unlines $
-        [ "This is Fancy Nu $3rv3r!"
-        , "You are visitor #"
-        <> (pack $ show nVisitorsNew) <> "."
-        ] ++ maybeToList
-        (("Last agent: " <>) <$> lastAgent)
+        [ "Fancy Nu $3rv3r says HI to #"
+        <> show nVisitorsNew <> "."
+        ] ++ lastAgentStrings
       return $ State nVisitorsNew lastAgentNew
   }
 \end{code}

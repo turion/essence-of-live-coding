@@ -5,4 +5,4 @@ main = do
   (debugger, observer) <- countDebugger
   _ <- launchWithDebugger printSineWait $ debugger -- <> gshowDebugger --statePrint
   -- await observer 1
-  await observer $ 16 * stepRate
+  await observer $ 12 * stepRate
