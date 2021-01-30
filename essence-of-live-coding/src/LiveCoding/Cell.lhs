@@ -73,7 +73,14 @@ Live programs are thus generalised to effectful \emph{Mealy machines} \cite{Meal
 Let us call them cells, the building blocks of everything live:
 \begin{comment}
 \begin{code}
--- | The basic building block of a live program.
+{- | The basic building block of a live program.
+
+You can build cells directly, by using constructors,
+or through the 'Functor', 'Applicative', or 'Arrow' type classes.
+
+The 'Cell' constructor is the main way build a cell,
+but for efficiency purposes there is an additional constructor.
+-}
 \end{code}
 \end{comment}
 \begin{code}
@@ -84,13 +91,17 @@ data Cell m a b = forall s . Data s => Cell
 \end{code}
 \begin{comment}
 \begin{code}
+  -- ^ A cell consists of an internal state,
+  --   and an effectful state transition function.
   | ArrM { runArrM :: a -> m b }
-  -- ^ Added to improve performance and keep state types simpler
+  -- ^ Effectively a cell with trivial state.
+  --   Added to improve performance and keep state types simpler.
 \end{code}
 \end{comment}
 \begin{comment}
 \begin{code}
 -- | Converts every 'Cell' to the 'Cell' constructor.
+--   Semantically, it is the identity function.
 toCell :: Functor m => Cell m a b -> Cell m a b
 toCell cell@Cell {} = cell
 toCell ArrM { .. } = Cell
@@ -105,6 +116,11 @@ and producing, by means of an effect in some monad \mintinline{haskell}{m},
 not only the updated cell,
 but also an output datum \mintinline{haskell}{b}:
 
+\begin{comment}
+\begin{code}
+-- | Execute a cell for one step.
+\end{code}
+\end{comment}
 \begin{code}
 step
   :: Monad m
@@ -122,6 +138,8 @@ step cell@ArrM { .. } a = ( , cell) <$> runArrM a
 
 \begin{comment}
 \begin{code}
+-- | Execute a cell for several steps.
+--   The number of steps is determined by the length of the list of inputs.
 steps
   :: Monad m
   => Cell m a b
@@ -136,6 +154,11 @@ steps cell (a : as) = do
 \end{comment}
 
 As a simple example, consider the following \mintinline{haskell}{Cell} which adds all input and returns the delayed sum each step:
+\begin{comment}
+\begin{code}
+-- | Add all inputs and return the delayed sum.
+\end{code}
+\end{comment}
 \begin{code}
 sumC :: (Monad m, Num a, Data a) => Cell m a a
 sumC = Cell { .. }
@@ -145,6 +168,12 @@ sumC = Cell { .. }
 \end{code}
 
 We recover live programs as the special case of trivial input and output:
+\begin{comment}
+\begin{code}
+-- | Convert a cell with no inputs and outputs to a live program.
+--   Semantically, this is an isomorphism.
+\end{code}
+\end{comment}
 \begin{code}
 liveCell
   :: Monad m
@@ -167,6 +196,7 @@ liveCell ArrM { .. } = LiveProgram
 \end{comment}
 \begin{comment}
 \begin{code}
+-- | The inverse to 'liveCell'.
 toLiveCell
   :: Functor     m
   => LiveProgram m
@@ -350,6 +380,11 @@ constM
 
 In case our \mintinline{haskell}{Cell} is in another monad than \mintinline{haskell}{IO},
 one can define a function that transports a cell along a monad morphism:
+\begin{comment}
+\begin{code}
+-- | Hoist a 'Cell' along a monad morphism.
+\end{code}
+\end{comment}
 \begin{code}
 hoistCell
   :: (forall x . m1 x   ->      m2 x)
@@ -357,6 +392,11 @@ hoistCell
 \end{code}
 For example, we may eliminate a \mintinline{haskell}{ReaderT r} context by supplying the environment through the \mintinline{haskell}{runReaderT} monad morphism,
 or lift into a monad transformer:
+\begin{comment}
+\begin{code}
+-- | Lift a 'Cell' into a monad transformer.
+\end{code}
+\end{comment}
 \begin{code}
 liftCell
   :: (Monad  m, MonadTrans t)
