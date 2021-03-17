@@ -18,6 +18,7 @@ extra-deps:
 
 nix:
   packages:
+    - alsa-lib
     - libGL
     - libGLU
     - libpulseaudio
