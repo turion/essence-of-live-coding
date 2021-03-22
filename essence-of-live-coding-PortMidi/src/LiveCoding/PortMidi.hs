@@ -15,6 +15,7 @@ module LiveCoding.PortMidi where
 import Control.Monad (void, forM, join)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Either (fromRight)
+import Data.Maybe (catMaybes)
 import GHC.Generics
 import GHC.TypeLits (Symbol, symbolVal, KnownSymbol)
 
@@ -90,14 +91,14 @@ portMidiInputWithProxy proxy = Handle
   { create = liftIO $ do
       nDevices <- countDevices
       devices <- forM [0..nDevices-1] $ \deviceID -> do
-        DeviceInfo { .. } <- getDeviceInfo deviceID
-        return (name, deviceID)
-      let deviceID = lookup (symbolVal proxy) devices
+        deviceInfo <- getDeviceInfo deviceID
+        return $ if input deviceInfo then Just (name deviceInfo, deviceID) else Nothing
+      let deviceID = lookup (symbolVal proxy) $ catMaybes devices
       pmStreamE <- mapM openInput deviceID
       let pmStream = either (const Nothing) Just =<< pmStreamE
       return $ portMidiInputStreamAtProxyName proxy <$> pmStream
   , destroy = maybe (return ()) $ liftIO . void . close . unPortMidiInputStream
   }
 
-handlingPortMidiInput :: (MonadIO m, KnownSymbol name) => Cell (HandlingStateT m) PortMidiHandle (Maybe (PortMidiInputStream (name :: Symbol)))
+handlingPortMidiInput :: (KnownSymbol name, MonadIO m) => Cell (HandlingStateT m) PortMidiHandle (Maybe (PortMidiInputStream (name :: Symbol)))
 handlingPortMidiInput = handling $ portMidiInputWithProxy Proxy
