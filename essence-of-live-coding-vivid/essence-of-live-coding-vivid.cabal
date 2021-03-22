@@ -1,0 +1,38 @@
+cabal-version:      2.4
+name:               essence-of-live-coding-vivid
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Manuel Bärenz
+maintainer:         programming@manuelbaerenz.de
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules:
+        LiveCoding.Vivid
+
+    -- Modules included in this library but not exported.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:
+        base >= 4.7
+      , vivid
+      , essence-of-live-coding >= 0.2.4
+    hs-source-dirs:   src
+    default-language: Haskell2010
