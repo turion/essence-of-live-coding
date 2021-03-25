@@ -102,3 +102,26 @@ portMidiInputWithProxy proxy = Handle
 
 handlingPortMidiInput :: (KnownSymbol name, MonadIO m) => Cell (HandlingStateT m) PortMidiHandle (Maybe (PortMidiInputStream (name :: Symbol)))
 handlingPortMidiInput = handling $ portMidiInputWithProxy Proxy
+
+data PortMidiDevices = PortMidiDevices
+  { inputDevices :: [DeviceInfo]
+  , outputDevices :: [DeviceInfo]
+  }
+
+getPortMidiDevices :: IO PortMidiDevices
+getPortMidiDevices = do
+  nDevices <- countDevices
+  devices <- mapM getDeviceInfo [0..nDevices-1]
+  return PortMidiDevices
+    { inputDevices = filter input devices
+    , outputDevices = filter output devices
+    }
+
+prettyPrintPortMidiDevices :: PortMidiDevices -> IO ()
+prettyPrintPortMidiDevices PortMidiDevices { .. } = do
+  putStrLn "\nPortMidi input devices:"
+  putStrLn $ unlines $ printName <$> inputDevices
+  putStrLn "\nPortMidi output devices:"
+  putStrLn $ unlines $ printName <$> outputDevices
+  where
+    printName dev = "- \"" ++ name dev ++ "\""
