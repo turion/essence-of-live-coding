@@ -10,7 +10,6 @@ myPkgs.shellFor {
   ];
   buildInputs = with myPkgs; [
     ghcid
-    ghcide
     hlint
   ];
 }
