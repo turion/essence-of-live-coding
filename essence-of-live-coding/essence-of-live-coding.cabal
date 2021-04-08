@@ -30,7 +30,7 @@ source-repository head
 source-repository this
   type:     git
   location: git@github.com:turion/essence-of-live-coding.git
-  tag:      v0.2.3
+  tag:      v0.2.4
 
 
 library
