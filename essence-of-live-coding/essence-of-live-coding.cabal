@@ -57,6 +57,7 @@ library
     , LiveCoding.Handle
     , LiveCoding.Handle.Examples
     , LiveCoding.LiveProgram
+    , LiveCoding.LiveProgram.Except
     , LiveCoding.LiveProgram.HotCodeSwap
     , LiveCoding.LiveProgram.Monad.Trans
     , LiveCoding.Migrate
