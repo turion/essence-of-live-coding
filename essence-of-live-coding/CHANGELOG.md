@@ -1,5 +1,12 @@
 # Revision history for essence-of-live-coding
 
+## 0.2.5
+
+* Refactored GHCi support
+* Add `liveMain`
+* Add exception monad for live programs
+* Improved some haddocks
+
 ## 0.2.4
 
 * Extended testing utilities
