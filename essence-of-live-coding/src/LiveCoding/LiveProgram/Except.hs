@@ -10,6 +10,7 @@ module LiveCoding.LiveProgram.Except where
 -- base
 import Control.Monad (liftM, ap)
 import Data.Data
+import Data.Void (Void)
 
 -- transformers
 import Control.Monad.Trans.Except
@@ -22,7 +23,6 @@ import LiveCoding.Exceptions.Finite (Finite)
 import LiveCoding.Forever
 import LiveCoding.LiveProgram
 import qualified LiveCoding.CellExcept as CellExcept
-import Data.Void (Void)
 
 {- | A live program that can throw an exception.
 
