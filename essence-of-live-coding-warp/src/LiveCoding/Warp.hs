@@ -1,6 +1,11 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
+{- | Live coding backend to the [@warp@](https://hackage.haskell.org/package/warp) server.
+
+If you write a cell that consumes 'Request's and produces 'Response's,
+you can use the functions here that run this cell as a @warp@ application.
+-}
 module LiveCoding.Warp
   ( runWarpC
   , runWarpC_
@@ -69,8 +74,27 @@ runWarpC port cell = proc a -> do
       arrM $ liftIO . threadDelay     -< 1000 -- Prevent too much CPU load
       returnA                         -< Nothing
 
+-- | A simple live-codable web application is a cell that consumes HTTP 'Request's and emits 'Response's for each.
+type LiveWebApp = Cell IO Request Response
+
+{- | Like 'runWarpC', but don't consume additional input or produce additional output.
+
+Suitable for a main program, for example like this:
+
+@
+mainCell :: Cell IO Request Response
+mainCell = undefined
+
+liveProgram :: LiveProgram (HandlingStateT IO)
+liveProgram = liveCell mainCell
+
+main :: IO ()
+main = liveMain liveProgram
+@
+-}
+
 runWarpC_
   :: Port
-  -> Cell IO Request Response
+  -> LiveWebApp
   -> Cell (HandlingStateT IO) () ()
 runWarpC_ port cell = runWarpC port (arr snd >>> cell >>> arr ((), )) >>> arr (const ())
