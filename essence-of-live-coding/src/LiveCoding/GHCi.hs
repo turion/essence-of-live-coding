@@ -45,7 +45,28 @@ possiblyLaunchedProgram _ = do
   storeMaybe <- lookupStore 0
   try $ traverse readStore storeMaybe
 
+data DebugAction a = DebugAction
+  { runDebugAction :: forall s . Data s => StateT s IO a }
 
+debugLaunchedProgram
+  :: Launchable m
+  => DebugAction a
+  -> LaunchedProgram m
+  -> IO a
+debugLaunchedProgram DebugAction { .. } LaunchedProgram { .. } = modifyMVarMasked programVar $ \LiveProgram { .. } -> do
+  (a, liveState) <- runStateT runDebugAction liveState
+  return (LiveProgram { .. }, a)
+
+debugStore
+  :: Launchable m
+  => Proxy m
+  -> DebugAction a
+  -> IO (Either SomeException (Maybe a))
+debugStore proxy debugAction = do
+  launchedProgramPossibly <- possiblyLaunchedProgram proxy
+  launchedProgramPossibly
+    & fmap (fmap (debugLaunchedProgram debugAction))
+    & traverse sequence
 
 -- | Try to load a 'LiveProgram' of a given type from the 'Store'.
 --   If the store doesn't contain a program, it is (re)started.
