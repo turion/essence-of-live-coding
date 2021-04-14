@@ -25,6 +25,30 @@ import Control.Monad.Trans.Reader
 import LiveCoding.Cell
 import LiveCoding.Cell.Monad.Trans
 -- import LiveCoding.CellExcept
+
+{- | A type class for datatypes on which exception handling can branch statically.
+
+These are exactly finite algebraic datatypes,
+i.e. those defined from sums and products without recursion.
+If you have a datatype with a 'Data' instance,
+and there is no recursion in it,
+then it is probably finite.
+
+Let us assume your data type is:
+
+@
+data Foo = Bar | Baz { baz1 :: Bool, baz2 :: Maybe () }
+@
+
+To define the instance you need to add these two lines of boilerplate
+(possibly you need to import "GHC.Generics" and enable some language extensions):
+
+@
+deriving instance Generic Foo
+instance Finite Foo
+@
+
+-}
 \end{code}
 \end{comment}
 

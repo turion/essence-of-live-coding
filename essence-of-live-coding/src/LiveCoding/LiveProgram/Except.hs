@@ -10,19 +10,19 @@ module LiveCoding.LiveProgram.Except where
 -- base
 import Control.Monad (liftM, ap)
 import Data.Data
+import Data.Void (Void)
 
 -- transformers
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Reader
 
 -- essence-of-live-coding
-import LiveCoding.Cell (hoistCell, toLiveCell, liveCell)
+import LiveCoding.Cell (hoistCell, toLiveCell, liveCell, constM)
 import LiveCoding.CellExcept (CellExcept, runCellExcept)
 import LiveCoding.Exceptions.Finite (Finite)
 import LiveCoding.Forever
 import LiveCoding.LiveProgram
 import qualified LiveCoding.CellExcept as CellExcept
-import Data.Void (Void)
 
 {- | A live program that can throw an exception.
 
@@ -81,6 +81,10 @@ safe
   => LiveProgram m
   -> LiveProgramExcept m Void
 safe = LiveProgramExcept . CellExcept.safe . toLiveCell
+
+-- | Run a monadic action and immediately raise its result as an exception.
+once :: (Monad m, Data e, Finite e) => m e -> LiveProgramExcept m e
+once action = try $ liveCell $ constM $ ExceptT $ Left <$> action
 
 {- | Run a 'LiveProgramExcept' in a loop.
 
