@@ -163,9 +163,6 @@ This means that handles are only migrated if they have exactly the same type.
 handling
   :: ( Typeable h
      , Monad m
-    --  , MonadBase m m
-    --  , MonadState (HandlingState m) n
-    --  , MonadBase m n
      )
   => Handle m h
   -> Cell (HandlingStateT m) arbitrary h
