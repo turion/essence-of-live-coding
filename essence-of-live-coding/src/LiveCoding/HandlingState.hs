@@ -120,9 +120,10 @@ register destructor handle = do
 reregister
   :: Monad m
   => m ()
-  -> Handling h -- FIXME Unsafe since this might be Uninitialized
+  -> Key
+  -> h
   -> HandlingStateT m ()
-reregister action Handling { .. } = do
+reregister action key handle = do
   HandlingState { .. } <- get
   put HandlingState { destructors = insertDestructor action key handle destructors, .. }
 
