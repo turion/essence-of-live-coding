@@ -73,7 +73,7 @@ handling handleImpl@Handle { .. } = Cell
   { cellState = Uninitialized
   , cellStep = \state input -> case state of
       handling@Handling { .. } -> do
-        reregister (destroy handle) handling
+        reregister (destroy handle) key handle
         return (handle, state)
       Uninitialized -> do
         handle <- lift create
