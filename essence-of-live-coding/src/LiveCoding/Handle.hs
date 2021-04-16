@@ -170,45 +170,45 @@ handling handleImpl@Handle { .. } = Cell
   { cellState = Uninitialized
   , cellStep = \state input -> case state of
       handling@Handling { .. } -> do
-        reregister handleImpl handling
+        reregister (destroy handle) handling
         return (handle, state)
       Uninitialized -> do
         handle <- lift create
-        id <- register handleImpl handle
+        id <- register (destroy handle) handle
         return (handle, Handling { .. })
   }
 
 register
   :: Monad m
-  => Handle m h
-  -> h
+  => m () -- ^ Destructor
+  -> h -- ^ Handle value
   -> HandlingStateT m Key
-register handleImpl handle = do
+register destructor handle = do
   HandlingState { .. } <- get
   let id = nHandles + 1
   put HandlingState
     { nHandles = id
-    , destructors = insertDestructor handleImpl id handle destructors
+    , destructors = insertDestructor destructor id handle destructors
     }
   return id
 
 reregister
   :: Monad m
-  => Handle m h
-  -> Handling h
+  => m ()
+  -> Handling h -- FIXME Unsafe since this might be Uninitialized
   -> HandlingStateT m ()
-reregister handleImpl Handling { .. } = do
+reregister action Handling { .. } = do
   HandlingState { .. } <- get
-  put HandlingState { destructors = insertDestructor handleImpl id handle destructors, .. }
+  put HandlingState { destructors = insertDestructor action id handle destructors, .. }
 
 insertDestructor
-  :: Handle m h
+  :: m ()
   -> Key
   -> h
   -> Destructors m
   -> Destructors m
-insertDestructor Handle { .. } id handle destructors =
-  let destructor = Destructor { isRegistered = True, action = destroy handle }
+insertDestructor action id handle destructors =
+  let destructor = Destructor { isRegistered = True, .. }
   in  insert id destructor destructors
 
 unregisterAll
