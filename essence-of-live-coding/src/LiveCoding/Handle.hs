@@ -80,3 +80,61 @@ handling handleImpl@Handle { .. } = Cell
         key <- register (destroy handle) handle
         return (handle, Handling { .. })
   }
+
+{- | Generalisation of 'Handle' carrying an additional parameter which may change at runtime.
+
+Like in a 'Handle', the @h@ value of a 'ParametrisedHandle' is preserved through live coding reloads.
+Additionally, the parameter @p@ value can be adjusted,
+and triggers a destruction and reinitialisation whenever it changes.
+-}
+data ParametrisedHandle m p h = ParametrisedHandle
+  { createParametrised :: p -> m h
+  , destroyParametrised :: p -> h -> m ()
+  }
+
+-- | Like 'combineHandles', but for 'ParametrisedHandle's.
+combineParametrisedHandles
+  :: Applicative m
+  => ParametrisedHandle m p1 h1
+  -> ParametrisedHandle m p2 h2
+  -> ParametrisedHandle m (p1, p2) (h1, h2)
+combineParametrisedHandles handle1 handle2 = ParametrisedHandle
+  { createParametrised = \(p1, p2) -> ( , ) <$> createParametrised handle1 p1 <*> createParametrised handle2 p2
+  , destroyParametrised = \(p1, p2) (h1, h2) -> destroyParametrised handle1 p1 h1 *> destroyParametrised handle2 p2 h2
+  }
+
+{- | Hide a 'ParametrisedHandle' in a cell,
+taking care of initialisation and destruction.
+
+Upon the first tick, directly after migration, and after each parameter change,
+the 'create' method of the 'Handle' is called,
+and the result stored.
+This result is then not changed anymore until the cell is removed again, or the parameter changes.
+A parameter change triggers the destructor immediately,
+but if the cell is removed, the destructor will be called on the next tick.
+
+Migrations will by default not inspect the interior of a 'handling' cell.
+This means that parametrised handles are only migrated if they have exactly the same type.
+-}
+handlingParametrised
+  :: ( Typeable h, Typeable p
+     , Monad m
+     , Eq p
+     )
+  => ParametrisedHandle m p h
+  -> Cell (HandlingStateT m) p h
+handlingParametrised handleImpl@ParametrisedHandle { .. } = Cell { .. }
+  where
+    cellState = Uninitialized
+    cellStep Uninitialized parameter = do
+      mereHandle <- lift $ createParametrised parameter
+      let handle = (mereHandle, parameter)
+      key <- register (destroyParametrised parameter mereHandle) mereHandle
+      return (mereHandle, Handling { handle = handle, .. })
+    cellStep handling@Handling { handle = (mereHandle, lastParameter), .. } parameter
+      | parameter == lastParameter = do
+          reregister (destroyParametrised parameter mereHandle) key mereHandle
+          return (mereHandle, handling)
+      | otherwise = do
+          lift $ destroyParametrised lastParameter mereHandle
+          cellStep Uninitialized parameter
