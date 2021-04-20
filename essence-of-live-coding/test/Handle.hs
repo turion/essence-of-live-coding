@@ -15,14 +15,8 @@ import Control.Monad.Trans.State.Strict
 -- test-framework
 import Test.Framework
 
--- test-framework
-import Test.Framework
-
 -- test-framework-quickcheck2
 import Test.Framework.Providers.QuickCheck2
-
--- QuickCheck
-import Test.QuickCheck
 
 -- essence-of-live-coding
 import qualified Handle.LiveProgram
@@ -44,9 +38,26 @@ testUnitHandle = Handle
   }
 
 cellWithAction
-  :: forall a b . (State Int b)
+  :: forall a b . State Int b
   -> Cell Identity a (String, Int)
 cellWithAction action = flip runStateC 0 $ runHandlingStateC $ handling testHandle >>> arrM (<$ lift action)
+
+testParametrisedHandle :: ParametrisedHandle (State Int) Bool String
+testParametrisedHandle = ParametrisedHandle
+  { createParametrised = \flag -> do
+      n <- get
+      let greeting = if flag then "Ye Olde Handle No " else "Crazy new hdl #"
+      return $ greeting ++ show n
+  , destroyParametrised = const $ const $ put 12345
+  }
+
+cellWithActionParametrized
+  :: forall a b . State Int b
+  -> Cell Identity Bool (String, Int)
+cellWithActionParametrized action
+  = flip runStateC 0
+  $ runHandlingStateC
+  $ handlingParametrised testParametrisedHandle >>> arrM (<$ lift action)
 
 test = testGroup "Handle"
   [ testProperty "Preserve Handles" CellMigrationSimulation
@@ -102,6 +113,16 @@ test = testGroup "Handle"
     , input2 = replicate 3 ()
     , output1 = ("Handle #0", ) <$> replicate 3 0
     , output2 = ("Done", ) <$> replicate 3 10000
+    }
+  , testProperty "Changing parameters triggers destructors" CellSimulation
+    { cell = cellWithActionParametrized $ modify (+ 1)
+    , input = [True, True, False, False]
+    , output =
+        [ ("Ye Olde Handle No 0", 1)
+        , ("Ye Olde Handle No 0", 2)
+        , ("Crazy new hdl #12345", 12345)
+        , ("Crazy new hdl #12345", 12346)
+        ]
     }
   , Handle.LiveProgram.test
   ]

@@ -22,6 +22,7 @@ import LiveCoding.LiveProgram.Except
 import LiveCoding.LiveProgram.HotCodeSwap
 import LiveCoding.Cell.Monad.Trans
 import LiveCoding.Exceptions.Finite (Finite)
+import LiveCoding.HandlingState
 
 {- | Monads in which live programs can be launched in 'IO',
 for example when you have special effects that have to be handled on every reload.

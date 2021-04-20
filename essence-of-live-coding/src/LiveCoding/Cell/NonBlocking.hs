@@ -15,6 +15,7 @@ import Data.Data
 import LiveCoding.Cell
 import LiveCoding.Handle
 import LiveCoding.Handle.Examples
+import LiveCoding.HandlingState
 
 threadVarHandle :: Handle IO (MVar ThreadId)
 threadVarHandle = Handle

@@ -1,47 +1,28 @@
 {-# LANGUAGE Arrows #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module LiveCoding.Handle
-  ( Handle (..)
-  , handling
-  , HandlingState (..)
-  , HandlingStateT
-  , isRegistered
-  , runHandlingState
-  , runHandlingStateC
-  , runHandlingStateT
-  )
-  where
+module LiveCoding.Handle where
 
 -- base
-import Control.Arrow (returnA, arr, (>>>))
 import Data.Data
-
--- containers
-import Data.IntMap
-import qualified Data.IntMap as IntMap
 
 -- transformers
 import Control.Monad.Trans.Class (MonadTrans(lift))
-import Control.Monad.Trans.State.Strict
 
 -- essence-of-live-coding
 import LiveCoding.Cell
-import LiveCoding.Cell.Monad
-import LiveCoding.Cell.Monad.Trans
-import LiveCoding.LiveProgram
-import LiveCoding.LiveProgram.Monad.Trans
+import LiveCoding.HandlingState
+import Control.Arrow ((>>>), arr)
 
 {- | Container for unserialisable values,
 such as 'IORef's, threads, 'MVar's, pointers, and device handles.
 
-In a 'Handle', you can store a mechanism to create and destroy a value that survives live coding even if does not have a 'Data' instance.
+In a 'Handle', you can store a mechanism to create and destroy a value
+that survives reloads occuring during live coding
+even if does not have a 'Data' instance.
 Using the function 'handling', you can create a cell that will
 automatically initialise your value,
 and register it in the 'HandlingStateT' monad transformer,
@@ -71,83 +52,6 @@ combineHandles handle1 handle2 = Handle
   , destroy = \(h1, h2) -> destroy handle2 h2 *> destroy handle1 h1
   }
 
-data Handling h where
-  Handling
-    :: { id     :: Key
-       , handle :: h
-       }
-    -> Handling h
-  Uninitialized :: Handling h
-
-type Destructors m = IntMap (Destructor m)
-
--- | Hold a map of registered handle keys and destructors
-data HandlingState m = HandlingState
-  { nHandles    :: Key
-  , destructors :: Destructors m
-  }
-  deriving Data
-
--- | In this monad, handles can be registered,
---   and their destructors automatically executed.
---   It is basically a monad in which handles are automatically garbage collected.
-type HandlingStateT m = StateT (HandlingState m) m
-
-initHandlingState :: HandlingState m
-initHandlingState = HandlingState
-  { nHandles = 0
-  , destructors = IntMap.empty
-  }
-
--- | Handle the 'HandlingStateT' effect _without_ garbage collection.
---   Apply this to your main loop after calling 'foreground'.
---   Since there is no garbage collection, don't use this function for live coding.
-runHandlingStateT
-  :: Monad m
-  => HandlingStateT m a
-  -> m a
-runHandlingStateT = flip evalStateT initHandlingState
-
-{- | Apply this to your main live cell before passing it to the runtime.
-
-On the first tick, it initialises the 'HandlingState' at "no handles".
-
-On every step, it does:
-
-1. Unregister all handles
-2. Register currently present handles
-3. Destroy all still unregistered handles
-   (i.e. those that were removed in the last tick)
--}
-runHandlingStateC
-  :: forall m a b .
-     (Monad m, Typeable m)
-  => Cell (HandlingStateT m) a b
-  -> Cell                 m  a b
-runHandlingStateC cell = flip runStateC_ initHandlingState
-  $ hoistCellOutput garbageCollected cell
-
--- | Like 'runHandlingStateC', but for whole live programs.
-runHandlingState
-  :: (Monad m, Typeable m)
-  => LiveProgram (HandlingStateT m)
-  -> LiveProgram                 m
-runHandlingState LiveProgram { .. } = flip runStateL initHandlingState LiveProgram
-  { liveStep = garbageCollected . liveStep
-  , ..
-  }
-
-garbageCollected
-  :: Monad m
-  => HandlingStateT m a
-  -> HandlingStateT m a
-garbageCollected action = unregisterAll >> action <* destroyUnregistered
-
-data Destructor m = Destructor
-  { isRegistered :: Bool
-  , action       :: m ()
-  }
-
 {- | Hide a handle in a cell,
 taking care of initialisation and destruction.
 
@@ -163,99 +67,73 @@ This means that handles are only migrated if they have exactly the same type.
 handling
   :: ( Typeable h
      , Monad m
-    --  , MonadBase m m
-    --  , MonadState (HandlingState m) n
-    --  , MonadBase m n
      )
   => Handle m h
   -> Cell (HandlingStateT m) arbitrary h
-handling handleImpl@Handle { .. } = Cell
-  { cellState = Uninitialized
-  , cellStep = \state input -> case state of
-      handling@Handling { .. } -> do
-        reregister handleImpl handling
-        return (handle, state)
-      Uninitialized -> do
-        handle <- lift create
-        id <- register handleImpl handle
-        return (handle, Handling { .. })
+handling handle = arr (const ()) >>> handlingParametrised (toParametrised handle)
+
+{- | Generalisation of 'Handle' carrying an additional parameter which may change at runtime.
+
+Like in a 'Handle', the @h@ value of a 'ParametrisedHandle' is preserved through live coding reloads.
+Additionally, the parameter @p@ value can be adjusted,
+and triggers a destruction and reinitialisation whenever it changes.
+-}
+data ParametrisedHandle m p h = ParametrisedHandle
+  { createParametrised :: p -> m h
+  , destroyParametrised :: p -> h -> m ()
   }
 
-register
-  :: Monad m
-  => Handle m h
-  -> h
-  -> HandlingStateT m Key
-register handleImpl handle = do
-  HandlingState { .. } <- get
-  let id = nHandles + 1
-  put HandlingState
-    { nHandles = id
-    , destructors = insertDestructor handleImpl id handle destructors
-    }
-  return id
+-- | Like 'combineHandles', but for 'ParametrisedHandle's.
+combineParametrisedHandles
+  :: Applicative m
+  => ParametrisedHandle m p1 h1
+  -> ParametrisedHandle m p2 h2
+  -> ParametrisedHandle m (p1, p2) (h1, h2)
+combineParametrisedHandles handle1 handle2 = ParametrisedHandle
+  { createParametrised = \(p1, p2) -> ( , ) <$> createParametrised handle1 p1 <*> createParametrised handle2 p2
+  , destroyParametrised = \(p1, p2) (h1, h2) -> destroyParametrised handle1 p1 h1 *> destroyParametrised handle2 p2 h2
+  }
 
-reregister
-  :: Monad m
-  => Handle m h
-  -> Handling h
-  -> HandlingStateT m ()
-reregister handleImpl Handling { .. } = do
-  HandlingState { .. } <- get
-  put HandlingState { destructors = insertDestructor handleImpl id handle destructors, .. }
+{- | Hide a 'ParametrisedHandle' in a cell,
+taking care of initialisation and destruction.
 
-insertDestructor
-  :: Handle m h
-  -> Key
-  -> h
-  -> Destructors m
-  -> Destructors m
-insertDestructor Handle { .. } id handle destructors =
-  let destructor = Destructor { isRegistered = True, action = destroy handle }
-  in  insert id destructor destructors
+Upon the first tick, directly after migration, and after each parameter change,
+the 'create' method of the 'Handle' is called,
+and the result stored.
+This result is then not changed anymore until the cell is removed again, or the parameter changes.
+A parameter change triggers the destructor immediately,
+but if the cell is removed, the destructor will be called on the next tick.
 
-unregisterAll
-  :: Monad m
-  => HandlingStateT m ()
-unregisterAll = do
-  HandlingState { .. } <- get
-  let newDestructors = IntMap.map (\destructor -> destructor { isRegistered = False }) destructors
-  put HandlingState { destructors = newDestructors, .. }
+Migrations will by default not inspect the interior of a 'handling' cell.
+This means that parametrised handles are only migrated if they have exactly the same type.
+-}
+handlingParametrised
+  :: ( Typeable h, Typeable p
+     , Monad m
+     , Eq p
+     )
+  => ParametrisedHandle m p h
+  -> Cell (HandlingStateT m) p h
+handlingParametrised handleImpl@ParametrisedHandle { .. } = Cell { .. }
+  where
+    cellState = Uninitialized
+    cellStep Uninitialized parameter = do
+      mereHandle <- lift $ createParametrised parameter
+      let handle = (mereHandle, parameter)
+      key <- register (destroyParametrised parameter mereHandle) mereHandle
+      return (mereHandle, Handling { handle = handle, .. })
+    cellStep handling@Handling { handle = (mereHandle, lastParameter), .. } parameter
+      | parameter == lastParameter = do
+          reregister (destroyParametrised parameter mereHandle) key mereHandle
+          return (mereHandle, handling)
+      | otherwise = do
+          lift $ destroyParametrised lastParameter mereHandle
+          cellStep Uninitialized parameter
 
-destroyUnregistered
-  :: Monad m
-  => HandlingStateT m ()
-destroyUnregistered = do
-  HandlingState { .. } <- get
-  let
-      (registered, unregistered) = partition isRegistered destructors
-  traverse (lift . action) unregistered
-  put HandlingState { destructors = registered, .. }
-
--- * 'Data' instances
-
-dataTypeHandling :: DataType
-dataTypeHandling = mkDataType "Handling" [handlingConstr, uninitializedConstr]
-
-handlingConstr :: Constr
-handlingConstr = mkConstr dataTypeHandling "Handling" [] Prefix
-
-uninitializedConstr :: Constr
-uninitializedConstr = mkConstr dataTypeHandling "Uninitialized" [] Prefix
-
-instance (Typeable h) => Data (Handling h) where
-  dataTypeOf _ = dataTypeHandling
-  toConstr Handling { .. } = handlingConstr
-  toConstr Uninitialized = uninitializedConstr
-  gunfold _cons nil constructor = nil Uninitialized
-
-dataTypeDestructor :: DataType
-dataTypeDestructor = mkDataType "Destructor" [ destructorConstr ]
-
-destructorConstr :: Constr
-destructorConstr = mkConstr dataTypeDestructor "Destructor" [] Prefix
-
-instance Typeable m => Data (Destructor m) where
-  dataTypeOf _ = dataTypeDestructor
-  toConstr Destructor { .. } = destructorConstr
-  gunfold _ _ = error "Destructor.gunfold"
+-- | Every 'Handle' is trivially a 'ParametrisedHandle'
+--   when the parameter is the trivial type.
+toParametrised :: Handle m h -> ParametrisedHandle m () h
+toParametrised Handle { .. } = ParametrisedHandle
+  { createParametrised = const create
+  , destroyParametrised = const destroy
+  }

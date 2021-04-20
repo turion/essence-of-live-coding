@@ -56,6 +56,7 @@ library
     , LiveCoding.GHCi
     , LiveCoding.Handle
     , LiveCoding.Handle.Examples
+    , LiveCoding.HandlingState
     , LiveCoding.LiveProgram
     , LiveCoding.LiveProgram.Except
     , LiveCoding.LiveProgram.HotCodeSwap
