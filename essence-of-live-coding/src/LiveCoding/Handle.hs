@@ -15,6 +15,7 @@ import Control.Monad.Trans.Class (MonadTrans(lift))
 -- essence-of-live-coding
 import LiveCoding.Cell
 import LiveCoding.HandlingState
+import Control.Arrow ((>>>), arr)
 
 {- | Container for unserialisable values,
 such as 'IORef's, threads, 'MVar's, pointers, and device handles.
@@ -69,17 +70,7 @@ handling
      )
   => Handle m h
   -> Cell (HandlingStateT m) arbitrary h
-handling handleImpl@Handle { .. } = Cell
-  { cellState = Uninitialized
-  , cellStep = \state input -> case state of
-      handling@Handling { .. } -> do
-        reregister (destroy handle) key handle
-        return (handle, state)
-      Uninitialized -> do
-        handle <- lift create
-        key <- register (destroy handle) handle
-        return (handle, Handling { .. })
-  }
+handling handle = arr (const ()) >>> handlingParametrised (toParametrised handle)
 
 {- | Generalisation of 'Handle' carrying an additional parameter which may change at runtime.
 
@@ -138,3 +129,11 @@ handlingParametrised handleImpl@ParametrisedHandle { .. } = Cell { .. }
       | otherwise = do
           lift $ destroyParametrised lastParameter mereHandle
           cellStep Uninitialized parameter
+
+-- | Every 'Handle' is trivially a 'ParametrisedHandle'
+--   when the parameter is the trivial type.
+toParametrised :: Handle m h -> ParametrisedHandle m () h
+toParametrised Handle { .. } = ParametrisedHandle
+  { createParametrised = const create
+  , destroyParametrised = const destroy
+  }
