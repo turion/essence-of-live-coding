@@ -15,14 +15,8 @@ import Control.Monad.Trans.State.Strict
 -- test-framework
 import Test.Framework
 
--- test-framework
-import Test.Framework
-
 -- test-framework-quickcheck2
 import Test.Framework.Providers.QuickCheck2
-
--- QuickCheck
-import Test.QuickCheck
 
 -- essence-of-live-coding
 import qualified Handle.LiveProgram
@@ -44,7 +38,7 @@ testUnitHandle = Handle
   }
 
 cellWithAction
-  :: forall a b . (State Int b)
+  :: forall a b . State Int b
   -> Cell Identity a (String, Int)
 cellWithAction action = flip runStateC 0 $ runHandlingStateC $ handling testHandle >>> arrM (<$ lift action)
 
