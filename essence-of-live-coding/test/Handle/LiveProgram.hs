@@ -49,5 +49,5 @@ test = testGroup "Handle.LiveProgram"
         HandlingState { .. } <- get
         lift $ tell
           [ "Handles: " ++ show nHandles
-          , "Destructors: " ++ unwords ((show . second isRegistered) <$> IntMap.toList destructors)
+          , "Destructors: " ++ unwords (show . second isRegistered <$> IntMap.toList destructors)
           ]
