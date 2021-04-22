@@ -1,6 +1,16 @@
 language: haskell
+cabal: "3.4" # Temporary pin until a sufficiently recent version is in the standard Travis images
 addons:
   apt:
+    packages:
+      - libgl1-mesa-dev
+      - libglu1-mesa-dev
+      - freeglut3-dev
+      - libpulse-dev
+      - libblas-dev
+      - liblapack-dev
+    sources:
+      - sourceline: 'ppa:hvr/ghc'
     packages:
       - libgl1-mesa-dev
       - libglu1-mesa-dev
@@ -12,6 +22,7 @@ cache:
   directories:
     - $HOME/.cabal
 ghc:
+  - '8.10'
   - '8.8'
   - '8.6'
 script:
