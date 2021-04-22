@@ -9,6 +9,7 @@ addons:
       - libpulse-dev
       - libblas-dev
       - liblapack-dev
+      - libasound2-dev
     sources:
       - sourceline: 'ppa:hvr/ghc'
 cache:
