@@ -211,3 +211,8 @@ it's advisable to follow these patterns:
   (at least version 3).
   If this is not the case for you,
   consider updating, or adapt the files to use `new-`style commands.
+
+## Contributors
+
+* Manuel Bärenz https://github.com/turion/
+* Miguel Negrão https://github.com/miguel-negrao/
