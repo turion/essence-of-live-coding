@@ -1,4 +1,5 @@
 language: haskell
+cabal: "3.4" # Temporary pin until a sufficiently recent version is in the standard Travis images
 addons:
   apt:
     packages:
