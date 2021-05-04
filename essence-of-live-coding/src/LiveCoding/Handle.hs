@@ -3,10 +3,13 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 
 module LiveCoding.Handle where
 
 -- base
+import Control.Arrow ((>>>), arr, returnA)
+import Control.Monad (join, unless)
 import Data.Data
 
 -- transformers
@@ -14,8 +17,9 @@ import Control.Monad.Trans.Class (MonadTrans(lift))
 
 -- essence-of-live-coding
 import LiveCoding.Cell
+import LiveCoding.Cell.Feedback
+import LiveCoding.Cell.Resample (resampleMaybe)
 import LiveCoding.HandlingState
-import Control.Arrow ((>>>), arr)
 
 {- | Container for unserialisable values,
 such as 'IORef's, threads, 'MVar's, pointers, and device handles.
@@ -137,3 +141,34 @@ toParametrised Handle { .. } = ParametrisedHandle
   { createParametrised = const create
   , destroyParametrised = const destroy
   }
+
+{- | Perform an action whenever the parameter @p@ changes, and the code is reloaded.
+
+Note that this does not trigger any actions when adding, or removing an 'onChange' cell.
+For this functionality, see "LiveCoding.Handle".
+Also, when moving such a cell, the action may not be triggered reliably.
+-}
+onChange
+  :: (Monad m, Data p, Eq p)
+  => p -- ^ This parameter has to change during live coding to trigger an action
+  -> (p -> p -> a -> m b) -- ^ This action gets passed the old parameter and the new parameter
+  -> Cell m a (Maybe b)
+onChange p action = proc a -> do
+  pCurrent <- arr $ const p -< ()
+  pPrevious <- delay p -< pCurrent
+  arrM $ whenDifferent action -< (pCurrent, pPrevious, a)
+
+-- | Like 'onChange'', but with a dynamic input.
+onChange'
+  :: (Monad m, Data p, Eq p)
+  => (p -> p -> a -> m b) -- ^ This action gets passed the old parameter and the new parameter
+  -> Cell m (p, a) (Maybe b)
+onChange' action = proc (pCurrent, a) -> do
+  pPrevious <- delay Nothing -< Just pCurrent
+  bMaybeMaybe <- resampleMaybe $ arrM $ whenDifferent action -< ( , pCurrent, a) <$> pPrevious
+  returnA -< join bMaybeMaybe
+
+whenDifferent :: (Eq p, Monad m) => (p -> p -> a -> m b) -> (p, p, a) -> m (Maybe b)
+whenDifferent action (pOld, pNew, a)
+  | pOld == pNew = Just <$> action pOld pNew a
+  | otherwise    = return Nothing
