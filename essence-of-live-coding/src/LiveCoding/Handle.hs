@@ -80,8 +80,18 @@ and triggers a destruction and reinitialisation whenever it changes.
 -}
 data ParametrisedHandle m p h = ParametrisedHandle
   { createParametrised :: p -> m h
+  , changeParametrised :: p -> p -> h -> m h
   , destroyParametrised :: p -> h -> m ()
   }
+
+-- | Given the methods 'createParametrised' and 'destroyParametrised',
+--   build a fitting method for 'changeParametrised' which
+defaultChange :: (Eq p, Monad m) => (p -> m h) -> (p -> h -> m ()) -> p -> p -> h -> m h
+defaultChange creator destructor pOld pNew h
+  | pOld == pNew = return h
+  | otherwise    = do
+      destructor pOld h
+      creator pNew
 
 -- | Like 'combineHandles', but for 'ParametrisedHandle's.
 combineParametrisedHandles
@@ -91,6 +101,7 @@ combineParametrisedHandles
   -> ParametrisedHandle m (p1, p2) (h1, h2)
 combineParametrisedHandles handle1 handle2 = ParametrisedHandle
   { createParametrised = \(p1, p2) -> ( , ) <$> createParametrised handle1 p1 <*> createParametrised handle2 p2
+  , changeParametrised = \(pOld1, pOld2) (pNew1, pNew2) (h1, h2) -> ( , ) <$> changeParametrised handle1 pOld1 pNew1 h1 <*> changeParametrised handle2 pOld2 pNew2 h2
   , destroyParametrised = \(p1, p2) (h1, h2) -> destroyParametrised handle1 p1 h1 *> destroyParametrised handle2 p2 h2
   }
 
@@ -127,13 +138,15 @@ handlingParametrised handleImpl@ParametrisedHandle { .. } = Cell { .. }
           reregister (destroyParametrised parameter mereHandle) key mereHandle
           return (mereHandle, handling)
       | otherwise = do
-          lift $ destroyParametrised lastParameter mereHandle
-          cellStep Uninitialized parameter
+          mereHandle <- lift $ changeParametrised lastParameter parameter mereHandle
+          reregister (destroyParametrised parameter mereHandle) key mereHandle
+          return (mereHandle, Handling { handle = (mereHandle, parameter), .. })
 
 -- | Every 'Handle' is trivially a 'ParametrisedHandle'
 --   when the parameter is the trivial type.
-toParametrised :: Handle m h -> ParametrisedHandle m () h
+toParametrised :: Monad m => Handle m h -> ParametrisedHandle m () h
 toParametrised Handle { .. } = ParametrisedHandle
   { createParametrised = const create
+  , changeParametrised = const $ const return
   , destroyParametrised = const destroy
   }
