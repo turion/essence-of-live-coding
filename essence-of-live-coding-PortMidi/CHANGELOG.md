@@ -1,4 +1,4 @@
-# Revision history for essence-of-live-coding-vivid
+# Revision history for essence-of-live-coding-PortMidi
 
 ## 0.1.0.0 -- YYYY-mm-dd
 
