@@ -1,9 +1,11 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
 module LiveCoding.Cell.Util where
 
 -- base
 import Control.Arrow
+import Control.Monad (join)
 import Control.Monad.IO.Class
 import Data.Data (Data)
 import Data.Functor (void)
@@ -20,6 +22,8 @@ import Data.Time.Clock
 import LiveCoding.Cell
 import LiveCoding.Cell.Feedback
 import Data.Foldable (toList)
+import LiveCoding.Cell.Resample (resampleMaybe)
+import LiveCoding.Cell.Util.Internal
 
 -- * State accumulation
 
@@ -161,3 +165,31 @@ buffered cell = feedback Nothing $ proc (aMaybe, ticked) -> do
   aMaybe' <- buffer -< maybePop ticked ++ maybePush aMaybe
   bMaybe' <- cell   -< aMaybe'
   returnA           -< (bMaybe', void bMaybe')
+
+-- * Detecting change
+
+{- | Perform an action whenever the parameter @p@ changes, and the code is reloaded.
+
+Note that this does not trigger any actions when adding, or removing an 'onChange' cell.
+For this functionality, see "LiveCoding.Handle".
+Also, when moving such a cell, the action may not be triggered reliably.
+-}
+onChange
+  :: (Monad m, Data p, Eq p)
+  => p -- ^ This parameter has to change during live coding to trigger an action
+  -> (p -> p -> a -> m b) -- ^ This action gets passed the old parameter and the new parameter
+  -> Cell m a (Maybe b)
+onChange p action = proc a -> do
+  pCurrent <- arr $ const p -< ()
+  pPrevious <- delay p -< pCurrent
+  arrM $ whenDifferent action -< (pCurrent, pPrevious, a)
+
+-- | Like 'onChange'', but with a dynamic input.
+onChange'
+  :: (Monad m, Data p, Eq p)
+  => (p -> p -> a -> m b) -- ^ This action gets passed the old parameter and the new parameter
+  -> Cell m (p, a) (Maybe b)
+onChange' action = proc (pCurrent, a) -> do
+  pPrevious <- delay Nothing -< Just pCurrent
+  bMaybeMaybe <- resampleMaybe $ arrM $ whenDifferent action -< ( , pCurrent, a) <$> pPrevious
+  returnA -< join bMaybeMaybe

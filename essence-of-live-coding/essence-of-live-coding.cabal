@@ -70,7 +70,8 @@ library
     , LiveCoding.RuntimeIO.Launch
 
   other-modules:
-      LiveCoding.Preliminary.CellExcept
+      LiveCoding.Cell.Util.Internal
+    , LiveCoding.Preliminary.CellExcept
     , LiveCoding.Preliminary.CellExcept.Applicative
     , LiveCoding.Preliminary.CellExcept.Monad
     , LiveCoding.Preliminary.CellExcept.Newtype

@@ -7,6 +7,7 @@
 module LiveCoding.Handle where
 
 -- base
+import Control.Arrow (arr, (>>>))
 import Data.Data
 
 -- transformers
@@ -15,7 +16,6 @@ import Control.Monad.Trans.Class (MonadTrans(lift))
 -- essence-of-live-coding
 import LiveCoding.Cell
 import LiveCoding.HandlingState
-import Control.Arrow ((>>>), arr)
 
 {- | Container for unserialisable values,
 such as 'IORef's, threads, 'MVar's, pointers, and device handles.
