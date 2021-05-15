@@ -2,8 +2,12 @@
 set -e
 
 test_repl() {
-  cat ../replcommands.txt | cabal repl &> result.txt
+  start_repl
   test_for_errors
+}
+
+start_repl() {
+  cat ../replcommands.txt | cabal repl &> result.txt
 }
 
 test_for_errors() {
