@@ -22,6 +22,7 @@ import qualified Feedback
 import qualified Handle
 import qualified Monad
 import qualified Monad.Trans
+import qualified RuntimeIO.Launch
 
 import LiveCoding
 
@@ -116,6 +117,7 @@ tests =
     , Feedback.test
     ]
   , Monad.Trans.test
+  , RuntimeIO.Launch.test
   ]
 
 countFrom :: Monad m => Int -> Cell m () Int
