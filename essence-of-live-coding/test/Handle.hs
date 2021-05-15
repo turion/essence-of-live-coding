@@ -124,5 +124,17 @@ test = testGroup "Handle"
         , ("Crazy new hdl #12345", 12346)
         ]
     }
+  , testProperty "Control flow does not trigger destructors or constructors" CellSimulation
+    { cell = cellWithAction (modify (+ 1)) ||| arr (const ("Nope", 23))
+    , input = [Right (), Left (), Left (), Right (), Left ()]
+    , output =
+        [ ("Nope", 23)
+        , ("Handle #0", 1)
+        , ("Handle #0", 2)
+        , ("Nope", 23)
+        , ("Handle #0", 3)
+        ]
+
+    }
   , Handle.LiveProgram.test
   ]
