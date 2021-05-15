@@ -1,5 +1,5 @@
 # Revision history for essence-of-live-coding-ghci-example
 
-## 0.1.0.0 -- YYYY-mm-dd
+## 0.2.5
 
-* First version. Released on an unsuspecting world.
+* Integration test for handles & GHCi commands
