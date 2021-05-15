@@ -99,7 +99,8 @@ update LaunchedProgram { .. } newProg = modifyMVarMasked_ programVar
 {- | Stops a thread where a 'LiveProgram' is being executed.
 
 Before the thread is killed, an empty program (in the monad @m@) is first inserted and stepped.
-This can be used to call cleanup actions encoded in the monad.
+This can be used to call cleanup actions encoded in the monad,
+such as 'HandlingStateT'.
 -}
 stop
   :: Launchable m
@@ -121,8 +122,8 @@ launchWithDebugger liveProg debugger = launch $ liveProg `withDebugger` debugger
 -- | This is the background task executed by 'launch'.
 background :: MVar (LiveProgram IO) -> IO ()
 background var = forever $ do
-  liveProg   <- takeMVar var
-  liveProg'  <- stepProgram liveProg
+  liveProg  <- takeMVar var
+  liveProg' <- stepProgram liveProg
   putMVar var liveProg'
 
 -- | Advance a 'LiveProgram' by a single step.
