@@ -14,8 +14,8 @@ module LiveCoding.GHCi where
 
 -- base
 import Control.Concurrent
-import Control.Exception (SomeException, try)
-import Control.Monad (void, (>=>))
+import Control.Exception (SomeException, try, Exception (toException, displayException))
+import Control.Monad (void, (>=>), join)
 import Data.Data
 import Data.Function ((&))
 
@@ -32,6 +32,12 @@ import LiveCoding.RuntimeIO.Launch
 proxyFromLiveProgram :: LiveProgram m -> Proxy m
 proxyFromLiveProgram _ = Proxy
 
+-- | An exception type marking the absence of a foreign store of the correct type.
+data NoStore = NoStore
+  deriving Show
+
+instance Exception NoStore
+
 -- * Retrieving launched programs from the foreign store
 
 -- | Try to retrieve a 'LiveProgram' of a given type from the 'Store',
@@ -40,12 +46,10 @@ proxyFromLiveProgram _ = Proxy
 possiblyLaunchedProgram
   :: Launchable m
   => Proxy m
-  -> IO (Either SomeException (Maybe (LaunchedProgram m)))
+  -> IO (Either SomeException (LaunchedProgram m))
 possiblyLaunchedProgram _ = do
   storeMaybe <- lookupStore 0
-  try $ traverse readStore storeMaybe
-
-
+  fmap join $ try $ traverse readStore $ maybe (Left $ toException NoStore) Right storeMaybe
 
 -- | Try to load a 'LiveProgram' of a given type from the 'Store'.
 --   If the store doesn't contain a program, it is (re)started.
@@ -54,11 +58,14 @@ sync program = do
   launchedProgramPossibly <- possiblyLaunchedProgram $ proxyFromLiveProgram program
   case launchedProgramPossibly of
     -- Looking up the store failed in some way, restart
-    Left (e :: SomeException) -> putStrLn "exc" >> launchAndSave program
-    -- The store was empty, restart
-    Right Nothing -> putStrLn "empty" >> launchAndSave program
+    Left (e :: SomeException) -> do
+      putStrLn $ displayException e
+      launchAndSave program
+
     -- A program is running, update it
-    Right (Just launchedProgram) -> putStrLn "update" >> update launchedProgram program
+    Right launchedProgram -> do
+      putStrLn "update"
+      update launchedProgram program
 
 -- | Launch a 'LiveProgram' and save it in the 'Store'.
 launchAndSave :: Launchable m => LiveProgram m -> IO ()
@@ -74,7 +81,9 @@ stopStored
   :: Launchable m
   => Proxy m
   -> IO ()
-stopStored proxy = void $ (fmap $ fmap $ fmap stop) $ possiblyLaunchedProgram proxy
+stopStored proxy = do
+  launchedProgramPossibly <- possiblyLaunchedProgram proxy
+  either (putStrLn . displayException) stop launchedProgramPossibly
 
 -- * GHCi commands
 
