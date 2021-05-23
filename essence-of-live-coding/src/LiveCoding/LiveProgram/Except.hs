@@ -18,7 +18,7 @@ import Control.Monad.Trans.Reader
 
 -- essence-of-live-coding
 import LiveCoding.Cell (hoistCell, toLiveCell, liveCell, constM)
-import LiveCoding.CellExcept (CellExcept, runCellExcept)
+import LiveCoding.CellExcept (CellExcept, runCellExcept, once_)
 import LiveCoding.Exceptions.Finite (Finite)
 import LiveCoding.Forever
 import LiveCoding.LiveProgram
@@ -84,7 +84,7 @@ safe = LiveProgramExcept . CellExcept.safe . toLiveCell
 
 -- | Run a monadic action and immediately raise its result as an exception.
 once :: (Monad m, Data e, Finite e) => m e -> LiveProgramExcept m e
-once action = try $ liveCell $ constM $ ExceptT $ Left <$> action
+once = LiveProgramExcept . once_
 
 {- | Run a 'LiveProgramExcept' in a loop.
 
