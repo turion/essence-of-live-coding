@@ -103,5 +103,13 @@ discardVoid
   = fmap (either absurd id) . runExceptT
 safe :: Monad m => Cell m a b -> CellExcept m a b Void
 safe cell = try $ liftCell cell
+
+-- | Run a monadic action and immediately raise its result as an exception.
+once :: (Monad m, Data e, Finite e) => (a -> m e) -> CellExcept m a arbitrary e
+once kleisli = try $ arrM $ ExceptT . (Left <$>) . kleisli
+
+-- | Like 'once', but the action does not have an input.
+once_ :: (Monad m, Data e, Finite e) => m e -> CellExcept m a arbitrary e
+once_ = once . const
 \end{code}
 \end{comment}
