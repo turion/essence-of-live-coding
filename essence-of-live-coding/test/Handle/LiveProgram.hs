@@ -8,6 +8,7 @@ import Control.Arrow
 import qualified Data.IntMap as IntMap
 
 -- transformers
+import Control.Monad.Trans.Class (MonadTrans(lift))
 import Control.Monad.Trans.RWS.Strict (RWS, tell)
 import qualified Control.Monad.Trans.RWS.Strict as RWS
 import Control.Monad.Trans.State.Strict
@@ -22,7 +23,6 @@ import Test.Framework.Providers.QuickCheck2
 import LiveCoding
 import LiveCoding.Handle
 import Util.LiveProgramMigration
-import Control.Monad.Trans.Class (MonadTrans(lift))
 
 testHandle :: Handle (RWS () [String] Int) String
 testHandle = Handle
