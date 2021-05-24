@@ -36,7 +36,7 @@ class Monad m => Launchable m where
 instance Launchable IO where
   runIO = id
 
-instance (Typeable m, Launchable m) => Launchable (StateT (HandlingState m) m) where
+instance (Typeable m, Launchable m) => Launchable (HandlingStateT m) where
   runIO = runIO . runHandlingState
 
 -- | Upon an exception, the program is restarted.
