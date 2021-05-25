@@ -19,6 +19,7 @@ import Data.Time.Clock
 -- essence-of-live-coding
 import LiveCoding.Cell
 import LiveCoding.Cell.Feedback
+import Data.Foldable (toList)
 
 -- * State accumulation
 
@@ -69,6 +70,24 @@ boundedFIFO n = foldC' step empty
   where
     step Nothing  as = as
     step (Just a) as = Sequence.take n $ a <| as
+
+-- | Buffers and returns the elements in First-In-First-Out order,
+--   returning 'Nothing' whenever the buffer is empty.
+fifo :: (Monad m, Data a) => Cell m (Seq a) (Maybe a)
+fifo = feedback empty $ proc (as, accum) -> do
+  let accum' = accum >< as
+  returnA -< case accum' of
+    Empty    -> (Nothing, empty)
+    a :<| as -> (Just a , as)
+
+-- | Like 'fifo', but accepts lists as input.
+--   Each step is O(n) in the length of the list.
+fifoList :: (Monad m, Data a) => Cell m [a] (Maybe a)
+fifoList = arr fromList >>> fifo
+
+-- | Like 'fifoList', but generalised to any 'Foldable'.
+fifoFoldable :: (Monad m, Data a, Foldable f) => Cell m (f a) (Maybe a)
+fifoFoldable = arr toList >>> fifoList
 
 -- | Returns 'True' iff the current input value is 'True' and the last input value was 'False'.
 edge :: Monad m => Cell m Bool Bool
