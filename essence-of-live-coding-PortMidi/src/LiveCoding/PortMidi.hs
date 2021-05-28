@@ -13,6 +13,7 @@
 module LiveCoding.PortMidi where
 
 -- base
+import Control.Concurrent (threadDelay)
 import Control.Monad (void, forM, join)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Either (fromRight)
@@ -68,6 +69,7 @@ loopPortMidiC cell = foreverC $ runCellExcept $ do
   once_ $ liftIO $ do
     putStrLn "Encountered PortMidi exception:"
     print e
+    threadDelay 1000
   return e
 
 deriving instance Data PMError
