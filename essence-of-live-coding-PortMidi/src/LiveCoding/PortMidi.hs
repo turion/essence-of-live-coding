@@ -41,7 +41,7 @@ data EOLCPortMidiError
 instance Finite EOLCPortMidiError
 
 -- | The monad transformer of PortMidi exceptions
-newtype PortMidiT m a = PortMidiT { unPortMidi :: ExceptT EOLCPortMidiError m a }
+newtype PortMidiT m a = PortMidiT { unPortMidi :: ExceptT EOLCPortMidiError (HandlingStateT m) a }
   deriving (Functor, Applicative, Monad, MonadIO)
 
 throwPortMidi :: Monad m => EOLCPortMidiError -> PortMidiT m arbitrary
@@ -51,16 +51,16 @@ throwPortMidiC :: Monad m => Cell (PortMidiT m) EOLCPortMidiError arbitrary
 throwPortMidiC = arrM throwPortMidi
 
 instance MonadTrans PortMidiT where
-  lift = PortMidiT . lift
+  lift = PortMidiT . lift . lift
 
-liftPMError :: Functor m => m (Either PMError a) -> PortMidiT m a
-liftPMError = PortMidiT . ExceptT . fmap (left PMError)
+liftPMError :: Monad m => m (Either PMError a) -> PortMidiT m a
+liftPMError = PortMidiT . ExceptT . fmap (left PMError) . lift
 
 -- | Initialize the MIDI system, run the action, and shut it down again.
 runPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> CellExcept (HandlingStateT m) a b EOLCPortMidiError
 runPortMidiC cell = try $ proc a -> do
   _ <- liftCell $ handling portMidiHandle -< ()
-  hoistCell (mapExceptT lift . unPortMidi) cell -< a
+  hoistCell unPortMidi cell -< a
 
 loopPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> Cell (HandlingStateT m) a b
 loopPortMidiC cell = foreverC $ runCellExcept $ do
@@ -74,8 +74,7 @@ deriving instance Data PMError
 deriving instance Generic PMError
 instance Finite PMError
 
--- FIXME do we still need this?
--- | A marker to make sure that PortMidi was initialized
+-- | A marker witnessing that PortMidi was initialized
 data PortMidiHandle = PortMidiHandle
 
 portMidiHandle :: MonadIO m => Handle m PortMidiHandle
