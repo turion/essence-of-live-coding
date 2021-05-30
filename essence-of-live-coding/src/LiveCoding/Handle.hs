@@ -78,7 +78,7 @@ Like in a 'Handle', the @h@ value of a 'ParametrisedHandle' is preserved through
 Additionally, the parameter @p@ value can be adjusted,
 and triggers a destruction and reinitialisation whenever it changes.
 -}
-data ParametrisedHandle m p h = ParametrisedHandle
+data ParametrisedHandle p m h = ParametrisedHandle
   { createParametrised :: p -> m h
   , changeParametrised :: p -> p -> h -> m h
   , destroyParametrised :: p -> h -> m ()
@@ -96,9 +96,9 @@ defaultChange creator destructor pOld pNew h
 -- | Like 'combineHandles', but for 'ParametrisedHandle's.
 combineParametrisedHandles
   :: Applicative m
-  => ParametrisedHandle m p1 h1
-  -> ParametrisedHandle m p2 h2
-  -> ParametrisedHandle m (p1, p2) (h1, h2)
+  => ParametrisedHandle  p1      m  h1
+  -> ParametrisedHandle      p2  m      h2
+  -> ParametrisedHandle (p1, p2) m (h1, h2)
 combineParametrisedHandles handle1 handle2 = ParametrisedHandle
   { createParametrised = \(p1, p2) -> ( , ) <$> createParametrised handle1 p1 <*> createParametrised handle2 p2
   , changeParametrised = \(pOld1, pOld2) (pNew1, pNew2) (h1, h2) -> ( , ) <$> changeParametrised handle1 pOld1 pNew1 h1 <*> changeParametrised handle2 pOld2 pNew2 h2
@@ -123,7 +123,7 @@ handlingParametrised
      , Monad m
      , Eq p
      )
-  => ParametrisedHandle m p h
+  => ParametrisedHandle p m h
   -> Cell (HandlingStateT m) p h
 handlingParametrised handleImpl@ParametrisedHandle { .. } = Cell { .. }
   where
@@ -144,7 +144,7 @@ handlingParametrised handleImpl@ParametrisedHandle { .. } = Cell { .. }
 
 -- | Every 'Handle' is trivially a 'ParametrisedHandle'
 --   when the parameter is the trivial type.
-toParametrised :: Monad m => Handle m h -> ParametrisedHandle m () h
+toParametrised :: Monad m => Handle m h -> ParametrisedHandle () m h
 toParametrised Handle { .. } = ParametrisedHandle
   { createParametrised = const create
   , changeParametrised = const $ const return
