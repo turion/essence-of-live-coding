@@ -22,7 +22,7 @@ data SynthState
 -- fixme release instead of free?
 vividHandleParametrised
   :: (VividAction m, Eq params, VarList params, Subset (InnerVars params) args)
-  => ParametrisedHandle m (params, SynthDef args, SynthState) (Maybe (Synth args))
+  => ParametrisedHandle (params, SynthDef args, SynthState) m (Maybe (Synth args))
 vividHandleParametrised = ParametrisedHandle { .. }
   where
     createParametrised (params, synthDef, Started) = Just <$> synth synthDef params
