@@ -17,7 +17,7 @@ import Control.Concurrent (threadDelay)
 import Control.Monad (void, forM, join)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Either (fromRight)
-import Data.Foldable (traverse_)
+import Data.Foldable (traverse_, find)
 import Data.Function ((&))
 import Data.Maybe (catMaybes)
 import GHC.Generics
@@ -42,8 +42,12 @@ data EOLCPortMidiError
 instance Finite EOLCPortMidiError
 
 -- | The monad transformer of PortMidi exceptions
-newtype PortMidiT m a = PortMidiT { unPortMidi :: ExceptT EOLCPortMidiError (HandlingStateT m) a }
+newtype PortMidiT m a = PortMidiT
+  { unPortMidiT :: ExceptT EOLCPortMidiError (HandlingStateT m) a }
   deriving (Functor, Applicative, Monad, MonadIO)
+
+runPortMidiT :: PortMidiT m a -> HandlingStateT m (Either EOLCPortMidiError a)
+runPortMidiT PortMidiT { .. } = runExceptT unPortMidiT
 
 throwPortMidi :: Monad m => EOLCPortMidiError -> PortMidiT m arbitrary
 throwPortMidi = PortMidiT . throwE
@@ -57,11 +61,14 @@ instance MonadTrans PortMidiT where
 liftPMError :: Monad m => m (Either PMError a) -> PortMidiT m a
 liftPMError = PortMidiT . ExceptT . fmap (left PMError) . lift
 
+liftHandlingState :: Monad m => Cell (HandlingStateT m) a b -> Cell (PortMidiT m) a b
+liftHandlingState = hoistCell $ PortMidiT . lift
+
 -- | Initialize the MIDI system, run the action, and shut it down again.
 runPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> CellExcept (HandlingStateT m) a b EOLCPortMidiError
 runPortMidiC cell = try $ proc a -> do
   _ <- liftCell $ handling portMidiHandle -< ()
-  hoistCell unPortMidi cell -< a
+  hoistCell unPortMidiT cell -< a
 
 loopPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> Cell (HandlingStateT m) a b
 loopPortMidiC cell = foreverC $ runCellExcept $ do
@@ -90,24 +97,31 @@ portMidiHandle = Handle
 newtype PortMidiInputStream = PortMidiInputStream { unPortMidiInputStream :: PMStream }
 newtype PortMidiOutputStream = PortMidiOutputStream { unPortMidiOutputStream :: PMStream }
 
-lookupDeviceID :: MonadIO m => String -> (DeviceInfo -> Maybe EOLCPortMidiError) -> PortMidiT m DeviceID
+lookupDeviceID :: MonadIO m => String -> (DeviceInfo -> Maybe EOLCPortMidiError) -> m (Either EOLCPortMidiError DeviceID)
 lookupDeviceID nameLookingFor filter = do
   nDevices <- liftIO countDevices
+  -- This is a bit of a race condition, but PortMidi has no better API
   devices <- forM [0..nDevices-1] $ \deviceID -> do
     deviceInfo <- liftIO $ getDeviceInfo deviceID
-    traverse_ throwPortMidi $ filter deviceInfo
-    return (name deviceInfo, deviceID)
-  maybe (throwPortMidi NoSuchDevice) return $ lookup nameLookingFor devices
+    return (deviceInfo, deviceID)
+  let maybeDevice = find ((nameLookingFor ==) . name . fst) devices
+  return $ do
+    (deviceInfo, deviceID) <- maybe (Left NoSuchDevice) Right maybeDevice
+    maybe (Right deviceID) Left $ filter deviceInfo
 
 portMidiInputStreamHandle
   :: MonadIO m
   => String
-  -> Handle (PortMidiT m) PortMidiInputStream
+  -> Handle m (Either EOLCPortMidiError PortMidiInputStream)
 portMidiInputStreamHandle name = Handle
-  { create = do
-      deviceID <- lookupDeviceID name $ \DeviceInfo { .. } -> if input then Nothing else Just NotAnInputDevice
-      PortMidiInputStream <$> liftPMError (liftIO (openInput deviceID))
-  , destroy = liftIO . void . close . unPortMidiInputStream
+  { create = runExceptT $ do
+      deviceID <- ExceptT $ lookupDeviceID name
+        $ \DeviceInfo { .. }
+          -> if input then Nothing else Just NotAnInputDevice
+      fmap PortMidiInputStream $ withExceptT PMError $ ExceptT $ liftIO $ openInput deviceID
+  -- TODO I don't get the error from closing here.
+  -- Actually I really want ExceptT in the monad
+  , destroy = either (const $ return ()) $ liftIO . void . close . unPortMidiInputStream
   }
 
 readEventsFrom
@@ -117,22 +131,25 @@ readEventsFrom = arrM $ liftPMError . liftIO . readEvents . unPortMidiInputStrea
 
 readEventsC
   :: MonadIO m
-  => String -> Cell (HandlingStateT (PortMidiT m)) arbitrary [PMEvent]
+  => String -> Cell (PortMidiT m) arbitrary [PMEvent]
 readEventsC name = proc _ -> do
-  pmstream <- handling $ portMidiInputStreamHandle name -< ()
-  liftCell readEventsFrom -< pmstream
+  pmStreamE <- liftHandlingState $ handling $ portMidiInputStreamHandle name -< ()
+  pmStream <- hoistCell PortMidiT inExceptT -< pmStreamE
+  readEventsFrom -< pmStream
 
 portMidiOutputStreamHandle
   :: MonadIO m
   => String
-  -> Handle (PortMidiT m) PortMidiOutputStream
+  -> Handle m (Either EOLCPortMidiError PortMidiOutputStream)
 portMidiOutputStreamHandle name = Handle
-  { create = do
-      deviceID <- lookupDeviceID name $ \DeviceInfo { .. } -> if output then Nothing else Just NotAnOutputDevice
+  { create = runExceptT $ do
+      deviceID <- ExceptT $ lookupDeviceID name
+        $ \DeviceInfo { .. }
+          -> if output then Nothing else Just NotAnOutputDevice
       -- Choose same latency as supercollider, see https://github.com/supercollider/supercollider/blob/18c4aad363c49f29e866f884f5ac5bd35969d828/lang/LangPrimSource/SC_PortMIDI.cpp#L416
       -- Thanks Miguel Negrão
-      PortMidiOutputStream <$> liftPMError (liftIO (openOutput deviceID 0))
-  , destroy = liftIO . void . close . unPortMidiOutputStream
+      fmap PortMidiOutputStream $ withExceptT PMError $ ExceptT $ liftIO $ openOutput deviceID 0
+  , destroy = either (const $ return ()) $ liftIO . void . close . unPortMidiOutputStream
   }
 
 writeEventsTo
@@ -146,10 +163,13 @@ writeEventsTo = arrM writer
       & void
 
 writeEventsC
-  :: String -> Cell (HandlingStateT (PortMidiT IO)) [PMEvent] ()
+  :: MonadIO m
+  => String
+  -> Cell (PortMidiT m) [PMEvent] ()
 writeEventsC name = proc events -> do
-  portMidiOutputStream <- handling (portMidiOutputStreamHandle name) -< ()
-  liftCell writeEventsTo -< (portMidiOutputStream, events)
+  portMidiOutputStreamE <- liftHandlingState $ handling (portMidiOutputStreamHandle name) -< ()
+  portMidiOutputStream <- hoistCell PortMidiT inExceptT -< portMidiOutputStreamE
+  writeEventsTo -< (portMidiOutputStream, events)
 
 data PortMidiDevices = PortMidiDevices
   { inputDevices :: [DeviceInfo]
