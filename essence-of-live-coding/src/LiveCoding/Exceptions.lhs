@@ -64,6 +64,12 @@ throwIf condition e = proc a -> do
 
 throwIf_ :: Monad m => (a -> Bool) -> Cell (ExceptT () m) a a
 throwIf_ condition = throwIf condition ()
+
+inExceptT :: Monad m => Cell (ExceptT e m) (Either e a) a
+inExceptT = proc ea -> do
+  case ea of
+    Left e -> throwC -< e
+    Right a -> returnA -< a
 \end{code}
 \end{comment}
 
