@@ -43,7 +43,7 @@ cellWithAction
   -> Cell Identity a (String, Int)
 cellWithAction action = flip runStateC 0 $ runHandlingStateC $ handling testHandle >>> arrM (<$ lift action)
 
-testParametrisedHandle :: ParametrisedHandle (State Int) Bool String
+testParametrisedHandle :: ParametrisedHandle Bool (State Int) String
 testParametrisedHandle = ParametrisedHandle { .. }
   where
     createParametrised flag = do
