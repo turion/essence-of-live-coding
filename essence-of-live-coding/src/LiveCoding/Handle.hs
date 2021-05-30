@@ -13,6 +13,9 @@ import Data.Data
 -- transformers
 import Control.Monad.Trans.Class (MonadTrans(lift))
 
+-- mmorph
+import Control.Monad.Morph
+
 -- essence-of-live-coding
 import LiveCoding.Cell
 import LiveCoding.HandlingState
@@ -36,6 +39,12 @@ data Handle m h = Handle
   { create :: m h
   , destroy :: h -> m ()
   }
+
+instance MFunctor Handle where
+  hoist morphism Handle { .. } = Handle
+    { create = morphism create
+    , destroy = morphism . destroy
+    }
 
 {- | Combine two handles to one.
 
@@ -83,6 +92,13 @@ data ParametrisedHandle p m h = ParametrisedHandle
   , changeParametrised :: p -> p -> h -> m h
   , destroyParametrised :: p -> h -> m ()
   }
+
+instance MFunctor (ParametrisedHandle p) where
+  hoist morphism ParametrisedHandle { .. } = ParametrisedHandle
+    { createParametrised = morphism . createParametrised
+    , changeParametrised = ((morphism .) .) . changeParametrised
+    , destroyParametrised = (morphism .) . destroyParametrised
+    }
 
 -- | Given the methods 'createParametrised' and 'destroyParametrised',
 --   build a fitting method for 'changeParametrised' which
