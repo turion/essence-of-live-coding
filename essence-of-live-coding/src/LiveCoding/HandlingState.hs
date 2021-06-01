@@ -1,27 +1,39 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 module LiveCoding.HandlingState where
 
 -- base
 import Control.Arrow (arr, returnA, (>>>))
+import Control.Monad.IO.Class
 import Data.Data
+import Data.Foldable (traverse_)
+import Data.Functor (($>))
+import qualified Data.List as List
 
 -- transformers
+import Control.Monad.Trans.Accum
 import Control.Monad.Trans.Class (MonadTrans (lift))
-import Control.Monad.Trans.State.Strict
-import Data.Foldable (traverse_)
+import Control.Monad.Trans.Writer.Strict ( WriterT(runWriterT) )
+import Control.Monad.Trans.Accum
+    ( add, look, runAccumT, AccumT(..) )
+
+-- mtl
+import Control.Monad.Writer.Class
 
 -- containers
 import Data.IntMap
 import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 
 -- essence-of-live-coding
 import LiveCoding.Cell
@@ -29,7 +41,7 @@ import LiveCoding.Cell.Monad
 import LiveCoding.Cell.Monad.Trans
 import LiveCoding.LiveProgram
 import LiveCoding.LiveProgram.Monad.Trans
-import qualified Data.IntSet as IntSet
+import LiveCoding.HandlingState.AccumTOrphan
 
 data Handling h = Handling
   { key :: Key
@@ -40,39 +52,38 @@ type Destructors m = IntMap (Destructor m)
 
 -- | Hold a map of registered handle keys and destructors
 data HandlingState m = HandlingState
-  { nHandles :: Key
-  , destructors :: Destructors m
+  { destructors :: Destructors m
+  , registered :: [Key] -- TODO Make it an intset?
   }
   deriving (Data)
 
-{- | In this monad, handles can be registered,
-   and their destructors automatically executed.
-   It is basically a monad in which handles are automatically garbage collected.
--}
-type HandlingStateT m = StateT (HandlingState m) m
-
 instance Semigroup (HandlingState m) where
   handlingState1 <> handlingState2 = HandlingState
-    { nHandles = nHandles handlingState1 `max` nHandles handlingState2
-    , destructors = destructors handlingState1 <> destructors handlingState2
+    { destructors = destructors handlingState1 <> destructors handlingState2
+    , registered = registered handlingState1 `List.union` registered handlingState2
     }
 
-data MyHandlingState m a = MyHandlingState
-  { handlingState :: HandlingState m
-  , registered :: [Key]
-  , value :: a
+instance Monoid (HandlingState m) where
+  mempty = HandlingState
+    { destructors = IntMap.empty
+    , registered = []
+    }
+
+newtype Registry = Registry
+  { nHandles :: Key
   }
-  deriving Functor
 
-newtype MyHandlingStateT m a = MyHandlingStateT
-  { unMyHandlingStateT :: m (MyHandlingState m a) }
-  deriving Functor
+instance Semigroup Registry where
+  registry1 <> registry2 = Registry $ nHandles registry1 + nHandles registry2
 
+instance Monoid Registry where
+  mempty = Registry 0
+
+{-
 instance Monad m => Monad (MyHandlingStateT m) where
   return a = MyHandlingStateT $ return MyHandlingState
-    { handlingState = initHandlingState
+    { handlingState = mempty
     , registered = []
-    , value = a
     }
   action >>= continuation = MyHandlingStateT $ do
     firstState <- unMyHandlingStateT action
@@ -84,25 +95,33 @@ instance Monad m => Monad (MyHandlingStateT m) where
     return MyHandlingState
       { handlingState = handlingStateLater
       , registered = registeredLater
-      , value = value continuationState
       }
-
-initHandlingState :: HandlingState m
-initHandlingState =
-  HandlingState
-    { nHandles = 0
-    , destructors = IntMap.empty
-    }
-
-{- | Handle the 'HandlingStateT' effect _without_ garbage collection.
-   Apply this to your main loop after calling 'foreground'.
-   Since there is no garbage collection, don't use this function for live coding.
 -}
-runHandlingStateT ::
-  Monad m =>
-  HandlingStateT m a ->
-  m a
-runHandlingStateT = flip evalStateT initHandlingState
+
+-- | In this monad, handles can be registered,
+--   and their destructors automatically executed.
+--   It is basically a monad in which handles are automatically garbage collected.
+newtype HandlingStateT m a = HandlingStateT
+  { unHandlingStateT :: AccumT Registry (WriterT (HandlingState m) m) a }
+  deriving (Functor, Applicative, Monad, MonadIO)
+
+instance MonadTrans HandlingStateT where
+  lift = HandlingStateT . lift . lift
+
+
+instance Monad m => MonadWriter (HandlingState m) (HandlingStateT m) where
+  writer = HandlingStateT . writer
+  listen = HandlingStateT . listen . unHandlingStateT
+  pass = HandlingStateT . pass . unHandlingStateT
+
+-- | Handle the 'HandlingStateT' effect _without_ garbage collection.
+--   Apply this to your main loop after calling 'foreground'.
+--   Since there is no garbage collection, don't use this function for live coding.
+runHandlingStateT
+  :: Monad m
+  => HandlingStateT m a
+  -> m a
+runHandlingStateT = fmap fst . runWriterT . fmap fst . flip runAccumT mempty . unHandlingStateT
 
 {- | Apply this to your main live cell before passing it to the runtime.
 
@@ -115,80 +134,78 @@ On every step, it does:
 3. Destroy all still unregistered handles
    (i.e. those that were removed in the last tick)
 -}
-runHandlingStateC ::
-  forall m a b.
-  (Monad m, Typeable m) =>
-  Cell (HandlingStateT m) a b ->
-  Cell m a b
-runHandlingStateC cell =
-  flip runStateC_ initHandlingState $
-    hoistCellOutput garbageCollected cell
+runHandlingStateC
+  :: forall m a b .
+     (Monad m, Typeable m)
+  => Cell (HandlingStateT m) a b
+  -> Cell                 m  a b
+runHandlingStateC = hoistCell $ runHandlingStateT . garbageCollected
+-- runHandlingStateC cell = flip runStateC_ mempty
+--   $ hoistCellOutput garbageCollected cell
 
 -- | Like 'runHandlingStateC', but for whole live programs.
-runHandlingState ::
-  (Monad m, Typeable m) =>
-  LiveProgram (HandlingStateT m) ->
-  LiveProgram m
-runHandlingState LiveProgram {..} =
-  flip
-    runStateL
-    initHandlingState
-    LiveProgram
-      { liveStep = garbageCollected . liveStep
-      , ..
-      }
+runHandlingState
+  :: (Monad m, Typeable m)
+  => LiveProgram (HandlingStateT m)
+  -> LiveProgram                 m
+runHandlingState = hoistLiveProgram $ runHandlingStateT . garbageCollected
+-- runHandlingState LiveProgram { .. } = flip runStateL mempty LiveProgram
+--   { liveStep = garbageCollected . liveStep
+--   , ..
+--   }
 
-garbageCollected ::
-  Monad m =>
-  HandlingStateT m a ->
-  HandlingStateT m a
-garbageCollected action = unregisterAll >> action <* destroyUnregistered
+-- Now I need mtl
+garbageCollected
+  :: Monad m
+  => HandlingStateT m a
+  -> HandlingStateT m a
+garbageCollected actionHS = pass $ do
+  (a, HandlingState { .. }) <- listen actionHS
+  let registeredKeys = IntSet.fromList registered
+      registeredConstructors = restrictKeys destructors registeredKeys
+      unregisteredConstructors = withoutKeys destructors registeredKeys
+  lift $ traverse_ action unregisteredConstructors
+  return (a, const HandlingState { destructors = registeredConstructors, registered = [] })
+-- garbageCollected action = unregisterAll >> action <* destroyUnregistered
 
 data Destructor m = Destructor
-  { isRegistered :: Bool
-  , action :: m ()
+  { isRegistered :: Bool -- TODO we don't need this anymore
+  , action       :: m ()
   }
 
-register ::
-  Monad m =>
-  -- | Destructor
-  m () ->
-  HandlingStateT m Key
-register destructor = do
-  HandlingState {..} <- get
-  let key = nHandles + 1
-  put
-    HandlingState
-      { nHandles = key
-      , destructors = insertDestructor destructor key destructors
-      }
+register
+  :: Monad m
+  => m () -- ^ Destructor
+  -> HandlingStateT m Key
+register action = HandlingStateT $ do
+  Registry { nHandles = key } <- look
+  add $ Registry 1
+  tell HandlingState
+    { destructors = singleton key Destructor { isRegistered = True, action }
+    , registered = [key]
+    }
   return key
 
-reregister ::
-  Monad m =>
-  m () ->
-  Key ->
-  HandlingStateT m ()
-reregister action key = do
-  HandlingState {..} <- get
-  put HandlingState {destructors = insertDestructor action key destructors, ..}
+reregister
+  :: Monad m
+  => m ()
+  -> Key
+  -> HandlingStateT m ()
+reregister action key = HandlingStateT $ tell HandlingState
+  { destructors = singleton key Destructor { isRegistered = True, action }
+  , registered = [key]
+  }
 
-insertDestructor ::
-  m () ->
-  Key ->
-  Destructors m ->
-  Destructors m
-insertDestructor action key destructors =
-  let destructor = Destructor {isRegistered = True, ..}
-   in insert key destructor destructors
-
-unregisterAll ::
-  Monad m =>
-  HandlingStateT m ()
-unregisterAll = do
-  HandlingState {..} <- get
-  let newDestructors = IntMap.map (\destructor -> destructor {isRegistered = False}) destructors
-  put HandlingState {destructors = newDestructors, ..}
+  -- Doesn't work as a single action
+{-
+unregisterAll
+  :: Monad m
+  => HandlingStateT m ()
+unregisterAll = _ {- do
+  HandlingState { .. } <- get
+  let newDestructors = IntMap.map (\destructor -> destructor { isRegistered = False }) destructors
+  put HandlingState { destructors = newDestructors, .. }
+-}
 
 destroyUnregistered ::
   Monad m =>
@@ -198,7 +215,8 @@ destroyUnregistered = do
   let
     (registered, unregistered) = partition isRegistered destructors
   traverse_ (lift . action) unregistered
-  put HandlingState {destructors = registered, ..}
+  put HandlingState { destructors = registered, .. }
+-}
 
 -- * 'Data' instances
 dataTypeDestructor :: DataType

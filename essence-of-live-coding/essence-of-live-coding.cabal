@@ -79,11 +79,13 @@ library
     , LiveCoding.Preliminary.LiveProgram.HotCodeSwap
     , LiveCoding.Preliminary.LiveProgram.LiveProgram2
     , LiveCoding.Preliminary.LiveProgram.LiveProgramPreliminary
+    , LiveCoding.HandlingState.AccumTOrphan
 
   other-extensions:    DeriveDataTypeable
   build-depends:
       base >= 4.11 && < 5
     , transformers >= 0.5
+    , mtl >= 2.2
     , containers >= 0.6
     , syb >= 0.7
     , vector-sized >= 1.2
