@@ -111,6 +111,7 @@ runExceptC (Cell state step) = Cell { .. }
           -> cellStep (Exception e) a
     cellStep (Exception e) _
       = return (Left e, Exception e)
+runExceptC cell = runExceptC $ toCell cell
 \end{code}
 \end{comment}
 
