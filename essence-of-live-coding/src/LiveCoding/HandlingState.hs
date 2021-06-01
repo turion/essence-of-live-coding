@@ -1,8 +1,13 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
-
+{-# LANGUAGE UndecidableInstances #-}
 module LiveCoding.HandlingState where
 
 -- base
@@ -24,6 +29,7 @@ import LiveCoding.Cell.Monad
 import LiveCoding.Cell.Monad.Trans
 import LiveCoding.LiveProgram
 import LiveCoding.LiveProgram.Monad.Trans
+import qualified Data.IntSet as IntSet
 
 data Handling h = Handling
   { key :: Key
@@ -44,6 +50,42 @@ data HandlingState m = HandlingState
    It is basically a monad in which handles are automatically garbage collected.
 -}
 type HandlingStateT m = StateT (HandlingState m) m
+
+instance Semigroup (HandlingState m) where
+  handlingState1 <> handlingState2 = HandlingState
+    { nHandles = nHandles handlingState1 `max` nHandles handlingState2
+    , destructors = destructors handlingState1 <> destructors handlingState2
+    }
+
+data MyHandlingState m a = MyHandlingState
+  { handlingState :: HandlingState m
+  , registered :: [Key]
+  , value :: a
+  }
+  deriving Functor
+
+newtype MyHandlingStateT m a = MyHandlingStateT
+  { unMyHandlingStateT :: m (MyHandlingState m a) }
+  deriving Functor
+
+instance Monad m => Monad (MyHandlingStateT m) where
+  return a = MyHandlingStateT $ return MyHandlingState
+    { handlingState = initHandlingState
+    , registered = []
+    , value = a
+    }
+  action >>= continuation = MyHandlingStateT $ do
+    firstState <- unMyHandlingStateT action
+    continuationState <- unMyHandlingStateT $ continuation $ value firstState
+    let registeredLater = registered continuationState
+        handlingStateEarlier = handlingState firstState <> handlingState continuationState
+        handlingStateLater = handlingStateEarlier
+          { destructors = destructors handlingStateEarlier `restrictKeys` IntSet.fromList registeredLater }
+    return MyHandlingState
+      { handlingState = handlingStateLater
+      , registered = registeredLater
+      , value = value continuationState
+      }
 
 initHandlingState :: HandlingState m
 initHandlingState =
