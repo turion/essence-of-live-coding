@@ -37,6 +37,7 @@ data EOLCPortMidiError
   | NoSuchDevice
   | NotAnInputDevice
   | NotAnOutputDevice
+  | MultipleDevices
   deriving (Data, Generic, Show)
 
 instance Finite EOLCPortMidiError
@@ -97,17 +98,25 @@ portMidiHandle = Handle
 newtype PortMidiInputStream = PortMidiInputStream { unPortMidiInputStream :: PMStream }
 newtype PortMidiOutputStream = PortMidiOutputStream { unPortMidiOutputStream :: PMStream }
 
-lookupDeviceID :: MonadIO m => String -> (DeviceInfo -> Maybe EOLCPortMidiError) -> m (Either EOLCPortMidiError DeviceID)
-lookupDeviceID nameLookingFor filter = do
+data InputOrOutput = Input | Output
+
+lookupDeviceID :: MonadIO m => String -> InputOrOutput -> m (Either EOLCPortMidiError DeviceID)
+lookupDeviceID nameLookingFor inputOrOutput = do
   nDevices <- liftIO countDevices
   -- This is a bit of a race condition, but PortMidi has no better API
   devices <- forM [0..nDevices-1] $ \deviceID -> do
     deviceInfo <- liftIO $ getDeviceInfo deviceID
     return (deviceInfo, deviceID)
-  let maybeDevice = find ((nameLookingFor ==) . name . fst) devices
-  return $ do
-    (deviceInfo, deviceID) <- maybe (Left NoSuchDevice) Right maybeDevice
-    maybe (Right deviceID) Left $ filter deviceInfo
+  let allDevicesWithName = filter ((nameLookingFor ==) . name . fst) devices
+      inputDevices = filter (input . fst) allDevicesWithName
+      outputDevices = filter (output . fst) allDevicesWithName
+  return $ case (inputOrOutput, inputDevices, outputDevices) of
+    (_, [], []) -> Left NoSuchDevice
+    (Input, [], _ : _) -> Left NotAnInputDevice
+    (Output, _ : _, []) -> Left NotAnOutputDevice
+    (Input, [(_, deviceID)], _) -> Right deviceID
+    (Output, _, [(_, deviceID)]) -> Right deviceID
+    _ -> Left MultipleDevices
 
 portMidiInputStreamHandle
   :: MonadIO m
@@ -115,9 +124,7 @@ portMidiInputStreamHandle
   -> Handle m (Either EOLCPortMidiError PortMidiInputStream)
 portMidiInputStreamHandle name = Handle
   { create = runExceptT $ do
-      deviceID <- ExceptT $ lookupDeviceID name
-        $ \DeviceInfo { .. }
-          -> if input then Nothing else Just NotAnInputDevice
+      deviceID <- ExceptT $ lookupDeviceID name Input
       fmap PortMidiInputStream $ withExceptT PMError $ ExceptT $ liftIO $ openInput deviceID
   -- TODO I don't get the error from closing here.
   -- Actually I really want ExceptT in the monad
@@ -143,9 +150,7 @@ portMidiOutputStreamHandle
   -> Handle m (Either EOLCPortMidiError PortMidiOutputStream)
 portMidiOutputStreamHandle name = Handle
   { create = runExceptT $ do
-      deviceID <- ExceptT $ lookupDeviceID name
-        $ \DeviceInfo { .. }
-          -> if output then Nothing else Just NotAnOutputDevice
+      deviceID <- ExceptT $ lookupDeviceID name Output
       -- Choose same latency as supercollider, see https://github.com/supercollider/supercollider/blob/18c4aad363c49f29e866f884f5ac5bd35969d828/lang/LangPrimSource/SC_PortMIDI.cpp#L416
       -- Thanks Miguel Negrão
       fmap PortMidiOutputStream $ withExceptT PMError $ ExceptT $ liftIO $ openOutput deviceID 0
