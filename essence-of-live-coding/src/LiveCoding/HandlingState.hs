@@ -106,14 +106,13 @@ data Destructor m = Destructor
 register
   :: Monad m
   => m () -- ^ Destructor
-  -> h -- ^ Handle value
   -> HandlingStateT m Key
-register destructor handle = do
+register destructor = do
   HandlingState { .. } <- get
   let key = nHandles + 1
   put HandlingState
     { nHandles = key
-    , destructors = insertDestructor destructor key handle destructors
+    , destructors = insertDestructor destructor key destructors
     }
   return key
 
@@ -121,19 +120,17 @@ reregister
   :: Monad m
   => m ()
   -> Key
-  -> h
   -> HandlingStateT m ()
-reregister action key handle = do
+reregister action key = do
   HandlingState { .. } <- get
-  put HandlingState { destructors = insertDestructor action key handle destructors, .. }
+  put HandlingState { destructors = insertDestructor action key destructors, .. }
 
 insertDestructor
   :: m ()
   -> Key
-  -> h
   -> Destructors m
   -> Destructors m
-insertDestructor action key handle destructors =
+insertDestructor action key destructors =
   let destructor = Destructor { isRegistered = True, .. }
   in  insert key destructor destructors
 

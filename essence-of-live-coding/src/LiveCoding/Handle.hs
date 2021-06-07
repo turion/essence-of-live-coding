@@ -120,11 +120,11 @@ handlingParametrised handleImpl@ParametrisedHandle { .. } = Cell { .. }
     cellStep Uninitialized parameter = do
       mereHandle <- lift $ createParametrised parameter
       let handle = (mereHandle, parameter)
-      key <- register (destroyParametrised parameter mereHandle) mereHandle
+      key <- register $ destroyParametrised parameter mereHandle
       return (mereHandle, Handling { handle = handle, .. })
     cellStep handling@Handling { handle = (mereHandle, lastParameter), .. } parameter
       | parameter == lastParameter = do
-          reregister (destroyParametrised parameter mereHandle) key mereHandle
+          reregister (destroyParametrised parameter mereHandle) key
           return (mereHandle, handling)
       | otherwise = do
           lift $ destroyParametrised lastParameter mereHandle

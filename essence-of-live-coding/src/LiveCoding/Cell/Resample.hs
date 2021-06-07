@@ -28,7 +28,7 @@ resample cell = arr toList >>> resampleList cell >>> arr (fromList >>> fromJust)
 
 -- | Execute the cell for as many steps as the input list is long.
 resampleList :: Monad m => Cell m a b -> Cell m [a] [b]
-resampleList cell = hoistCellKleisli morph cell
+resampleList = hoistCellKleisli morph
   where
     morph _ s [] = return ([], s)
     morph singleStep s (a : as) = do
