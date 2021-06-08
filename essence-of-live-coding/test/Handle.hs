@@ -1,6 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE RecordWildCards #-}
 module Handle where
 
 -- base
@@ -42,14 +43,15 @@ cellWithAction
   -> Cell Identity a (String, Int)
 cellWithAction action = flip runStateC 0 $ runHandlingStateC $ handling testHandle >>> arrM (<$ lift action)
 
-testParametrisedHandle :: ParametrisedHandle (State Int) Bool String
-testParametrisedHandle = ParametrisedHandle
-  { createParametrised = \flag -> do
+testParametrisedHandle :: ParametrisedHandle Bool (State Int) String
+testParametrisedHandle = ParametrisedHandle { .. }
+  where
+    createParametrised flag = do
       n <- get
       let greeting = if flag then "Ye Olde Handle No " else "Crazy new hdl #"
       return $ greeting ++ show n
-  , destroyParametrised = const $ const $ put 12345
-  }
+    destroyParametrised = const $ const $ put 12345
+    changeParametrised = defaultChange createParametrised destroyParametrised
 
 cellWithActionParametrized
   :: forall a b . State Int b
@@ -120,8 +122,8 @@ test = testGroup "Handle"
     , output =
         [ ("Ye Olde Handle No 0", 1)
         , ("Ye Olde Handle No 0", 2)
-        , ("Crazy new hdl #12345", 12345)
         , ("Crazy new hdl #12345", 12346)
+        , ("Crazy new hdl #12345", 12347)
         ]
     }
   , testProperty "Control flow does not trigger destructors or constructors" CellSimulation
