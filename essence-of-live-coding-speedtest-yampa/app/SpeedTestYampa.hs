@@ -1,5 +1,7 @@
 {-# LANGUAGE Arrows #-}
 
+module Main (main) where
+
 -- base
 import Data.Maybe (isJust)
 
