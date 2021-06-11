@@ -14,12 +14,26 @@ addons:
 cache:
   directories:
     - $HOME/.cabal
-ghc:
-  - '8.10'
-  - '8.8'
-  - '8.6'
+    - $HOME/.stack
+    - $TRAVIS_BUILD_DIR/.stack-work
+
+matrix:
+  include:
+
+  # Cabal
+  - ghc: '8.10'
+  - ghc: '8.8'
+  - ghc: '8.6'
+
+  # Stack
+  - ghc: '8.10.4'
+    env: STACK_YAML="stack.yaml"
+  - ghc: '8.8.4'
+    env: STACK_YAML="stack-lts-16.31.yaml"
+  - ghc: '8.6.5'
+    env: STACK_YAML="stack-lts-14.27.yaml"
+
 script:
-  - cabal new-build all --enable-tests
-  - cabal new-test all --enable-tests
-  - git fetch origin master:origin/master && git rebase origin/master --exec "cabal new-build all --enable-tests"
+  - bash travis-build.sh    
+
 install: skip
