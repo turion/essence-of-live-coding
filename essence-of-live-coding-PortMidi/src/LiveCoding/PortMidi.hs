@@ -34,6 +34,9 @@ import GHC.TypeLits (Symbol, symbolVal, KnownSymbol)
 -- transformers
 import Control.Monad.Trans.Class
 
+-- mmorph
+import Control.Monad.Morph
+
 -- PortMidi
 import Sound.PortMidi
 
@@ -102,6 +105,9 @@ liftPMError = PortMidiT . ExceptT . fmap (left PMError) . lift
 liftHandlingState :: Monad m => Cell (HandlingStateT m) a b -> Cell (PortMidiT m) a b
 liftHandlingState = hoistCell $ PortMidiT . lift
 
+-- Trouble is I really want to go from PortMidiT (ExceptT e m)
+joinCellExcept :: (Data e, Finite e, Monad m) => CellExcept (PortMidiT m) a b e -> CellExcept (HandlingStateT m) a b (Either e EOLCPortMidiError)
+joinCellExcept = try . hoistCell squash . runCellExcept . fmap Left . hoistCellExcept (withExceptT Right . unPortMidiT)
 -- ** Running values in 'PortMidiT'
 
 {- | Run a cell containing PortMidi effects.
