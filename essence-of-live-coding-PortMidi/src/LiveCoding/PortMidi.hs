@@ -1,3 +1,11 @@
+{- | * Support for PortMidi (hackage.haskell.org/package/PortMidi)
+
+With this module, you can add cells which receive and send MIDI events.
+
+You don't need to initialise PortMidi, or open devices,
+this is all done by `essence-of-live-coding` using the "LiveCoding.Handle" mechanism.
+-}
+
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -32,40 +40,79 @@ import Sound.PortMidi
 -- essence-of-live-coding
 import LiveCoding
 
+-- * The 'PortMidiT' monad transformer
+
+{- | Monad transformer adding PortMidi-related effects to your monad.
+
+This transformer adds two kinds of effects to your stack:
+
+* PortMidi exceptions (See 'EOLCPortMidiError')
+* Automatic initialisation of PortMidi devices (using 'HandlingStateT')
+-}
+newtype PortMidiT m a = PortMidiT
+  { unPortMidiT :: ExceptT EOLCPortMidiError (HandlingStateT m) a }
+  deriving (Functor, Applicative, Monad, MonadIO)
+
+instance MonadTrans PortMidiT where
+  lift = PortMidiT . lift . lift
+
+{- | Exceptions that can occur while doing livecoding with PortMidi.
+
+There are two kinds of exceptions:
+
+* Internal PortMidi exceptions (see 'PMError')
+* When a device is not correctly specified by name and input/output configuration
+-}
 data EOLCPortMidiError
+  -- | An internal error occurred in the PortMidi library
   = PMError PMError
+  -- | There is no device of that name
   | NoSuchDevice
+  -- | There is a device of that name, but it doesn't support input
   | NotAnInputDevice
+  -- | There is a device of that name, but it doesn't support output
   | NotAnOutputDevice
+  -- | There are multiple devices of the same name
   | MultipleDevices
   deriving (Data, Generic, Show)
 
 instance Finite EOLCPortMidiError
 
--- | The monad transformer of PortMidi exceptions
-newtype PortMidiT m a = PortMidiT
-  { unPortMidiT :: ExceptT EOLCPortMidiError (HandlingStateT m) a }
-  deriving (Functor, Applicative, Monad, MonadIO)
+deriving instance Data PMError
+deriving instance Generic PMError
+instance Finite PMError
 
-runPortMidiT :: PortMidiT m a -> HandlingStateT m (Either EOLCPortMidiError a)
-runPortMidiT PortMidiT { .. } = runExceptT unPortMidiT
+-- ** Constructing values in 'PortMidiT'
 
+-- | Given an exception value, throw it immediately.
 throwPortMidi :: Monad m => EOLCPortMidiError -> PortMidiT m arbitrary
 throwPortMidi = PortMidiT . throwE
 
+-- | Like 'throwPortMidi', but as a 'Cell'.
 throwPortMidiC :: Monad m => Cell (PortMidiT m) EOLCPortMidiError arbitrary
 throwPortMidiC = arrM throwPortMidi
 
-instance MonadTrans PortMidiT where
-  lift = PortMidiT . lift . lift
-
+-- | Given a monadic action that produces a value or a 'PMError',
+--   run it as an action in 'PortMidiT'.
+--   Typically needed to lift PortMidi backend functions.
 liftPMError :: Monad m => m (Either PMError a) -> PortMidiT m a
 liftPMError = PortMidiT . ExceptT . fmap (left PMError) . lift
 
+-- | Given a cell with existing handles, lift it into 'PortMidiT'.
 liftHandlingState :: Monad m => Cell (HandlingStateT m) a b -> Cell (PortMidiT m) a b
 liftHandlingState = hoistCell $ PortMidiT . lift
 
--- | Initialize the MIDI system, run the action, and shut it down again.
+-- ** Running values in 'PortMidiT'
+
+{- | Run a cell containing PortMidi effects.
+
+@runPortMidiC cell@ goes through the following steps:
+
+1. Initialize the MIDI system
+2. Run @cell@, until possibly an exception occurs
+3. Shut the MIDI system down
+4. Throw the exception in 'CellExcept'
+-}
 runPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> CellExcept (HandlingStateT m) a b EOLCPortMidiError
 runPortMidiC cell = try $ proc a -> do
   _ <- liftCell $ handling portMidiHandle -< ()
@@ -80,9 +127,18 @@ loopPortMidiC cell = foreverC $ runCellExcept $ do
     threadDelay 1000
   return e
 
-deriving instance Data PMError
-deriving instance Generic PMError
-instance Finite PMError
+{- | Execute the 'PortMidiT' effects'.
+
+This returns the first occurring exception.
+For details on how to automatically start and garbage collect handles,
+such as the PortMidi backend and devices,
+see "LiveCoding.HandlingState".
+
+You will rarely need this function.
+Look at 'runPortMidiC' and 'loopPortMidiC' instead.
+-}
+runPortMidiT :: PortMidiT m a -> HandlingStateT m (Either EOLCPortMidiError a)
+runPortMidiT PortMidiT { .. } = runExceptT unPortMidiT
 
 -- | A marker witnessing that PortMidi was initialized
 data PortMidiHandle = PortMidiHandle
