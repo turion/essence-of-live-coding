@@ -20,6 +20,7 @@ import Test.QuickCheck
 import qualified Cell
 import qualified Feedback
 import qualified Handle
+import qualified HandlingState
 import qualified Migrate.NoMigration
 import qualified Monad
 import qualified Monad.Trans
@@ -133,6 +134,7 @@ tests =
           ]
       , Cell.test
       , Handle.test
+    , HandlingState.test
       , Migrate.NoMigration.test
       , Monad.test
       , Feedback.test

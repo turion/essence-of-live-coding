@@ -94,6 +94,7 @@ cellWithActionTypelevel action =
     runHandlingStateC $
       handling testTypelevelHandle >>> arrM (<$ lift action)
 
+test :: Test
 test =
   testGroup
     "Handle"
