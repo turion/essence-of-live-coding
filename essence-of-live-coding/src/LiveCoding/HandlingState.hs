@@ -68,7 +68,7 @@ data HandlingState m = HandlingState
 
 instance Semigroup (HandlingState m) where
   handlingState1 <> handlingState2 = HandlingState
-    { destructors = destructors handlingState1 <> destructors handlingState2
+    { destructors = destructors handlingState2 <> destructors handlingState1
     , registered = registered handlingState1 `List.union` registered handlingState2
     }
 
