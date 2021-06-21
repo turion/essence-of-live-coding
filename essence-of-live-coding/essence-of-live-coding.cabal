@@ -103,6 +103,7 @@ test-suite test
     , Feedback
     , Handle
     , Handle.LiveProgram
+    , HandlingState
     , Monad
     , Monad.Trans
     , RuntimeIO.Launch

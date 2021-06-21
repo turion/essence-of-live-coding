@@ -20,6 +20,7 @@ import Test.QuickCheck
 import qualified Cell
 import qualified Feedback
 import qualified Handle
+import qualified HandlingState
 import qualified Monad
 import qualified Monad.Trans
 import qualified RuntimeIO.Launch
@@ -113,6 +114,7 @@ tests =
       ]
     , Cell.test
     , Handle.test
+    , HandlingState.test
     , Monad.test
     , Feedback.test
     ]
