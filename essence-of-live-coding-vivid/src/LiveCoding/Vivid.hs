@@ -42,14 +42,14 @@ data SynthState
 * A change in the 'SynthDef' or the types of the @params@ will 'release' the synthesizer and start a new one.
 -}
 vividHandleParametrised
-  :: (VividAction m, Eq params, VarList params, Subset (InnerVars params) args)
+  :: (VividAction m, Eq params, VarList params, Subset (InnerVars params) args, Elem "gate" args)
   => ParametrisedHandle (params, SynthDef args, SynthState) m (Maybe (Synth args))
 vividHandleParametrised = ParametrisedHandle { .. }
   where
     createParametrised (params, synthDef, Started) = Just <$> synth synthDef params
     createParametrised (params, synthDef, Stopped) = defineSD synthDef >> pure Nothing
 
-    destroyParametrised _ synthMaybe = traverse_ free synthMaybe
+    destroyParametrised _ synthMaybe = traverse_ release synthMaybe
 
     -- Only the synth parameters changed and it's still running.
     -- So simply set new parameters without stopping it.
@@ -63,6 +63,6 @@ vividHandleParametrised = ParametrisedHandle { .. }
 deriving instance Eq (SynthDef args)
 
 liveSynth
-  :: (VividAction m, VarList params, Subset (InnerVars params) args, Typeable args, Data params, Eq params, VarList (Synth args))
+  :: (VividAction m, VarList params, Subset (InnerVars params) args, Typeable args, Data params, Eq params, VarList (Synth args), Elem "gate" args)
   => Cell (HandlingStateT m) (params, SynthDef args, SynthState) (Maybe (Synth args))
 liveSynth = handlingParametrised vividHandleParametrised
