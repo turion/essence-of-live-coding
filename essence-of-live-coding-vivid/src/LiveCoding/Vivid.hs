@@ -2,10 +2,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE Arrows #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module LiveCoding.Vivid where
 
 -- base
 import Data.Foldable (traverse_)
+import GHC.TypeLits ( KnownSymbol )
 
 -- vivid
 import Vivid
@@ -39,8 +42,21 @@ vividHandleParametrised = ParametrisedHandle { .. }
     changeParametrised old new synth = defaultChange createParametrised destroyParametrised old new synth
 
 deriving instance Eq (SynthDef args)
+deriving instance Data SynthState
+deriving instance KnownSymbol a => Data (I a)
+
+holdFirstValue :: (Data a, Monad m) => Cell m a a
+holdFirstValue = Cell { .. }
+  where
+    cellState = Nothing
+    cellStep Nothing x = return (x, Just x)
+    cellStep (Just s) _ = return (s, Just s)
 
 liveSynth
-  :: (VividAction m, VarList params, Subset (InnerVars params) args, Typeable args, Data params, Eq params, VarList (Synth args), Elem "gate" args)
-  => Cell (HandlingStateT m) (params, SynthDef args, SynthState) (Maybe (Synth args))
-liveSynth = handlingParametrised vividHandleParametrised
+  :: (VividAction m, VarList params, Subset (InnerVars params) (InnerVars params),
+    Typeable params, Typeable (InnerVars params),
+    Eq params, Elem "gate" (InnerVars params), Data params)
+  => Cell (HandlingStateT m) (params, SDBody' (InnerVars params) [Signal], SynthState) (Maybe (Synth (InnerVars params)))
+liveSynth = proc (params, sdbody, synthstate) -> do
+  paramsFirstValue <- holdFirstValue -< params
+  handlingParametrised vividHandleParametrised -< (params, sd paramsFirstValue sdbody, synthstate)
