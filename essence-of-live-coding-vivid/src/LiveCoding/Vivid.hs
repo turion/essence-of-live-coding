@@ -6,7 +6,9 @@ With this module, you can create cells corresponding to synthesizers.
 The synthesizers automatically start and stop on reload.
 -}
 
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -14,6 +16,7 @@ module LiveCoding.Vivid where
 
 -- base
 import Data.Foldable (traverse_)
+import GHC.TypeLits (KnownSymbol)
 
 -- vivid
 import Vivid
@@ -61,8 +64,18 @@ vividHandleParametrised = ParametrisedHandle { .. }
     changeParametrised old new synth = defaultChange createParametrised destroyParametrised old new synth
 
 deriving instance Eq (SynthDef args)
+deriving instance Data SynthState
+deriving instance KnownSymbol a => Data (I a)
 
 liveSynth
-  :: (VividAction m, VarList params, Subset (InnerVars params) args, Typeable args, Data params, Eq params, VarList (Synth args), Elem "gate" args)
-  => Cell (HandlingStateT m) (params, SynthDef args, SynthState) (Maybe (Synth args))
-liveSynth = handlingParametrised vividHandleParametrised
+  :: ( VividAction m
+     , Eq params, Typeable params, VarList params
+     , Typeable (InnerVars params), Subset (InnerVars params) (InnerVars params)
+     , Elem "gate" (InnerVars params), Data params
+     )
+  => Cell (HandlingStateT m)
+       (params, SDBody' (InnerVars params) [Signal], SynthState)
+       (Maybe (Synth (InnerVars params)))
+liveSynth = proc (params, sdbody, synthstate) -> do
+  paramsFirstValue <- holdFirst -< params
+  handlingParametrised vividHandleParametrised -< (params, sd paramsFirstValue sdbody, synthstate)
