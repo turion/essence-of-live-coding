@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE GADTs #-}
 module LiveCoding.JSON where
 
 -- json
@@ -8,9 +10,13 @@ import LiveCoding
 
 -- * JSON Utilities
 
--- | Decode a string as a value,
---   throwing an error if the JSON is invalid or doesn't match the type.
-decodeJSON :: Data a => String -> Result a
-decodeJSON = runGetJSON readJSValue >=> fromJSON
+data DataBox where
+  DataBox :: Data a => a -> DataBox
+
+withJSON :: (DataBox -> b) -> JSValue -> Maybe b
+withJSON f val = fmap f $ resultToMaybe $ fromJSON val
+  where
+    resultToMaybe (Ok value) = Just value
+    resultToMaybe (Error _) = Nothing
 
 -- FIXME Actually I need to reimplement fromJSON_generic and insert default values
