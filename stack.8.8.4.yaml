@@ -15,3 +15,12 @@ packages:
 extra-deps:
 - Yampa-0.13.1@sha256:4612a2646c27bcd3ac55c90dbc34249303e28aa5b3bc3e0c6fa9ce58b889843c,5436
 - http-client-0.7.8@sha256:ed76dcd7edec3aaebe012541ca0a52594405e9b21d69420d26c0223bc4d5dc82,5400
+
+nix:
+  packages:
+    - libGL
+    - libGLU
+    - libpulseaudio
+    - zlib
+    - blas
+    - lapack

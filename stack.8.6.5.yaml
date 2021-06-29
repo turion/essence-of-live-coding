@@ -24,3 +24,12 @@ extra-deps:
 - http2-3.0.2@sha256:7ef3389c98243da89960dc5b874d20d56c335f4319ee040cda7eea2d4ded308f,15814
 - network-byte-order-0.1.6@sha256:23d8b609ac43a69d04d5e8f411e5f86a0266c0e8b33b65f8c92ebda64273fe3a,1313
 - http-client-0.7.8@sha256:ed76dcd7edec3aaebe012541ca0a52594405e9b21d69420d26c0223bc4d5dc82,5400
+
+nix:
+  packages:
+    - libGL
+    - libGLU
+    - libpulseaudio
+    - zlib
+    - blas
+    - lapack
