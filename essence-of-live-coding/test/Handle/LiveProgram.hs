@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE NamedFieldPuns #-}
 module Handle.LiveProgram where
 
 -- base
@@ -13,6 +14,9 @@ import Control.Monad.Trans.RWS.Strict (RWS, tell)
 import qualified Control.Monad.Trans.RWS.Strict as RWS
 import Control.Monad.Trans.State.Strict
 
+-- mtl
+import Control.Monad.Writer (listen)
+
 -- test-framework
 import Test.Framework
 
@@ -22,7 +26,9 @@ import Test.Framework.Providers.QuickCheck2
 -- essence-of-live-coding
 import LiveCoding
 import LiveCoding.Handle
+import LiveCoding.HandlingState
 import Util.LiveProgramMigration
+import Control.Monad.Trans.Accum
 
 testHandle :: Handle (RWS () [String] Int) String
 testHandle = Handle
@@ -36,8 +42,8 @@ testHandle = Handle
 
 test = testGroup "Handle.LiveProgram"
   [ testProperty "Trigger destructors in live program" LiveProgramMigration
-    { liveProgram1 = runHandlingState $ liveCell
-        $ handling testHandle >>> arrM (lift . tell . return) >>> constM inspectHandlingState
+    { liveProgram1 = runHandlingState $ liveCell $ hoistCell inspectingHandlingState
+        $ handling testHandle >>> arrM (lift . tell . return)
     , liveProgram2 = runHandlingState mempty
     , input1 = replicate 3 ()
     , input2 = replicate 3 ()
@@ -48,9 +54,11 @@ test = testGroup "Handle.LiveProgram"
     }
   ]
     where
-      inspectHandlingState = do
-        HandlingState { .. } <- get
+      inspectingHandlingState action = do
+        (a, HandlingState { .. }) <- listen action
+        Registry { .. } <- HandlingStateT look
         lift $ tell
           [ "Handles: " ++ show nHandles
           , "Destructors: " ++ unwords (show . second isRegistered <$> IntMap.toList destructors)
           ]
+        return a
