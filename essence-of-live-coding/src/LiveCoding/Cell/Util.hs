@@ -8,6 +8,7 @@ import Control.Arrow
 import Control.Monad (join)
 import Control.Monad.IO.Class
 import Data.Data (Data)
+import Data.Foldable (toList)
 import Data.Functor (void)
 import Data.Maybe
 
@@ -21,7 +22,6 @@ import Data.Time.Clock
 -- essence-of-live-coding
 import LiveCoding.Cell
 import LiveCoding.Cell.Feedback
-import Data.Foldable (toList)
 import LiveCoding.Cell.Resample (resampleMaybe)
 import LiveCoding.Cell.Util.Internal
 
