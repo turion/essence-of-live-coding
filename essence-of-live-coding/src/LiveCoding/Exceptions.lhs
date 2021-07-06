@@ -64,6 +64,15 @@ throwIf condition e = proc a -> do
 
 throwIf_ :: Monad m => (a -> Bool) -> Cell (ExceptT () m) a a
 throwIf_ condition = throwIf condition ()
+
+-- | When the incoming value is @'Right' a@, forward it.
+--   When it is @'Left' e@, throw it as an exception.
+--   Compare with 'except'.
+exceptC :: Monad m => Cell (ExceptT e m) (Either e a) a
+exceptC = proc ea -> do
+  case ea of
+    Left e -> throwC -< e
+    Right a -> returnA -< a
 \end{code}
 \end{comment}
 
