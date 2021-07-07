@@ -47,9 +47,9 @@ bindBool cell handler
 {-
 bindBool'
   :: (Monad m, Data e, Finite e)
-  => CellExcept m a b Bool
-  -> (Bool -> CellExcept m a b e)
-  -> CellExcept m a b e
+  => CellExcept a b m Bool
+  -> (Bool -> CellExcept a b m e)
+  -> CellExcept a b m e
 bindBool' cellE handler = CellExcept
   { fmapExcept = id
   , cellExcept = runCellExcept cellE `bindBool` (runCellExcept . handler)
@@ -69,7 +69,7 @@ admitted,
 but if it is possible to bind \mintinline{haskell}{Bool},
 then it is certainly possible to bind \mintinline{haskell}{(Bool, Bool)},
 by nesting two \mintinline{haskell}{if}-statements.
-By the same logic, we can bind \mintinline{haskell}{(Bool, Bool, Bool)} %, 
+By the same logic, we can bind \mintinline{haskell}{(Bool, Bool, Bool)} %,
 %\mintinline{haskell}{(Bool, Bool, Bool, Bool)},
 and so on
 (and of course any isomorphic type as well).
@@ -106,7 +106,7 @@ given that it is not recursive.
 
 It is possible to restrict the previous \mintinline{haskell}{CellExcept} definition by the typeclass:
 \begin{spec}
-data CellExcept m a b e = forall e' .
+data CellExcept a b m e = forall e' .
   (Data e', Finite e') => CellExcept
   { fmapExcept :: e' -> e
   , cellExcept :: Cell (ExceptT e' m) a b

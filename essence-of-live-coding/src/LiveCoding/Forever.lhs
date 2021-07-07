@@ -32,8 +32,8 @@ What if we want to change between the oscillator and a waiting period indefinite
 In other words, how do we repeatedly execute this action:
 \begin{code}
 sinesWaitAndTry
-  :: MonadFix   m
-  => CellExcept m () String ()
+  :: MonadFix m
+  => CellExcept () String m ()
 sinesWaitAndTry = do
   try $ arr (const "Waiting...") >>> wait 1
   try $ sine 5 >>> arr asciiArt  >>> wait 5
@@ -42,8 +42,8 @@ sinesWaitAndTry = do
 The one temptation we have to resist is to recurse in the \mintinline{haskell}{CellExcept} context to prove the absence of exceptions:
 \begin{code}
 sinesForever'
-  :: MonadFix   m
-  => CellExcept m () String Void
+  :: MonadFix m
+  => CellExcept () String m Void
 sinesForever' = do
   sinesWaitAndTry
   sinesForever'
@@ -84,6 +84,7 @@ foreverE e (Cell state step) = Cell { .. }
       case continueExcept of
         Left e' -> cellStep f { lastException = e', currentState = initState } a
         Right (b, state') -> return (b, f { currentState = state' })
+foreverE e cell = foreverE e $ toCell cell
 \end{code}
 \end{comment}
 Again, it is instructive to look at the internal state of the looped cell:

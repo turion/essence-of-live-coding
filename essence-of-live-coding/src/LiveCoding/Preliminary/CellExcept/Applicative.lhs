@@ -64,7 +64,7 @@ or \emph{Co-Yoneda construction}:
 \fxwarning{Maybe cite http://comonad.com/reader/2016/adjoint-triples/ or search something else}
 \fxwarning{Possible other names: Mode}
 \begin{code}
-data CellExcept m a b e = forall e' .
+data CellExcept a b m e = forall e' .
   Data e' => CellExcept
   { fmapExcept :: e' -> e
   , cellExcept :: Cell (ExceptT e' m) a b
@@ -75,7 +75,7 @@ we do not restrict the parameter type \mintinline{haskell}{e}.
 
 It is known that this construction gives rise to a \mintinline{haskell}{Functor} instance for free:
 \begin{code}
-instance Functor (CellExcept m a b) where
+instance Functor (CellExcept a b m) where
   fmap f CellExcept { .. } = CellExcept
     { fmapExcept = f . fmapExcept
     , ..
@@ -87,7 +87,7 @@ The \mintinline{haskell}{Applicative} instance arises from the work we have done
 while sequential application is a bookkeeping exercise around the previously defined function \mintinline{haskell}{andThen}:
 \begin{code}
 instance Monad m
-  => Applicative (CellExcept m a b) where
+  => Applicative (CellExcept a b m) where
   pure e = CellExcept
     { fmapExcept = const e
     , cellExcept = constM $ throwE ()

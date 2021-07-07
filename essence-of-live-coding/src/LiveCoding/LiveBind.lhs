@@ -7,8 +7,8 @@ we want to implement the holy grail of Haskell, \emph{bind}:
 (>>=)
   :: Monad      m
   => CellExcept m        a b e1
-  -> (e1 -> CellExcept m a b    e2)
-  ->        CellExcept m a b    e2
+  -> (e1 -> CellExcept a b m    e2)
+  ->        CellExcept a b m    e2
 \end{spec}
 Unwrapped from the \mintinline{haskell}{newtype},
 it would have a type signature like this:

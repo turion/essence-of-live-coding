@@ -39,7 +39,7 @@ The interface is the basically the same as 'CellExcept',
 and it is in fact a newtype around it.
 -}
 newtype LiveProgramExcept m e = LiveProgramExcept
-  { unLiveProgramExcept :: CellExcept m () () e }
+  { unLiveProgramExcept :: CellExcept () () m e }
   deriving (Functor, Applicative, Monad)
 
 -- | Execute a 'LiveProgramExcept', throwing its exceptions in the 'ExceptT' monad.

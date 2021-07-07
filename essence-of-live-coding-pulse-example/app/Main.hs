@@ -51,7 +51,7 @@ cellB = proc _ -> do
   fDelta <- runReaderC 10 osc -< ()
   runReaderC' osc -< (440 + 5 * fDelta, ())
 
-short :: Monad m => Float -> CellExcept m () Float ()
+short :: Monad m => Float -> CellExcept () Float m ()
 short frequency = try $ proc _ -> do
   count <- sumC -< 1 :: Int
   if count > 8000
