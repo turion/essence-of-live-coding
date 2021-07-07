@@ -44,6 +44,13 @@ instance Monad m => Functor (CellExcept a b m) where
 instance Monad m => Applicative (CellExcept a b m) where
   pure = return
   (<*>) = ap
+
+instance MFunctor (CellExcept a b) where
+  hoist morphism (Return e) = Return e
+  hoist morphism (Bind action cont) = Bind
+    (hoist morphism action)
+    (hoist morphism . cont)
+  hoist morphism (Try cell) = Try $ hoistCell (mapExceptT morphism) cell
 \end{code}
 \end{comment}
 The \mintinline{haskell}{Monad} instance is now trivial:
