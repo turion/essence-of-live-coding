@@ -84,6 +84,7 @@ foreverE e (Cell state step) = Cell { .. }
       case continueExcept of
         Left e' -> cellStep f { lastException = e', currentState = initState } a
         Right (b, state') -> return (b, f { currentState = state' })
+foreverE e cell = foreverE e $ toCell cell
 \end{code}
 \end{comment}
 Again, it is instructive to look at the internal state of the looped cell:
