@@ -116,7 +116,7 @@ liftHandlingState = hoistCell $ PortMidiT . lift
 3. Shut the MIDI system down
 4. Throw the exception in 'CellExcept'
 -}
-runPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> CellExcept (HandlingStateT m) a b EOLCPortMidiError
+runPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> CellExcept a b (HandlingStateT m) EOLCPortMidiError
 runPortMidiC cell = try $ proc a -> do
   _ <- liftCell $ handling portMidiHandle -< ()
   hoistCell unPortMidiT cell -< a

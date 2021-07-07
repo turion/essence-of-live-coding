@@ -32,7 +32,7 @@ Also we already know that try needs an extra type class. Take this from the mona
 try
   :: Data          e
   => Cell (ExceptT e m) a b
-  -> CellExcept      m  a b e
+  -> CellExcept         a b m e
 try = CellExcept id
 \end{code}
 And we can leave it safely once we have proven that there are no exceptions left to throw,
@@ -41,7 +41,7 @@ i.e. the exception type is empty (represented in Haskell by \mintinline{haskell}
 \begin{code}
 safely
   :: Monad      m
-  => CellExcept m a b Void
+  => CellExcept a b m Void
   -> Cell       m a b
 safely = hoistCell discardVoid . runCellExcept
 
@@ -55,7 +55,7 @@ discardVoid
 One way to prove the absence of further exceptions is,
 of course, to run an exception-free cell:
 \begin{code}
-safe :: Monad m => Cell m a b -> CellExcept m a b void
+safe :: Monad m => Cell m a b -> CellExcept a b m void
 safe cell = CellExcept
   { fmapExcept = absurd
   , cellExcept = liftCell cell
@@ -65,8 +65,8 @@ If we want to leave an exception unhandled,
 this is also possible:
 \begin{code}
 runCellExcept
-  :: Monad           m
-  => CellExcept      m  a b e
+  :: Monad          m
+  => CellExcept a b m e
   -> Cell (ExceptT e m) a b
 runCellExcept CellExcept { .. }
   = hoistCell (withExceptT fmapExcept)

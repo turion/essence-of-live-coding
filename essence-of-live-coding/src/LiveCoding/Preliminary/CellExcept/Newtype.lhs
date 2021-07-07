@@ -24,7 +24,7 @@ Inspired by \cite[Section 2, "Control Flow through Exceptions"]{Rhine},
 we introduce a newtype:
 
 \begin{code}
-newtype CellExcept m a b e = CellExcept
+newtype CellExcept a b m e = CellExcept
   { runCellExcept :: Cell (ExceptT e m) a b }
 \end{code}
 
@@ -33,7 +33,7 @@ trying to execute it until the exception occurs:
 \begin{code}
 try
   :: Cell (ExceptT e m) a b
-  -> CellExcept      m  a b e
+  -> CellExcept a b m e
 try = CellExcept
 \end{code}
 And we can leave it safely once we have proven that there are no exceptions left to throw,
@@ -41,7 +41,7 @@ i.e. the exception type is empty (represented in Haskell by \mintinline{haskell}
 \begin{code}
 safely
   :: Monad      m
-  => CellExcept m a b Void
+  => CellExcept a b m Void
   -> Cell       m a b
 \end{code}
 \begin{comment}
@@ -58,7 +58,7 @@ of course, to run an exception-free cell:
 safe
   :: Monad      m
   => Cell       m a b
-  -> CellExcept m a b Void
+  -> CellExcept a b m Void
 \end{code}
 \begin{comment}
 \begin{code}
@@ -75,7 +75,7 @@ When an exception is raised,
 we simply apply a given function to it:
 \begin{code}
 instance Functor m
-  => Functor (CellExcept m a b) where
+  => Functor (CellExcept a b m) where
   fmap f (CellExcept cell) = CellExcept
     $ hoistCell (withExceptT f) cell
 \end{code}
@@ -88,7 +88,7 @@ wrapped in the newtype:
 pure
   :: Monad      m
   =>                  e
-  -> CellExcept m a b e
+  -> CellExcept a b m e
 pure e = CellExcept $ arr (const e) >>> throwC
 \end{code}
 

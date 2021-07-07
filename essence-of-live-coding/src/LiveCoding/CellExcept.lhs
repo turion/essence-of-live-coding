@@ -16,6 +16,7 @@ import Control.Monad.Trans.Except
 import LiveCoding.Cell
 import LiveCoding.Exceptions
 import LiveCoding.Exceptions.Finite
+import Control.Monad.Morph
 \end{code}
 \end{comment}
 
@@ -23,39 +24,39 @@ We can save on boiler plate by dropping the Coyoneda embedding for an ``operatio
 \fxerror{Cite operational}
 \fxerror{Move the following code into appendix?}
 \begin{code}
-data CellExcept m a b e where
-  Return :: e -> CellExcept m a b e
+data CellExcept a b m e where
+  Return :: e -> CellExcept a b m e
   Bind
-    :: CellExcept m a b e1
-    -> (e1 -> CellExcept m a b e2)
-    -> CellExcept m a b e2
+    :: CellExcept a b m e1
+    -> (e1 -> CellExcept a b m e2)
+    -> CellExcept a b m e2
   Try
     :: (Data e, Finite e)
     => Cell (ExceptT e m) a b
-    -> CellExcept m a b e
+    -> CellExcept a b m e
 \end{code}
 
 \begin{comment}
 \begin{code}
-instance Monad m => Functor (CellExcept m a b) where
+instance Monad m => Functor (CellExcept a b m) where
   fmap = liftM
 
-instance Monad m => Applicative (CellExcept m a b) where
+instance Monad m => Applicative (CellExcept a b m) where
   pure = return
   (<*>) = ap
 \end{code}
 \end{comment}
 The \mintinline{haskell}{Monad} instance is now trivial:
 \begin{code}
-instance Monad m => Monad (CellExcept m a b) where
+instance Monad m => Monad (CellExcept a b m) where
   return = Return
   (>>=) = Bind
 \end{code}
 As is typical for operational monads, all of the effort now goes into the interpretation function:
 \begin{code}
 runCellExcept
-  :: Monad           m
-  => CellExcept      m  a b e
+  :: Monad m
+  => CellExcept a b m e
   -> Cell (ExceptT e m) a b
 \end{code}
 \begin{spec}
@@ -79,7 +80,7 @@ throwing exceptions is now only allowed for finite types:
 try
   :: (Data e, Finite e)
   => Cell (ExceptT e m) a b
-  -> CellExcept m a b e
+  -> CellExcept a b m e
 try = Try
 \end{code}
 In practice however, this is less often a limitation than first assumed,
@@ -92,7 +93,7 @@ calculations with all types are allowed again.
 \begin{code}
 safely
   :: Monad      m
-  => CellExcept m a b Void
+  => CellExcept a b m Void
   -> Cell       m a b
 safely = hoistCell discardVoid . runCellExcept
 discardVoid
@@ -101,15 +102,15 @@ discardVoid
   ->              m a
 discardVoid
   = fmap (either absurd id) . runExceptT
-safe :: Monad m => Cell m a b -> CellExcept m a b Void
+safe :: Monad m => Cell m a b -> CellExcept a b m Void
 safe cell = try $ liftCell cell
 
 -- | Run a monadic action and immediately raise its result as an exception.
-once :: (Monad m, Data e, Finite e) => (a -> m e) -> CellExcept m a arbitrary e
+once :: (Monad m, Data e, Finite e) => (a -> m e) -> CellExcept a arbitrary m e
 once kleisli = try $ arrM $ ExceptT . (Left <$>) . kleisli
 
 -- | Like 'once', but the action does not have an input.
-once_ :: (Monad m, Data e, Finite e) => m e -> CellExcept m a arbitrary e
+once_ :: (Monad m, Data e, Finite e) => m e -> CellExcept a arbitrary m e
 once_ = once . const
 \end{code}
 \end{comment}
