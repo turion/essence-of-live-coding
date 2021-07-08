@@ -13,6 +13,9 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveAnyClass #-}
 module LiveCoding.Cell where
 
 -- base
@@ -27,6 +30,11 @@ import Prelude hiding ((.), id)
 -- transformers
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
+
+-- profunctors
+import Data.Profunctor
+import Data.Profunctor.Strong
+import Data.Profunctor.Choice
 
 -- essence-of-live-coding
 import LiveCoding.LiveProgram
@@ -96,6 +104,10 @@ data Cell m a b = forall s . Data s => Cell
   | ArrM { runArrM :: a -> m b }
   -- ^ Effectively a cell with trivial state.
   --   Added to improve performance and keep state types simpler.
+
+deriving via (WrappedArrow (Cell m)) instance Monad m => Profunctor (Cell m) 
+deriving via (WrappedArrow (Cell m)) instance Monad m => Strong (Cell m)
+deriving via (WrappedArrow (Cell m)) instance Monad m => Data.Profunctor.Choice.Choice (Cell m) 
 \end{code}
 \end{comment}
 \begin{comment}
