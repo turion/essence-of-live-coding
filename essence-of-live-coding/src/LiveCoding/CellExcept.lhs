@@ -1,15 +1,18 @@
 \begin{comment}
 \begin{code}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE GADTs #-}
 
 module LiveCoding.CellExcept where
 
 -- base
+import Control.Arrow
 import Control.Monad
 import Data.Data
 import Data.Void
 
 -- transformers
+import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except
 
 -- mmorph
@@ -53,6 +56,10 @@ instance MFunctor (CellExcept a b) where
     (hoist morphism action)
     (hoist morphism . cont)
   hoist morphism (Try cell) = Try $ hoistCell (mapExceptT morphism) cell
+
+-- TODO this is nearly MonadTrans, see https://github.com/turion/essence-of-live-coding/issues/70
+liftCellExcept :: (Data e, Finite e, Monad m) => m e -> CellExcept a b m e
+liftCellExcept action = try $ constM (lift action) >>> throwC
 \end{code}
 \end{comment}
 The \mintinline{haskell}{Monad} instance is now trivial:
