@@ -12,11 +12,13 @@ import Data.Void
 -- transformers
 import Control.Monad.Trans.Except
 
--- essenceoflivecoding
+-- mmorph
+import Control.Monad.Morph
+
+-- essence-of-live-coding
 import LiveCoding.Cell
 import LiveCoding.Exceptions
 import LiveCoding.Exceptions.Finite
-import Control.Monad.Morph
 \end{code}
 \end{comment}
 
