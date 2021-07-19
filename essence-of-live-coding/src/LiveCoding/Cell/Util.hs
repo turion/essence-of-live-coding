@@ -68,6 +68,14 @@ keepJust = feedback Nothing $ arr keep
     keep (_, Just a) = (Just a, Just a)
     keep (Just a, Nothing) = (Just a, Just a)
 
+-- | Hold the first value and output it indefinitely.
+hold :: (Data a, Monad m) => Cell m a a
+hold = Cell { .. }
+  where
+    cellState = Nothing
+    cellStep Nothing x = return (x, Just x)
+    cellStep (Just s) _ = return (s, Just s)
+
 -- | @boundedFIFO n@ keeps the first @n@ present values.
 boundedFIFO :: (Data a, Monad m) => Int -> Cell m (Maybe a) (Seq a)
 boundedFIFO n = foldC' step empty
