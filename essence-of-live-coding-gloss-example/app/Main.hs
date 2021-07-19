@@ -185,7 +185,7 @@ compPic Composition { .. }
   | otherwise = stateBoundedPic state1 `addRight` stateBoundedPic state2
 
 glossDebugger :: Debugger PictureM
-glossDebugger = Debugger $ liveCell $ every 100 >>> keep blank >>> arrM (lift . lift . tell)
+glossDebugger = Debugger $ liveCell $ every 100 >>> hold blank >>> arrM (lift . lift . tell)
 
 every :: Data s => Integer -> Cell (StateT s PictureM) () (Maybe Picture)
 every maxN = proc () -> do
