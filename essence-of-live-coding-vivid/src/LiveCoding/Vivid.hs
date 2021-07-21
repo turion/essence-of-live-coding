@@ -37,12 +37,7 @@ data SynthState
 
 {- | A 'ParametrisedHandle' corresponding to one @vivid@/@SuperCollider@ synthesizer.
 
-* The input of type 'SynthState' represent whether the synthesizer should currently be running or not.
-  * When it is started, @'Just' synth@ represents the running synthesizer.
-  * When it is stopped, 'Nothing' is returned.
-* A change in @params@ will reload the synthesizer quickly,
-  unless the types of the parameters change.
-* A change in the 'SynthDef' or the types of the @params@ will 'release' the synthesizer and start a new one.
+Usually, you will want to use 'liveSynth' instead, it is easier to handle.
 -}
 vividHandleParametrised
   :: (VividAction m, Eq params, VarList params, Subset (InnerVars params) args, Elem "gate" args)
@@ -67,6 +62,28 @@ deriving instance Eq (SynthDef args)
 deriving instance Data SynthState
 deriving instance KnownSymbol a => Data (I a)
 
+{- | Create a synthesizer.
+
+When you add 'liveSynth' to your live program,
+it will be started upon reload immediately.
+
+Feed the definition of the synthesizer and its current intended state to this cell.
+The input has the form @(params, sdbody, synthState)@.
+
+* A change in @params@ will reload the synthesizer quickly,
+  unless the types of the parameters change.
+* A change in the @sdbody :: 'SDBody' ...@ or the _types_ of the @params@ will 'release' the synthesizer and start a new one.
+* The input @synthState :: 'SynthState'@ represent whether the synthesizer should currently be running or not.
+  Changes in it quickly start or stop it.
+  * When it is started, @'Just' synth@ is returned, where @synth@ represents the running synthesizer.
+  * When it is stopped, 'Nothing' is returned.
+
+You have to use 'envGate' in your @sdbody@,
+or another way of gating your output signals
+in order to ensure release of the synths without clipping.
+
+For an example, have a look at the source code of 'sine'.
+-}
 liveSynth
   :: ( VividAction m
      , Eq params, Typeable params, VarList params
@@ -79,3 +96,16 @@ liveSynth
 liveSynth = proc (params, sdbody, synthstate) -> do
   paramsFirstValue <- holdFirst -< params
   handlingParametrised vividHandleParametrised -< (params, sd paramsFirstValue sdbody, synthstate)
+
+-- | Example sine synthesizer that creates a sine wave at the given input frequency.
+sine :: (VividAction m) => Cell (HandlingStateT m) Float ()
+sine = proc frequency -> do
+  liveSynth -<
+    (
+      ( 1 :: I "gate"
+      , 2 :: I "fadeSecs"
+      , I frequency :: I "freq"
+      )
+    , out (0 :: Int) [envGate ~* sinOsc (freq_ (V :: V "freq"))]
+    , Started)
+  returnA -< ()
