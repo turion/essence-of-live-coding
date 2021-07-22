@@ -65,7 +65,7 @@ liveProgram = liveCell mainCell
 mainCell :: Cell (HandlingStateT IO) () ()
 mainCell = proc () -> do
   angleMaybe <- glossWrapC defaultSettings glossCell -< ()
-  angle <- keep 0                                    -< angleMaybe
+  angle <- hold 0                                    -< angleMaybe
   pulseWrapC 800 pulseCell                           -< angle
   returnA                                            -< ()
 

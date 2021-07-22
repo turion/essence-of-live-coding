@@ -51,22 +51,30 @@ foldC' step cellState = Cell { .. }
     cellStep b a = let b' = step a b in return (b', b')
 
 -- | Initialise with a value 'a'.
---   If the input is 'Nothing', @keep a@ will output the stored indefinitely.
+--   If the input is 'Nothing', @'hold' a@ will output the stored indefinitely.
 --   A new value can be stored by inputting @'Just' a@.
-keep :: (Data a, Monad m) => a -> Cell m (Maybe a) a
-keep a = feedback a $ proc (ma, aOld) -> do
+hold :: (Data a, Monad m) => a -> Cell m (Maybe a) a
+hold a = feedback a $ proc (ma, aOld) -> do
   let aNew = fromMaybe aOld ma
   returnA -< (aNew, aNew)
 
--- | Like 'keep', but returns 'Nothing' until it is initialised by a @'Just' a@ value.
-keepJust
+-- | Like 'hold', but returns 'Nothing' until it is initialised by a @'Just' a@ value.
+holdJust
   :: (Monad m, Data a)
   => Cell m (Maybe a) (Maybe a)
-keepJust = feedback Nothing $ arr keep
+holdJust = feedback Nothing $ arr keep
   where
     keep (Nothing, Nothing) = (Nothing, Nothing)
     keep (_, Just a) = (Just a, Just a)
     keep (Just a, Nothing) = (Just a, Just a)
+
+-- | Hold the first value and output it indefinitely.
+holdFirst :: (Data a, Monad m) => Cell m a a
+holdFirst = Cell { .. }
+  where
+    cellState = Nothing
+    cellStep Nothing x = return (x, Just x)
+    cellStep (Just s) _ = return (s, Just s)
 
 -- | @boundedFIFO n@ keeps the first @n@ present values.
 boundedFIFO :: (Data a, Monad m) => Int -> Cell m (Maybe a) (Seq a)

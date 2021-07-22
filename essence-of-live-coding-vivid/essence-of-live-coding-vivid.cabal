@@ -1,6 +1,6 @@
-name:                essence-of-live-coding-PortMidi
-version:             0.2.5
-synopsis: General purpose live coding framework - PortMidi backend
+name:               essence-of-live-coding-vivid
+version:            0.1.0.0
+synopsis: General purpose live coding framework - vivid backend
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
   .
@@ -25,14 +25,12 @@ cabal-version:       >=1.10
 extra-source-files: CHANGELOG.md
 
 library
-  exposed-modules:
-      LiveCoding.PortMidi
-  other-modules:
-      LiveCoding.PortMidi.Internal
-  build-depends:
-      base >= 4.7
-    , transformers >= 0.5
-    , PortMidi >= 0.2
-    , essence-of-live-coding >= 0.2.5
-  hs-source-dirs:   src
-  default-language: Haskell2010
+    exposed-modules:
+        LiveCoding.Vivid
+
+    build-depends:
+        base >= 4.7
+      , vivid >= 0.5
+      , essence-of-live-coding >= 0.2.5
+    hs-source-dirs:   src
+    default-language: Haskell2010
