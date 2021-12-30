@@ -43,30 +43,4 @@ test = testGroup "HandlingState"
             garbageCollected $ reregister (tell ["reregistered clean up"]) key
             garbageCollected $ return ()
       ["reregistered clean up"] @=? extractHandlingStateEffect action
-  , testCase "Registering causes the destructor to appear in the state" $ do
-      let (((key, registry), handlingState), log) = runWriter $ runWriterT $ flip runAccumT mempty $ unHandlingStateT $ register $ tell ["clean up"]
-      singleton key ((), ["clean up"]) @=? runWriter . action <$> destructors handlingState
-      [] @=? log
-      [key] @=? registered handlingState
-  , testCase "Reregistering causes the destructor to appear in the state" $ do
-      let (((key, registry), handlingState), log) = runWriter $ runWriterT $ flip runAccumT mempty $ unHandlingStateT $ do
-            key <- register $ tell ["clean up"]
-            reregister (tell ["clean up"]) key
-            return key
-      singleton key ((), ["clean up"]) @=? runWriter . action <$> destructors handlingState
-      [] @=? log
-      [key] @=? registered handlingState
-  , testCase "Garbage collection leaves registered destructors in place and unregisters them" $ do
-      let (((key, registry), handlingState), log) = runWriter $ runWriterT $ flip runAccumT mempty $ unHandlingStateT $ garbageCollected $ register $ tell ["clean up"]
-      singleton key ((), ["clean up"]) @=? runWriter . action <$> destructors handlingState
-      [] @=? log
-      [] @=? registered handlingState
-  , testCase "Garbage collection leaves reregistered destructors in place and unregisters them" $ do
-      let (((key, registry), handlingState), log) = runWriter $ runWriterT $ flip runAccumT mempty $ unHandlingStateT $ garbageCollected $ do
-            key <- register $ tell ["clean up"]
-            reregister (tell ["reregister clean up"]) key
-            return key
-      singleton key ((), ["reregister clean up"]) @=? runWriter . action <$> destructors handlingState
-      [] @=? log
-      [] @=? registered handlingState
   ]
