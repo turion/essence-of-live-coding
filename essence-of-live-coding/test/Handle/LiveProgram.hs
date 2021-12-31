@@ -31,7 +31,9 @@ import LiveCoding.HandlingState
 import Util.LiveProgramMigration
 import Control.Monad.Trans.Accum
 
-testHandle :: Handle (RWS () [String] Int) String
+type TestMonad = RWS () [String] Int
+
+testHandle :: Handle TestMonad String
 testHandle =
   Handle
     { create = do
@@ -42,33 +44,26 @@ testHandle =
     , destroy = const $ tell ["Destroyed handle"]
     }
 
-test =
-  testGroup
-    "Handle.LiveProgram"
-    [ testProperty
-        "Trigger destructors in live program"
-        LiveProgramMigration
-          { liveProgram1 =
-              runHandlingState $
-                liveCell $ hoistCell inspectingHandlingState $
-                  handling testHandle >>> arrM (lift . tell . return)
-          , liveProgram2 = runHandlingState mempty
-          , input1 = replicate 3 ()
-          , input2 = replicate 3 ()
-          , output1 =
-              ["Creating Handle #0", "Handle #0", "Handles: 1", "Destructors: (1,True)"]
-                : replicate 2 ["Handle #0", "Handles: 1", "Destructors: (1,True)"]
-          , output2 = [["Destroyed handle"], [], []]
-          , initialState = 0
-          }
+test = testGroup "Handle.LiveProgram"
+  [ testProperty "Trigger destructors in live program" LiveProgramMigration
+    { liveProgram1 = runHandlingState $ liveCell $ hoistCell inspectingHandlingState
+        $ handling testHandle >>> arrM (lift . tell . return)
+    , liveProgram2 = runHandlingState mempty
+    , input1 = replicate 3 ()
+    , input2 = replicate 3 ()
+    , output1 = ["Creating Handle #0", "Handle #0", "Handles: 1", "Destructors: (1,True)"]
+        : replicate 2 ["Handle #0", "Handles: 1", "Destructors: (1,True)"]
+    , output2 = [["Destroyed handle"], [], []]
+    , initialState = 0
+    }
+  ]
+
+inspectingHandlingState :: HandlingStateT TestMonad a -> HandlingStateT TestMonad a
+inspectingHandlingState action = do
+  (a, HandlingState { .. }) <- listen action
+  Registry { .. } <- HandlingStateT look
+  lift $ tell
+    [ "Handles: " ++ show nHandles
+    , "Destructors: " ++ unwords (show . second isRegistered <$> IntMap.toList destructors)
     ]
-  where
-    inspectingHandlingState action = do
-      (a, HandlingState { .. }) <- listen action
-        Registry {..} <- HandlingStateT look
-      lift $
-        tell
-          [ "Handles: " ++ show nHandles
-          , "Destructors: " ++ unwords (show . second isRegistered <$> IntMap.toList destructors)
-          ]
-        return a
+  return a
