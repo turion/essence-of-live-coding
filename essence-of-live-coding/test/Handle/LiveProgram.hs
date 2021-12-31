@@ -30,7 +30,9 @@ import LiveCoding.HandlingState
 import Util.LiveProgramMigration
 import Control.Monad.Trans.Accum
 
-testHandle :: Handle (RWS () [String] Int) String
+type TestMonad = RWS () [String] Int
+
+testHandle :: Handle TestMonad String
 testHandle = Handle
   { create = do
       n <- RWS.get
@@ -53,12 +55,13 @@ test = testGroup "Handle.LiveProgram"
     , initialState = 0
     }
   ]
-    where
-      inspectingHandlingState action = do
-        (a, HandlingState { .. }) <- listen action
-        Registry { .. } <- HandlingStateT look
-        lift $ tell
-          [ "Handles: " ++ show nHandles
-          , "Destructors: " ++ unwords (show . second isRegistered <$> IntMap.toList destructors)
-          ]
-        return a
+
+inspectingHandlingState :: HandlingStateT TestMonad a -> HandlingStateT TestMonad a
+inspectingHandlingState action = do
+  (a, HandlingState { .. }) <- listen action
+  Registry { .. } <- HandlingStateT look
+  lift $ tell
+    [ "Handles: " ++ show nHandles
+    , "Destructors: " ++ unwords (show . second isRegistered <$> IntMap.toList destructors)
+    ]
+  return a

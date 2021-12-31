@@ -10,10 +10,14 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeApplications #-}
+
 module LiveCoding.HandlingState where
 
 -- base
-import Control.Arrow (returnA, arr, (>>>))
+import Control.Arrow (returnA, arr, (>>>), second)
 import Control.Monad.IO.Class
 import Data.Data
 import Data.Foldable (traverse_)
@@ -23,7 +27,7 @@ import qualified Data.List as List
 -- transformers
 import Control.Monad.Trans.Accum
 import Control.Monad.Trans.Class (MonadTrans(lift))
-import Control.Monad.Trans.Writer.Strict ( WriterT(runWriterT) )
+import Control.Monad.Trans.Writer.Strict ( WriterT(runWriterT, WriterT), mapWriter, mapWriterT )
 import Control.Monad.Trans.Accum
     ( add, look, runAccumT, AccumT(..) )
 
@@ -41,6 +45,11 @@ import LiveCoding.Cell.Monad
 import LiveCoding.Cell.Monad.Trans
 import LiveCoding.LiveProgram
 import LiveCoding.LiveProgram.Monad.Trans
+import LiveCoding.HandlingState.AccumTOrphan
+import Control.Monad.Trans.State.Strict (StateT (StateT), runStateT, evalStateT, modify, get, put)
+import Control.Monad.Morph (hoist, MFunctor)
+import Control.Monad.Trans.Has
+
 import LiveCoding.HandlingState.AccumTOrphan
 
 data Handling h where
@@ -72,9 +81,20 @@ instance Monoid (HandlingState m) where
     , registered = []
     }
 
+-- FIXME see whether this gets easier with lenses
+hoistHandlingState ::
+  (forall x . m x -> n x) ->
+  HandlingState m ->
+  HandlingState n
+hoistHandlingState morph HandlingState { .. } = HandlingState
+  { destructors = (\Destructor { .. } -> Destructor { action = morph action, .. }) <$> destructors
+  , ..
+  }
+
 newtype Registry = Registry
   { nHandles :: Key
   }
+  deriving Data
 
 instance Semigroup Registry where
   registry1 <> registry2 = Registry $ nHandles registry1 + nHandles registry2
@@ -111,11 +131,50 @@ newtype HandlingStateT m a = HandlingStateT
 instance MonadTrans HandlingStateT where
   lift = HandlingStateT . lift . lift
 
+instance MFunctor HandlingStateT where
+  hoist morph
+    = HandlingStateT
+    . hoist (mapWriterT $ morph . fmap (second $ hoistHandlingState morph))
+    . unHandlingStateT
 
 instance Monad m => MonadWriter (HandlingState m) (HandlingStateT m) where
   writer = HandlingStateT . writer
   listen = HandlingStateT . listen . unHandlingStateT
   pass = HandlingStateT . pass . unHandlingStateT
+
+writerToState :: (Semigroup w, Has (StateT w) m, Monad m) => WriterT w m a -> m a
+writerToState (WriterT action) = do
+  (a, w) <- action
+  liftH $ modify (<> w)
+  return a
+
+accumToState :: (Monad m, Semigroup w, Has (StateT w) m) => AccumT w m a -> m a
+accumToState (AccumT action) = do
+  w <- liftH get
+  (a, w') <- action w
+  liftH $ put $ w <> w'
+  return a
+-- accumToState :: (Functor m, Semigroup w) => AccumT w m a -> StateT w m a
+-- accumToState (AccumT action) = StateT $ \w -> second (w <>) <$> action w
+
+-- FIXME rewrite with lenses
+zoomStateL :: Functor m => StateT s m a -> StateT (s, s') m a
+zoomStateL (StateT action) = StateT $ \(s, s') -> second (, s') <$> action s
+zoomStateR :: Functor m => StateT s m a -> StateT (s', s) m a
+zoomStateR (StateT action) = StateT $ \(s', s) -> second (s', ) <$> action s
+
+-- FIXME Rename. To SimpleHandlingState? Or maybe a newtype?
+-- Also this might be the right place for the division between one m and two
+type HandlingStateStateT m a = AccumT Registry (StateT (HandlingState m) m) a
+
+handlingStateWriterToState :: Monad m => HandlingStateT m a -> HandlingStateStateT m a
+handlingStateWriterToState = unHandlingStateT >>> hoist (hoist lift >>> writerToState)
+
+runHandlingStateStateT :: Monad m => HandlingStateStateT m a -> m a
+runHandlingStateStateT
+  = flip evalStateT mempty
+  . fmap fst
+  . flip runAccumT mempty
 
 -- | Handle the 'HandlingStateT' effect _without_ garbage collection.
 --   Apply this to your main loop after calling 'foreground'.
@@ -124,7 +183,9 @@ runHandlingStateT
   :: Monad m
   => HandlingStateT m a
   -> m a
-runHandlingStateT = fmap fst . runWriterT . fmap fst . flip runAccumT mempty . unHandlingStateT
+runHandlingStateT
+  = runHandlingStateStateT
+  . handlingStateWriterToState
 
 {- | Apply this to your main live cell before passing it to the runtime.
 
@@ -142,7 +203,11 @@ runHandlingStateC
      (Monad m, Typeable m)
   => Cell (HandlingStateT m) a b
   -> Cell                 m  a b
-runHandlingStateC = hoistCell $ runHandlingStateT . garbageCollected
+-- runHandlingStateC = hoistCell $ runHandlingStateStateT . garbageCollected . handlingStateWriterToState
+runHandlingStateC
+  = flip runStateC_ mempty
+  . flip runStateC_ mempty
+  . hoistCell (accumToState . hoist (hoist (lift @(StateT Registry))) . garbageCollected . handlingStateWriterToState)
 -- runHandlingStateC cell = flip runStateC_ mempty
 --   $ hoistCellOutput garbageCollected cell
 
@@ -151,17 +216,27 @@ runHandlingState
   :: (Monad m, Typeable m)
   => LiveProgram (HandlingStateT m)
   -> LiveProgram                 m
-runHandlingState = hoistLiveProgram $ runHandlingStateT . garbageCollected
+-- runHandlingState = hoistLiveProgram $ runHandlingStateStateT . garbageCollected . handlingStateWriterToState
 -- runHandlingState LiveProgram { .. } = flip runStateL mempty LiveProgram
 --   { liveStep = garbageCollected . liveStep
 --   , ..
 --   }
+runHandlingState LiveProgram { .. } = flip runStateL mempty $ flip runStateL mempty $ LiveProgram
+  { liveStep = accumToState . hoist (hoist (lift @(StateT Registry))) . garbageCollected . handlingStateWriterToState . liveStep
+  -- { liveStep = garbageCollected . handlingStateWriterToState . liveStep
+  , ..
+  }
 
--- Now I need mtl
+
+-- This could simply be an action in the monad
+-- Now I need mtl -- nonsense
 garbageCollected
   :: Monad m
-  => HandlingStateT m a
-  -> HandlingStateT m a
+  -- => HandlingStateT m a
+  -- -> HandlingStateT m a
+  => HandlingStateStateT m a
+  -> HandlingStateStateT m a
+{-
 garbageCollected actionHS = pass $ do
   (a, HandlingState { .. }) <- listen actionHS
   let registeredKeys = IntSet.fromList registered
@@ -170,6 +245,29 @@ garbageCollected actionHS = pass $ do
   lift $ traverse_ action unregisteredConstructors
   return (a, const HandlingState { destructors = registeredConstructors, registered = [] })
 -- garbageCollected action = unregisterAll >> action <* destroyUnregistered
+garbageCollected actionHS
+  = HandlingStateT
+  $ AccumT
+  $ \registry
+  -> WriterT
+  $ do
+    (aAndRegistry, HandlingState { .. }) <- runWriterT $ flip runAccumT registry $ unHandlingStateT actionHS
+    let registeredKeys = IntSet.fromList registered
+        registeredConstructors = restrictKeys destructors registeredKeys
+        unregisteredConstructors = withoutKeys destructors registeredKeys
+    traverse_ action unregisteredConstructors
+    return (aAndRegistry, HandlingState { destructors = registeredConstructors, registered = [] })
+-}
+garbageCollected actionHS = do
+  a <- actionHS
+  HandlingState { .. } <- liftH get
+  let registeredKeys = IntSet.fromList registered
+      registeredConstructors = restrictKeys destructors registeredKeys
+      unregisteredConstructors = withoutKeys destructors registeredKeys
+  lift $ lift $ traverse_ action unregisteredConstructors
+  liftH $ put HandlingState { destructors = registeredConstructors, registered = [] }
+  return a
+
 
 data Destructor m = Destructor
   { isRegistered :: Bool -- TODO we don't need this anymore
