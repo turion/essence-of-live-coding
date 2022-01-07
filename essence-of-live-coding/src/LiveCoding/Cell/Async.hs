@@ -24,35 +24,33 @@ data Tuple (types :: [Type]) where
   TNil :: Tuple '[]
   (:::) :: a -> Tuple types -> Tuple (a ': types)
 
-data BlaSession
-  = Give Type BlaSession
-  | Get Type BlaSession
-  | Nu (BlaSession -> BlaSession)
-  | Compose (BlaSession -> BlaSession) (BlaSession -> BlaSession) BlaSession
-  | Id BlaSession
-  | GiveAndGet [Type] [Type] BlaSession
-  | InternalChoice (BlaSession -> BlaSession) (BlaSession -> BlaSession) BlaSession
-  | ExternalChoice (BlaSession -> BlaSession) (BlaSession -> BlaSession) BlaSession
+data Session
+  = Nu (Session -> Session)
+  | Compose (Session -> Session) (Session -> Session) Session
+  | Id Session
+  | GiveAndGet [Type] [Type] Session
+  | InternalChoice (Session -> Session) (Session -> Session) Session
+  | ExternalChoice (Session -> Session) (Session -> Session) Session
 
-data Prog m (session :: BlaSession) where
-  There :: Data s => s -> (s -> m (a, Prog m session)) -> Prog m (Give a session)
-  Here :: Data s => s -> (s -> a -> m (Prog m session)) -> Prog m (Get a session)
+type Give a = GiveAndGet '[] '[a]
+type Get a = GiveAndGet '[a] '[]
+type Act = GiveAndGet '[] '[]
+
+data Prog m (session :: Session) where
   Loop :: m (Prog m (f (Nu f))) -> Prog m (Nu f)
   -- TODO Not sure I really need an m for these
   Two :: m (Prog m (f (g session))) -> Prog m (Compose f g session)
   Yep :: m (Prog m session) -> Prog m (Id session)
-  -- TODO Maybe use this to replace the m's in the other constructors?
-  M :: m (Prog m session) -> Prog m session
   Step :: Data s => s -> (s -> Tuple inTypes -> m (Tuple outTypes, Prog m session)) -> Prog m (GiveAndGet inTypes outTypes session)
   ILeft :: Prog m (f session) -> Prog m (InternalChoice f g session)
   IRight :: Prog m (g session) -> Prog m (InternalChoice f g session)
   Both :: Prog m (f session) -> Prog m (g session) -> Prog m (ExternalChoice f g session)
 
-unThere :: Prog m (Give a session) -> m (a, Prog m session)
-unThere (There s f) = f s
+unThere :: Functor m => Prog m (Give a session) -> m (a, Prog m session)
+unThere (Step s f) = fmap (first $ \(a ::: TNil) -> a) $ f s TNil
 
-unHere :: Prog m (Get a session) -> a -> m (Prog m session)
-unHere (Here s f) a = f s a
+unHere :: Functor m => Prog m (Get a session) -> a -> m (Prog m session)
+unHere (Step s f) a = fmap snd $ f s $ a ::: TNil
 
 unLoop :: Prog m (Nu f) -> m (Prog m (f (Nu f)))
 unLoop (Loop prog) = prog
@@ -64,7 +62,7 @@ unYep :: Prog m (Id session) -> m (Prog m session)
 unYep (Yep prog) = prog
 
 always :: Monad m => a -> Prog m (Nu (Give a))
-always a = Loop $ return $ There () $ const $ return (a, always a)
+always a = Loop $ return $ Step () $ const $ const $ return (a ::: TNil, always a)
 
 -- FIXME These are all missing the M constructor
 
@@ -87,31 +85,30 @@ ht prog = Loop $ do
   return $ Yep $ return $ ht prog''''
 
 underGive :: Functor m => (Prog m session1 -> Prog m session2) -> Prog m (Give a session1) -> Prog m (Give a session2)
-underGive morph (There s f) = There s $ fmap (fmap (fmap morph)) f
+underGive morph (Step s f) = Step s $ fmap (fmap (fmap (fmap morph))) f
 
 -- Or newtype and make it a functor
 mapGive :: Functor m => (a -> b) -> Prog m (Give a session) -> Prog m (Give b session)
-mapGive g (There s f) = There s $ fmap (fmap $ first g) f
+mapGive g (Step s f) = Step s $ fmap (fmap (fmap (first $ \(a ::: TNil) -> g a ::: TNil))) f
 
 -- TODO same for Get
 
 underF :: Functor m => (Prog m session1 -> Prog m session2) -> Prog m (f session1) -> Prog m (f session2)
-underF morph (There s f) = There s $ fmap (fmap (fmap morph)) f
-underF morph (Here s f) = Here s $ fmap (fmap (fmap morph)) f
+underF morph (Step s f) = Step s $ fmap (fmap (fmap (fmap morph))) f
 -- Loop is not possible currently
 underF morph (Two prog) = Two $ fmap (underF (underF morph)) prog
 underF morph (Yep prog) = Yep $ fmap morph prog
-underF morph (M prog) = M $ fmap (underF morph) prog
+-- FIXME missing cases
 
 mapNu :: Functor m => (forall session . Prog m (f session) -> Prog m (g session)) -> Prog m (Nu f) -> Prog m (Nu g)
 mapNu morph prog = Loop $ fmap (underF (mapNu morph) . morph) $ unLoop prog
 
 -- FIXME If I'm clever enough I can do this just with Functor I think
-transposeNu :: Monad m => Prog m (Nu (Compose f g)) -> Prog m (f (Nu (Compose g f)))
-transposeNu prog = M $ do
-  prog' <- unLoop prog
-  prog'' <- unTwo prog'
-  return $ underF (Loop . return . Two . return . underF transposeNu) prog''
+-- transposeNu :: Monad m => Prog m (Nu (Compose f g)) -> Prog m (f (Nu (Compose g f)))
+-- transposeNu prog = M $ do
+--   prog' <- unLoop prog
+--   prog'' <- unTwo prog'
+--   return $ underF (Loop . return . Two . return . underF transposeNu) prog''
 
 -- TODO isomorphisms
 
@@ -121,7 +118,7 @@ type Pipes a' a b' b m r = Prog (ExceptT r m) (Nu (InternalChoice (Compose (Give
 
 type MSF m a b = Prog m (Nu (GiveAndGet '[a] '[b]))
 
-msfToCell :: MSF m a b -> Cell m a b
-msfToCell prog = _
+-- msfToCell :: MSF m a b -> Cell m a b
+-- msfToCell prog = _
 
 type ConduitPipe l i o u m r = Prog (ExceptT r m) (Nu (InternalChoice (InternalChoice (Give o) (ExternalChoice (Get i) (Get u))) (Give l)))
