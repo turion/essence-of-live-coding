@@ -38,6 +38,7 @@ library
       LiveCoding
     , LiveCoding.Bind
     , LiveCoding.Cell
+    , LiveCoding.Cell.Async
     , LiveCoding.Cell.Feedback
     , LiveCoding.Cell.HotCodeSwap
     , LiveCoding.Cell.Monad

@@ -1,6 +1,7 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE RankNTypes #-}
 
 module LiveCoding.CellExcept where
 
@@ -67,17 +68,16 @@ runCellExcept
   :: Monad m
   => CellExcept a b m e
   -> Cell (ExceptT e m) a b
+runCellExcept (Bind (Try cell) g)
+  = cell >>>== commute (runCellExcept . g)
 \end{code}
 \begin{spec}
-runCellExcept (Bind (Try cell) g)
-  = cell >>>= commute (runCellExcept . g)
 runCellExcept ... = ...
 \end{spec}
 \begin{comment}
 \begin{code}
 runCellExcept (Return e) = constM $ throwE e
 runCellExcept (Try cell) = cell
-runCellExcept (Bind (Try cell) g) = cell >>>== commute (runCellExcept . g)
 runCellExcept (Bind (Return e) f) = runCellExcept $ f e
 runCellExcept (Bind (Bind ce f) g) = runCellExcept $ Bind ce $ \e -> Bind (f e) g
 \end{code}
