@@ -1,10 +1,20 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module HandlingState where
 
 -- base
 import Control.Monad.Identity
 
+-- containers
+import Data.IntMap
+
 -- transformers
+import Control.Monad.Trans.Accum
 import Control.Monad.Trans.Writer.Strict
+import Control.Monad.Trans.State.Strict
+
+-- mmorph
+import Control.Monad.Morph
 
 -- test-framework
 import Test.Framework
@@ -15,17 +25,54 @@ import Test.HUnit hiding (Test)
 -- test-framework-hunit
 import Test.Framework.Providers.HUnit
 
+-- test-framework-quickcheck2
+import Test.Framework.Providers.QuickCheck2
+
+-- QuickCheck
+import Test.QuickCheck
+
 -- essence-of-live-coding
 import LiveCoding.HandlingState
-import Control.Monad.Trans.Accum
-import Data.IntMap
 
 extractHandlingStateEffect :: HandlingStateT (WriterT [String] Identity) a -> [String]
 extractHandlingStateEffect = runIdentity . execWriterT . runHandlingStateT
 
+runAccumDirectly :: Monoid w => Accum w a -> (a, w)
+runAccumDirectly = flip runAccum mempty
+
+runAccumViaState :: Monoid w => Accum w a -> (a, w)
+runAccumViaState = flip runState mempty . accumToState . hoist lift
+
+runWriterViaState :: Monoid w => Writer w a -> (a, w)
+runWriterViaState = flip runState mempty . writerToState . hoist lift
+
 test :: Test
 test = testGroup "HandlingState"
-    []
+  [ testGroup "Monad morphisms"
+    [ testGroup "AccumT -> StateT"
+      [ testProperty "Combinations of add are preserved"
+          $ \(values :: [[Int]]) ->
+            let action = mapM_ add values
+                lhs = runAccumViaState action
+                rhs = runAccumDirectly action
+            in lhs === rhs
+      , testCase "A combination of add and look is preserved"
+          $ let action = do
+                  add [1]
+                  log1 <- look
+                  add [2]
+                  log12 <- look
+                  add [3]
+            in runAccumDirectly action @=? runAccumViaState action
+      ]
+    , testGroup "WriterT -> StateT"
+      [ testProperty "Combinations of tell are preserved"
+          $ \(values :: [[Int]]) ->
+            let action = mapM_ tell values
+            in runWriter action === runWriterViaState action
+      ]
+    ]
+  ]
 {-
   [ testGroup "HandlingStateT"
   [ testCase "Registered action doesn't get triggered"
