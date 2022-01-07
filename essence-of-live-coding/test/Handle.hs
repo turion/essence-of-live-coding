@@ -89,6 +89,7 @@ cellWithActionTypelevel action
   $ runHandlingStateC
   $ handling testTypelevelHandle >>> arrM (<$ lift action)
 
+test :: Test
 test = testGroup "Handle"
   [ testProperty "Preserve Handles" CellMigrationSimulation
     { cell1 = cellWithAction $ modify (+ 1)

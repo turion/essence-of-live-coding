@@ -88,4 +88,24 @@ test = testGroup "Utility unit tests"
         $ counterexample labelString
         $ catMaybes inputs === catMaybes outputs
         .||. bufferNotEmpty
+  , testGroup "change"
+    [ testProperty "changeInit detects change" CellSimulation
+      { cell = changeInit (0 :: Int)
+      , input = [0, 1, 1, 2]
+      , output = [Nothing, Just 1, Nothing, Just 2]
+      }
+    , testProperty "changeInit detects change on first tick" CellSimulation
+      { cell = changeInit (0 :: Int)
+      , input = [1, 1, 1, 2]
+      , output = [Just 1, Nothing, Nothing, Just 2]
+      }
+    , testProperty "change detects change" CellSimulation
+      { cell = change
+      , input = [0 :: Int, 1, 1, 2]
+      , output = [Nothing, Just 1, Nothing, Just 2]
+      }
+    , testProperty "onChange acts on change" CellMigrationSimulation
+      { cell1 = onChange (0 :: Int) $ \p p' a -> return [p, p', a]
+      }
+    ]
   ]

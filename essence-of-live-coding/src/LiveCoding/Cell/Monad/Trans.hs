@@ -51,6 +51,23 @@ data State stateT stateInternal = State
   }
   deriving (Data, Eq, Show)
 
+-- runAccumC
+--   :: (Data accumT, Monad m)
+--   => Cell (AccumT accumT m) a  b
+--   -- ^ A cell with an accum state effect
+--   -> accumT
+--   -- ^ The initial state
+--   -> Cell                m  a (b, accumT)
+--   -- ^ The cell, returning its current state
+-- runAccumC cell stateT = _
+
+-- | The internal state of a cell to which 'runAccumC' or 'runAccumL' has been applied.
+data Accum accumT accumInternal = Accum
+  { accumT :: accumT
+  , accumInternal :: accumInternal
+  }
+  deriving (Data, Eq, Show)
+
 -- | Supply a 'ReaderT' environment before running the cell
 runReaderC
   ::               r
