@@ -5,7 +5,7 @@ module LiveCoding.Cell.Util where
 
 -- base
 import Control.Arrow
-import Control.Monad (join)
+import Control.Monad (join, guard)
 import Control.Monad.IO.Class
 import Data.Data (Data)
 import Data.Foldable (toList)
@@ -106,6 +106,15 @@ edge :: Monad m => Cell m Bool Bool
 edge = proc b -> do
   bLast <- delay False -< b
   returnA -< b && not bLast
+
+changeInit :: (Monad m, Data a, Eq a) => a -> Cell m a (Maybe a)
+changeInit a0 = proc a -> do
+  aLast <- delay a0 -< a
+  returnA -< guard (a /= aLast) >> Just a
+
+change :: (Monad m, Data a, Eq a) => Cell m a (Maybe a)
+change = arr Just >>> changeInit Nothing >>> arr join
+
 
 -- * Debugging utilities
 
