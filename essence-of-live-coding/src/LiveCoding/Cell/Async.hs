@@ -17,86 +17,8 @@ import Data.Proxy
 -- transformers
 import Control.Monad.Trans.Except
 
-data Nat where
-  Z :: Nat
-  S :: Nat -> Nat
-
-data SessionWord (n :: Nat) where
-  In :: Type -> SessionWord n -> SessionWord (S n)
-  Out :: Type -> SessionWord n -> SessionWord (S n)
-  Done :: SessionWord Z
-
-data Session = forall n n' . Session (SessionWord n) (SessionWord n')
-
-
-infixr :>:
-infixr :^:
-
-type family (:>:) (t :: Type) (session :: Session) :: Session where
-  t :>: 'Session finite loop = 'Session (In t finite) loop
-
-type family (:^:) (t :: Type) (session :: Session) :: Session where
-  t :^: 'Session finite loop = 'Session (Out t finite) loop
-
--- FIXME Do I want to have a way to break out of a loop? Maybe internal choice?
-data Async (m :: * -> *) (session :: Session) where
-  Receive :: Data s => s -> (s -> a -> m (Async m ('Session as loop))) -> Async m ('Session (In a as) loop)
-  -- Receive :: Data s => s -> (s -> a -> m (Async m as)) -> Async m (a :>: as)
-  Send :: Data s => s -> (s -> m (b, Async m ('Session bs loop))) -> Async m ('Session (Out b bs) loop)
-  -- Send :: Data s => s -> (s -> m (b, Async m bs)) -> Async m (b :^: bs)
-  Unroll :: Async m ('Session Done loop) -> Async m ('Session loop loop)
-
-receive :: Async m ('Session (In a as) loop) -> a -> m (Async m ('Session as loop))
--- receive :: Async m (a :>: as) -> a -> m (Async m as)
-receive (Receive s f) = f s
-
-send :: Async m ('Session (Out a as) loop) -> m (a, Async m ('Session as loop))
-send (Send s f) = f s
-
-unroll :: Async m ('Session Done loop) -> Async m ('Session loop loop)
-unroll (Unroll async) = async
-
-sync ::
-  Monad m =>
-     Async m ('Session (Out a (In a as)) loop) ->
-    -- FIXME would be nicer but has ambiguous types
-    --  Async m (a :^: a :>: as) ->
-  -- m (Async m              as )
-  m (Async m ('Session as loop))
-sync async = do
-  (a, async') <- send async
-  receive async' a
-
-syncForever ::
-  Monad m =>
-  -- FIXME maybe we can have a cool type family to make syntax nicer
-  -- Async m ('Session Done (a :^: a :>: Done)) ->
-  Async m ('Session Done (Out a (In a Done))) ->
-  m ()
-syncForever async = do
-  async' <- sync $ unroll async
-  syncForever async'
-
-data ScheduleWord (n :: Nat) where
-  First :: ScheduleWord n -> ScheduleWord (S n)
-  Second :: ScheduleWord n -> ScheduleWord (S n)
-  ScheduleDone :: ScheduleWord Z
-
-data Schedule = forall n n' . Schedule (ScheduleWord n) (ScheduleWord (S n'))
-
-type family Scheduled (schedule :: Schedule) (session1 :: Session) (session2 :: Session) :: Session where
-  Scheduled ('Schedule (First finite) sloop) ('Session (In a as) loop) bs = a :>: Scheduled ('Schedule finite sloop) ('Session as loop) bs
-  Scheduled ('Schedule (First finite) sloop) ('Session (Out a as) loop) bs = a :^: Scheduled ('Schedule finite sloop) ('Session as loop) bs
-  -- Scheduled ('Schedule (Second finite) loop) as (b :>: bs) = b :>: Scheduled ('Schedule finite loop) as bs
-  -- Scheduled ('Schedule (Second finite) loop) as (b :^: bs) = b :^: Scheduled ('Schedule finite loop) as bs
-  -- Scheduled ('Schedule ScheduleDone loop) as bs = Scheduled ('Schedule loop loop) as bs -- Needs UndecidableInstances
-
-schedule ::
-  Proxy (schedule :: Schedule) ->
-  Async m as ->
-  Async m bs ->
-  Async m as -- Wrong of coursle
-schedule = error "not done yet"
+-- essence-of-live-coding
+import LiveCoding.Cell
 
 data Tuple (types :: [Type]) where
   TNil :: Tuple '[]
@@ -125,8 +47,6 @@ data Prog m (session :: BlaSession) where
   ILeft :: Prog m (f session) -> Prog m (InternalChoice f g session)
   IRight :: Prog m (g session) -> Prog m (InternalChoice f g session)
   Both :: Prog m (f session) -> Prog m (g session) -> Prog m (ExternalChoice f g session)
-
--- TODO rather unThere
 
 unThere :: Prog m (Give a session) -> m (a, Prog m session)
 unThere (There s f) = f s
@@ -157,13 +77,6 @@ chooseExternallyLeft (Both left _) = left
 
 chooseExternallyRight :: Prog m (ExternalChoice f g session) -> Prog m (g session)
 chooseExternallyRight (Both _ right) = right
-
--- type Compose f g a = f (g a)
--- type Id a = a
-
--- type family Compose (f :: Session) (g :: Session) where
---   Compose f g a = f (g a)
--- type Compose f g = forall a . f (g a)
 
 ht :: Monad m => Prog m (Nu (Compose (Give a) (Get a))) -> Prog m (Nu Id)
 ht prog = Loop $ do
