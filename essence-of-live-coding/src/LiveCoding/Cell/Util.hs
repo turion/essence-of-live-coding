@@ -131,6 +131,15 @@ edge = proc b -> do
   bLast <- delay False -< b
   returnA -< b && not bLast
 
+changeInit :: (Monad m, Data a, Eq a) => a -> Cell m a (Maybe a)
+changeInit a0 = proc a -> do
+  aLast <- delay a0 -< a
+  returnA -< guard (a /= aLast) >> Just a
+
+change :: (Monad m, Data a, Eq a) => Cell m a (Maybe a)
+change = arr Just >>> changeInit Nothing >>> arr join
+
+
 -- * Debugging utilities
 
 -- | Print the current UTC time, prepended with the first 8 characters of the given message.
