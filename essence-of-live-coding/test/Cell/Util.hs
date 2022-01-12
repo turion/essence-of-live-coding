@@ -88,4 +88,25 @@ test = testGroup "Utility unit tests"
         $ counterexample labelString
         $ catMaybes inputs === catMaybes outputs
         .||. bufferNotEmpty
+  , testProperty "delay a >>> changes >>> hold a == delay a"
+    $ \(inputs :: [Int]) (startValue :: Int) -> fst (runIdentity $ steps (delay startValue) inputs) === 
+        fst (runIdentity $ steps (delay startValue >>> changes >>> hold startValue) inputs)
+  , testProperty "changes applied to a cell that outputs a constant, always outputs Nothing"
+    $ \(value :: Int) (inputs :: [Int]) -> [] === 
+        catMaybes (fst (runIdentity $ steps (arr (const value) >>> changes) inputs))
+  , testProperty "changes works as expected" CellSimulation
+    { cell = changes
+    , input =
+        [ 1 :: Int
+        , 1 :: Int
+        , 2 :: Int
+        , 2 :: Int
+        ]
+    , output =
+        [ Nothing
+        , Nothing
+        , Just (2 :: Int)
+        , Nothing
+        ]
+    }            
   ]
