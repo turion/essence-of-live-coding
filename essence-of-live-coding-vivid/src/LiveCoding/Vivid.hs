@@ -58,7 +58,6 @@ vividHandleParametrised = ParametrisedHandle { .. }
     -- Synthdef or start/stop state changed, need to release and reinitialise
     changeParametrised old new synth = defaultChange createParametrised destroyParametrised old new synth
 
-deriving instance Eq (SynthDef args)
 deriving instance Data SynthState
 deriving instance KnownSymbol a => Data (I a)
 
