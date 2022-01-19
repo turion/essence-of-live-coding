@@ -55,7 +55,7 @@ test-suite test
   hs-source-dirs: test
   build-depends:
       base >= 4.11 && < 5
-    , http-client >= 0.7.1
+    , http-client >= 0.6.4.1
     , bytestring >= 0.10
     , essence-of-live-coding >= 0.2.5
     , essence-of-live-coding-warp
