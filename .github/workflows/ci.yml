@@ -8,6 +8,8 @@ jobs:
         ghc: ['8.8.4','8.10.7']
         os: [ubuntu-latest]
     name: Haskell GHC ${{ matrix.ghc }} cabal + stack
+    env:
+      cabal_project_freeze: cabal.project.${{ matrix.ghc }}.freeze
     steps:
       - uses: actions/checkout@v2
       - uses: haskell/actions/setup@v1.2.9
@@ -27,7 +29,7 @@ jobs:
           path: |
             ${{ steps.setup-haskell-build.outputs.cabal-store }}
             dist-newstyle
-          key: ${{ runner.os }}-cabal-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          key: ${{ runner.os }}-cabal-${{ matrix.ghc }}-${{ hashFiles(env.cabal_project_freeze) }}
           restore-keys: |
             ${{ runner.os }}-cabal-${{ matrix.ghc }}
       - name: Cabal build dependencies
