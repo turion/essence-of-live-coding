@@ -231,10 +231,9 @@ testState
 testState query LiveProgram { .. } = conjoin
   $ gmapQ query liveState
 
-mkGenericProperty
-  :: Typeable b
-  =>         (b -> Property)
-  -> GenericQ      Property
+mkGenericProperty :: Typeable a 
+  => (a -> Property)
+  ->  a -> Property
 mkGenericProperty = mkQ $ property True
 
 posSumC :: (Monad m, Num a, Data a) => Cell m a a
