@@ -1,5 +1,9 @@
 # Revision history for essence-of-live-coding
 
+## 0.2.6
+
+* Add `changes`
+
 ## 0.2.5
 
 * Refactored GHCi support

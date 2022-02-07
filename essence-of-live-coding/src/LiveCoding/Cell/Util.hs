@@ -5,7 +5,7 @@ module LiveCoding.Cell.Util where
 
 -- base
 import Control.Arrow
-import Control.Monad (join)
+import Control.Monad (join, guard)
 import Control.Monad.IO.Class
 import Data.Data (Data)
 import Data.Foldable (toList)
@@ -57,6 +57,22 @@ hold :: (Data a, Monad m) => a -> Cell m (Maybe a) a
 hold a = feedback a $ proc (ma, aOld) -> do
   let aNew = fromMaybe aOld ma
   returnA -< (aNew, aNew)
+
+-- | Outputs @'Just' a@ whenever the the value a changes and 'Nothing' otherwise.
+--  The first output is always 'Nothing'. The following holds:
+--
+--  @
+--    delay a >>> changes >>> hold a == delay a
+--  @
+changes
+  :: (Data a, Eq a, Monad m) 
+  => Cell m a (Maybe a)
+changes = proc a -> do
+  aLast <- delay Nothing -< Just a
+  returnA -< do
+      aLast' <- aLast
+      guard $ a /= aLast'
+      return a
 
 -- | Like 'hold', but returns 'Nothing' until it is initialised by a @'Just' a@ value.
 holdJust
