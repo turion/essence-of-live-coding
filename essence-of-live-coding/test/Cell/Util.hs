@@ -7,6 +7,7 @@ import qualified Control.Category as C
 import Data.Functor.Identity
 import Data.Maybe
 import Control.Monad
+import Data.List
 
 -- transformers
 import Control.Monad.Trans.Reader
@@ -117,4 +118,11 @@ test = testGroup "Utility unit tests"
     , output1 = [Nothing, Just 2]
     , output2 = [Just 3, Just 4]
     }
+    , testProperty "resampleListPar works as expected"
+    $ forAll (vector 100) $ \(inputs :: [(Int, Int)]) -> let inputs' = fmap pairToList inputs  in
+        fmap sum (transpose (init inputs')) ===
+          last (fst (runIdentity $ steps (resampleListPar (sumC :: Cell Identity Int Int)) inputs'))
   ]
+
+pairToList :: (a, a) -> [a]
+pairToList (x,y) = [x,y]
