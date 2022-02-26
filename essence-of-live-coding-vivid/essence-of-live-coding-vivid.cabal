@@ -1,5 +1,5 @@
 name:               essence-of-live-coding-vivid
-version:            0.1.0.0
+version:            0.2.6
 synopsis: General purpose live coding framework - vivid backend
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -13,7 +13,7 @@ description:
   and allows to develop live programs from reusable, modular components.
   There are also useful utilities for debugging and quickchecking.
   .
-  This package contains the backend for PortMidi, a portable MIDI library.
+  This package contains the backend for vivid, a Supercollider library.
 license:             BSD3
 license-file:        LICENSE
 author:              Manuel Bärenz
@@ -29,8 +29,8 @@ library
         LiveCoding.Vivid
 
     build-depends:
-        base >= 4.7
+        base >= 4.7 && < 5
       , vivid >= 0.5.2.0
-      , essence-of-live-coding >= 0.2.5
+      , essence-of-live-coding >= 0.2.6
     hs-source-dirs:   src
     default-language: Haskell2010
