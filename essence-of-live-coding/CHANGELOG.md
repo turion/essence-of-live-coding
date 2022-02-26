@@ -3,6 +3,7 @@
 ## 0.2.6
 
 * Add `changes`
+* Add support for GHC 9.0.2
 
 ## 0.2.5
 
