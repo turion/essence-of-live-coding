@@ -118,7 +118,9 @@ The steps are:
 
   | What? | Which backend? | Which library? |
   | ----- | -------------- | -------------- |
-  | Sound | [PulseAudio](hackage.haskell.org/package/pulse-simple) | `essence-of-live-coding-pulse` |
+  | Sound (PCM) | [PulseAudio](hackage.haskell.org/package/pulse-simple) | `essence-of-live-coding-pulse` |
+  | Sound (Synthesizers) | [Vivid](https://hackage.haskell.org/package/vivid) & SuperCollider | `essence-of-live-coding-vivid` |
+  | Sound (Midi) | [PortMidi](https://hackage.haskell.org/package/PortMidi) | `essence-of-live-coding-PortMidi` |
   | 2d vector graphics | [`gloss`](http://hackage.haskell.org/package/gloss) | `essence-of-live-coding-gloss` |
   | Webserver | [WAI](https://hackage.haskell.org/package/wai) | `essence-of-live-coding-warp` |
 
