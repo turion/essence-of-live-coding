@@ -109,4 +109,12 @@ test = testGroup "Utility unit tests"
         , Nothing
         ]
     }
+  , testProperty "changes migrates correctly to itself" CellMigrationSimulation
+    { cell1 = changes
+    , cell2 = changes
+    , input1 = [1, 2] :: [Int]
+    , input2 = [3, 4] :: [Int]
+    , output1 = [Nothing, Just 2]
+    , output2 = [Just 3, Just 4]
+    }
   ]

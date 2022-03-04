@@ -61,6 +61,8 @@ tests =
       $ \x y z -> migrate (Foo2.Fooo z) (Foo1.Foo x y) === Foo2.Foo x
     , testProperty "Finds correct constructor with records"
       $ \barA barB barC baarA baarB -> migrate Foo2.Bar { .. } Foo1.Baar { .. } === Foo2.Baar { .. }
+    , testProperty "Finds correct constructor if type doesn't change"
+      $ \(x :: Int) -> migrate Nothing (Just x) === Just x
     ]
   , testGroup "User migration"
     [ testProperty "Can add migration from Int to Integer"
