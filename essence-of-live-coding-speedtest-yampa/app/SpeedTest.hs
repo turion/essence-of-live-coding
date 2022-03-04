@@ -4,7 +4,7 @@
 {-# LANGUAGE Arrows #-}
 
 module Main (main) where
-  
+
 -- base
 import Control.Arrow
 import Control.Monad (void)

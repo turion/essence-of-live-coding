@@ -89,10 +89,10 @@ test = testGroup "Utility unit tests"
         $ catMaybes inputs === catMaybes outputs
         .||. bufferNotEmpty
   , testProperty "delay a >>> changes >>> hold a == delay a"
-    $ \(inputs :: [Int]) (startValue :: Int) -> fst (runIdentity $ steps (delay startValue) inputs) === 
+    $ \(inputs :: [Int]) (startValue :: Int) -> fst (runIdentity $ steps (delay startValue) inputs) ===
         fst (runIdentity $ steps (delay startValue >>> changes >>> hold startValue) inputs)
   , testProperty "changes applied to a cell that outputs a constant, always outputs Nothing"
-    $ \(value :: Int) (inputs :: [Int]) -> [] === 
+    $ \(value :: Int) (inputs :: [Int]) -> [] ===
         catMaybes (fst (runIdentity $ steps (arr (const value) >>> changes) inputs))
   , testProperty "changes works as expected" CellSimulation
     { cell = changes
@@ -108,5 +108,5 @@ test = testGroup "Utility unit tests"
         , Just (2 :: Int)
         , Nothing
         ]
-    }            
+    }
   ]
