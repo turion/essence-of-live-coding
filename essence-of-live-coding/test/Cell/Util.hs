@@ -118,11 +118,27 @@ test = testGroup "Utility unit tests"
     , output1 = [Nothing, Just 2]
     , output2 = [Just 3, Just 4]
     }
-    , testProperty "resampleListPar works as expected"
-    $ forAll (vector 100) $ \(inputs :: [(Int, Int)]) -> let inputs' = fmap pairToList inputs  in
-        fmap sum (transpose (init inputs')) ===
-          last (fst (runIdentity $ steps (resampleListPar (sumC :: Cell Identity Int Int)) inputs'))
+  , testProperty "resampleListPar works as expected"
+    $ forAll (vector 100) $ \(inputs :: [(Int, Int)]) -> let 
+        inputs' = fmap pairToList inputs
+        pairToList :: (a, a) -> [a]
+        pairToList (x,y) = [x,y]
+      in fmap sum (transpose (init inputs')) ===
+        last (fst (runIdentity $ steps (resampleListPar (sumC :: Cell Identity Int Int)) inputs'))
+  , testProperty "resampleListPar grow"
+    $ CellSimulation (resampleListPar (sumC :: Cell Identity Int Int))
+        [[1,1,1],[1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1,1]]
+        [[0,0,0],[1,1,1],[2,2,2,0],[3,3,3,1],[4,4,4,2,0]]
+  , testProperty "resampleListPar shrink"
+    $ CellSimulation (resampleListPar (sumC :: Cell Identity Int Int))
+        [[1,1,1],[1,1,1],[1,1],[1,1],[1],[]]
+        [[0,0,0],[1,1,1],[2,2],[3,3],[4],[]]
+  , testProperty "resampleListPar grow then shrink"
+    $ CellSimulation (resampleListPar (sumC :: Cell Identity Int Int))
+        [[1,1,1],[1,1,1,1],[1,1,1]]
+        [[0,0,0],[1,1,1,0],[2,2,2]]
+  , testProperty "resampleListPar shrink then grow"
+    $ CellSimulation (resampleListPar (sumC :: Cell Identity Int Int))
+        [[1,1,1],[1,1],[1,1,1]]
+        [[0,0,0],[1,1],[2,2,0]]
   ]
-
-pairToList :: (a, a) -> [a]
-pairToList (x,y) = [x,y]

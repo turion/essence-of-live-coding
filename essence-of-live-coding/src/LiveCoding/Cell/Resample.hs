@@ -16,7 +16,7 @@ import Data.Maybe
 import GHC.TypeNats
 
 -- vector-sized
-import Data.Vector.Sized
+import Data.Vector.Sized ( fromList, toList, Vector )
 
 -- essence-of-live-coding
 import LiveCoding.Cell
@@ -45,9 +45,9 @@ resampleMaybe cell = arr maybeToList >>> resampleList cell >>> arr listToMaybe
 --
 -- Similar to Yampa's [parC](https://hackage.haskell.org/package/Yampa-0.13.3/docs/FRP-Yampa-Switches.html#v:parC).
 resampleListPar :: Monad m => Cell m a b -> Cell m [a] [b]
-resampleListPar (Cell initial step) = Cell cellState' cellStep' where
-    cellState' = []
-    cellStep' s xs = Prelude.unzip <$> traverse (uncurry step) (Prelude.zip s' xs)
+resampleListPar (Cell initial step) = Cell { .. } where
+    cellState = []
+    cellStep s xs = unzip <$> traverse (uncurry step) (zip s' xs)
         where
-            s' = s Prelude.++ Prelude.replicate (Prelude.length xs - Prelude.length s) initial
+            s' = s ++ replicate (length xs - length s) initial
 resampleListPar (ArrM f) = ArrM (traverse f)
