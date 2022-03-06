@@ -7,6 +7,7 @@ import qualified Control.Category as C
 import Data.Functor.Identity
 import Data.Maybe
 import Control.Monad
+import Data.List
 
 -- transformers
 import Control.Monad.Trans.Reader
@@ -116,5 +117,36 @@ test = testGroup "Utility unit tests"
     , input2 = [3, 4] :: [Int]
     , output1 = [Nothing, Just 2]
     , output2 = [Just 3, Just 4]
+    }
+  , testProperty "resampleListPar works as expected"
+    $ forAll (vector 100) $ \(inputs :: [(Int, Int)]) -> let
+        inputs' = fmap pairToList inputs
+        pairToList :: (a, a) -> [a]
+        pairToList (x,y) = [x,y]
+      in 
+        CellSimulation
+        { cell = resampleListPar (sumC :: Cell Identity Int Int)
+        , input = inputs'
+        , output = fmap sum . transpose <$> [[0::Int,0]] : tail (inits (init inputs'))
+        }
+  , testProperty "resampleListPar grow" CellSimulation
+    { cell = resampleListPar (sumC :: Cell Identity Int Int)
+    , input = [[1,1,1],[1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1,1]]
+    , output = [[0,0,0],[1,1,1],[2,2,2,0],[3,3,3,1],[4,4,4,2,0]]
+    }
+  , testProperty "resampleListPar shrink" CellSimulation
+    { cell = resampleListPar (sumC :: Cell Identity Int Int)
+    , input = [[1,1,1],[1,1,1],[1,1],[1,1],[1],[]]
+    , output = [[0,0,0],[1,1,1],[2,2],[3,3],[4],[]]
+    }
+  , testProperty "resampleListPar grow then shrink" CellSimulation
+    { cell = resampleListPar (sumC :: Cell Identity Int Int)
+    , input = [[1,1,1],[1,1,1,1],[1,1,1]]
+    , output = [[0,0,0],[1,1,1,0],[2,2,2]]
+    }
+  , testProperty "resampleListPar shrink then grow" CellSimulation
+    { cell = resampleListPar (sumC :: Cell Identity Int Int)
+    , input = [[1,1,1],[1,1],[1,1,1]]
+    , output = [[0,0,0],[1,1],[2,2,0]]
     }
   ]
