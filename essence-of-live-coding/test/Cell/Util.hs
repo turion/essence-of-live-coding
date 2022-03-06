@@ -119,26 +119,34 @@ test = testGroup "Utility unit tests"
     , output2 = [Just 3, Just 4]
     }
   , testProperty "resampleListPar works as expected"
-    $ forAll (vector 100) $ \(inputs :: [(Int, Int)]) -> let 
+    $ forAll (vector 100) $ \(inputs :: [(Int, Int)]) -> let
         inputs' = fmap pairToList inputs
         pairToList :: (a, a) -> [a]
         pairToList (x,y) = [x,y]
-      in fmap sum (transpose (init inputs')) ===
-        last (fst (runIdentity $ steps (resampleListPar (sumC :: Cell Identity Int Int)) inputs'))
-  , testProperty "resampleListPar grow"
-    $ CellSimulation (resampleListPar (sumC :: Cell Identity Int Int))
-        [[1,1,1],[1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1,1]]
-        [[0,0,0],[1,1,1],[2,2,2,0],[3,3,3,1],[4,4,4,2,0]]
-  , testProperty "resampleListPar shrink"
-    $ CellSimulation (resampleListPar (sumC :: Cell Identity Int Int))
-        [[1,1,1],[1,1,1],[1,1],[1,1],[1],[]]
-        [[0,0,0],[1,1,1],[2,2],[3,3],[4],[]]
-  , testProperty "resampleListPar grow then shrink"
-    $ CellSimulation (resampleListPar (sumC :: Cell Identity Int Int))
-        [[1,1,1],[1,1,1,1],[1,1,1]]
-        [[0,0,0],[1,1,1,0],[2,2,2]]
-  , testProperty "resampleListPar shrink then grow"
-    $ CellSimulation (resampleListPar (sumC :: Cell Identity Int Int))
-        [[1,1,1],[1,1],[1,1,1]]
-        [[0,0,0],[1,1],[2,2,0]]
+      in 
+        CellSimulation
+        { cell = resampleListPar (sumC :: Cell Identity Int Int)
+        , input = inputs'
+        , output = fmap sum . transpose <$> [[0::Int,0]] : tail (inits (init inputs'))
+        }
+  , testProperty "resampleListPar grow" CellSimulation
+    { cell = resampleListPar (sumC :: Cell Identity Int Int)
+    , input = [[1,1,1],[1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1,1]]
+    , output = [[0,0,0],[1,1,1],[2,2,2,0],[3,3,3,1],[4,4,4,2,0]]
+    }
+  , testProperty "resampleListPar shrink" CellSimulation
+    { cell = resampleListPar (sumC :: Cell Identity Int Int)
+    , input = [[1,1,1],[1,1,1],[1,1],[1,1],[1],[]]
+    , output = [[0,0,0],[1,1,1],[2,2],[3,3],[4],[]]
+    }
+  , testProperty "resampleListPar grow then shrink" CellSimulation
+    { cell = resampleListPar (sumC :: Cell Identity Int Int)
+    , input = [[1,1,1],[1,1,1,1],[1,1,1]]
+    , output = [[0,0,0],[1,1,1,0],[2,2,2]]
+    }
+  , testProperty "resampleListPar shrink then grow" CellSimulation
+    { cell = resampleListPar (sumC :: Cell Identity Int Int)
+    , input = [[1,1,1],[1,1],[1,1,1]]
+    , output = [[0,0,0],[1,1],[2,2,0]]
+    }
   ]
