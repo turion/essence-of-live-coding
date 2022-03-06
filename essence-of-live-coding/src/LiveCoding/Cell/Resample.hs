@@ -46,8 +46,8 @@ resampleMaybe cell = arr maybeToList >>> resampleList cell >>> arr listToMaybe
 -- Similar to Yampa's [parC](https://hackage.haskell.org/package/Yampa-0.13.3/docs/FRP-Yampa-Switches.html#v:parC).
 resampleListPar :: Monad m => Cell m a b -> Cell m [a] [b]
 resampleListPar (Cell initial step) = Cell { .. } where
-    cellState = []
-    cellStep s xs = unzip <$> traverse (uncurry step) (zip s' xs)
-        where
-            s' = s ++ replicate (length xs - length s) initial
+  cellState = []
+  cellStep s xs = unzip <$> traverse (uncurry step) (zip s' xs)
+    where
+      s' = s ++ replicate (length xs - length s) initial
 resampleListPar (ArrM f) = ArrM (traverse f)
