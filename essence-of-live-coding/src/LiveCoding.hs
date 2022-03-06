@@ -40,5 +40,6 @@ import LiveCoding.LiveProgram.Monad.Trans as X
 import LiveCoding.Migrate as X
 import LiveCoding.Migrate.Debugger as X
 import LiveCoding.Migrate.Migration as X
+import LiveCoding.Migrate.NoMigration as X hiding (delay, changes)
 import LiveCoding.RuntimeIO as X hiding (update)
 import LiveCoding.RuntimeIO.Launch as X hiding (foreground)

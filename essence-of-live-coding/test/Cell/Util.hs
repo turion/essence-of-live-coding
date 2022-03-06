@@ -1,5 +1,6 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Cell.Util where
 
 -- base
@@ -118,6 +119,22 @@ test = testGroup "Utility unit tests"
     , output1 = [Nothing, Just 2]
     , output2 = [Just 3, Just 4]
     }
+  , testProperty "delay migrates correctly to itself" CellMigrationSimulation
+    { cell1 = LiveCoding.delay 0
+    , cell2 = LiveCoding.delay 0
+    , input1 = [1 :: Int, 2, 3, 4]
+    , input2 = [5 :: Int, 6, 7, 8]
+    , output1 = [0, 1, 2, 3]
+    , output2 = [4, 5, 6, 7]
+    }
+  , testProperty "delay migrates correctly with original type wrapped in data type with single constructor" CellMigrationSimulation
+    { cell1 = LiveCoding.delay 0 :: Cell Identity Int Int
+    , cell2 = arr Stuff >>> LiveCoding.delay (Stuff 99) >>> arr (\(Stuff a) -> a) :: Cell Identity Int Int
+    , input1 = [1, 2, 3, 4] :: [Int]
+    , input2 = [10, 10, 10, 10] :: [Int]
+    , output1 = [0, 1, 2, 3] :: [Int]
+    , output2 = [4, 10, 10, 10] :: [Int]
+    }
   , testProperty "resampleListPar works as expected"
     $ forAll (vector 100) $ \(inputs :: [(Int, Int)]) -> let
         inputs' = fmap pairToList inputs
@@ -150,3 +167,5 @@ test = testGroup "Utility unit tests"
     , output = [[0,0,0],[1,1],[2,2,0]]
     }
   ]
+
+data Stuff a = Stuff a deriving (Eq, Data)

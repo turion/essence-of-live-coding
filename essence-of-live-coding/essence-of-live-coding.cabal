@@ -64,6 +64,7 @@ library
     , LiveCoding.Migrate
     , LiveCoding.Migrate.Cell
     , LiveCoding.Migrate.Migration
+    , LiveCoding.Migrate.NoMigration
     , LiveCoding.Migrate.Monad.Trans
     , LiveCoding.Migrate.Debugger
     , LiveCoding.RuntimeIO
@@ -98,6 +99,7 @@ test-suite test
   main-is: Main.hs
   other-modules:
       Cell
+    , Migrate.NoMigration
     , Cell.Monad.Trans
     , Cell.Util
     , Feedback

@@ -19,6 +19,7 @@ import Control.Monad.Morph
 -- essence-of-live-coding
 import LiveCoding.Cell
 import LiveCoding.HandlingState
+import LiveCoding.Migrate.NoMigration
 
 {- | Container for unserialisable values,
 such as 'IORef's, threads, 'MVar's, pointers, and device handles.
@@ -148,15 +149,15 @@ handlingParametrised handleImpl@ParametrisedHandle { .. } = Cell { .. }
       mereHandle <- lift $ createParametrised parameter
       let handle = (mereHandle, parameter)
       key <- register $ destroyParametrised parameter mereHandle
-      return (mereHandle, Handling { handle = handle, .. })
-    cellStep handling@Handling { handle = (mereHandle, lastParameter), .. } parameter
+      return (mereHandle, Initialized Handling { handle = handle, .. })
+    cellStep handling@(Initialized Handling { handle = (mereHandle, lastParameter), .. }) parameter
       | parameter == lastParameter = do
           reregister (destroyParametrised parameter mereHandle) key
           return (mereHandle, handling)
       | otherwise = do
           mereHandle <- lift $ changeParametrised lastParameter parameter mereHandle
           reregister (destroyParametrised parameter mereHandle) key
-          return (mereHandle, Handling { handle = (mereHandle, parameter), .. })
+          return (mereHandle, Initialized Handling { handle = (mereHandle, parameter), .. })
 
 -- | Every 'Handle' is trivially a 'ParametrisedHandle'
 --   when the parameter is the trivial type.
