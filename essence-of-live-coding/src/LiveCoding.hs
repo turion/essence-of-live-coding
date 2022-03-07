@@ -5,6 +5,9 @@ module LiveCoding
 -- base
 import Control.Arrow as X hiding (app)
 import Data.Data as X
+import Data.Profunctor as X hiding (Choice)
+import Data.Profunctor.Strong as X
+import Data.Profunctor.Traversing as X
 
 -- essence-of-live-coding
 import LiveCoding.Bind as X

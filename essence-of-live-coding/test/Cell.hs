@@ -1,9 +1,11 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RecordWildCards #-}
 module Cell where
 
 -- base
 import Prelude hiding (id)
-import Control.Category
+import Control.Arrow ( Arrow(arr), (>>>) )
+import Control.Category (id)
 import Data.Functor.Identity
 
 -- transformers
@@ -19,7 +21,7 @@ import Test.Framework.Providers.QuickCheck2
 import Test.QuickCheck
 
 -- essence-of-live-coding
-import LiveCoding
+import LiveCoding.Cell
 
 import qualified Cell.Util
 import qualified Cell.Monad.Trans
@@ -32,5 +34,6 @@ test = testGroup "Cell"
         sum (init inputs) ===
           last (fst (runIdentity $ steps (sumC :: Cell Identity Int Int) inputs))
   , Cell.Util.test
+  , Cell.Util.testTraverse'
   , Cell.Monad.Trans.test
   ]

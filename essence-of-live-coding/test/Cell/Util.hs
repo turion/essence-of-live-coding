@@ -1,5 +1,7 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 module Cell.Util where
 
@@ -9,9 +11,15 @@ import Data.Functor.Identity
 import Data.Maybe
 import Control.Monad
 import Data.List
+import Control.Exception
 
 -- transformers
 import Control.Monad.Trans.Reader
+import Control.Monad.Trans.State.Lazy
+
+
+-- vector-sized
+import qualified Data.Vector.Sized as V
 
 -- test-framework
 import Test.Framework
@@ -21,6 +29,12 @@ import Test.Framework.Providers.QuickCheck2
 
 -- QuickCheck
 import Test.QuickCheck hiding (output)
+
+-- HUnit
+import Test.HUnit (assertFailure)
+
+-- test-framework-hunit
+import Test.Framework.Providers.HUnit (testCase)
 
 -- essence-of-live-coding
 import LiveCoding
@@ -90,9 +104,9 @@ test = testGroup "Utility unit tests"
         $ counterexample labelString
         $ catMaybes inputs === catMaybes outputs
         .||. bufferNotEmpty
-  , testProperty "delay a >>> changes >>> hold a == delay a"
-    $ \(inputs :: [Int]) (startValue :: Int) -> fst (runIdentity $ steps (delay startValue) inputs) ===
-        fst (runIdentity $ steps (delay startValue >>> changes >>> hold startValue) inputs)
+  , testProperty "delay a >>> changes >>> hold a = delay a"
+    $ \(inputs :: [Int]) (startValue :: Int) ->
+      CellIdentitySimulation  (delay startValue) (delay startValue >>> changes >>> hold startValue) inputs
   , testProperty "changes applied to a cell that outputs a constant, always outputs Nothing"
     $ \(value :: Int) (inputs :: [Int]) -> [] ===
         catMaybes (fst (runIdentity $ steps (arr (const value) >>> changes) inputs))
@@ -167,5 +181,60 @@ test = testGroup "Utility unit tests"
     , output = [[0,0,0],[1,1],[2,2,0]]
     }
   ]
+
+testTraverse' :: Test
+testTraverse' = testGroup "Traversing unit tests"
+  [ testProperty "traverse' (arr f) = arr (f <$>) ([a])"
+    $ \(input :: [[Int]], Fn (f :: Int -> Int)) -> traverseArrLaw f input
+  , testProperty "traverse' (arr f) = arr (f <$>) (Maybe a)"
+    $ \(input :: [Maybe Int], Fn (f :: Int -> Int)) -> traverseArrLaw f input
+  , testProperty "traverse' (arr f) = arr (f <$>) (Vecttor 4 Int)"
+    $ \(input :: [(Int,Int,Int,Int)], Fn (f :: Int -> Int)) -> traverseArrLaw f (V.fromTuple <$> input)
+  , testProperty "traverse' works as expected for any Cell Identy Int Int created with constructor Cell ([a])"
+    $ \(input :: [[Int]], s :: Int, Fn (f :: (Int, Int) -> (Int,Int))) -> traverseCellTest s (curry f) input
+  , testProperty "traverse' works as expected for any Cell Identy Int Int created with constructor Cell (Maybe a)"
+    $ \(input :: [Maybe Int], s :: Int, Fn (f :: (Int, Int) -> (Int,Int))) -> traverseCellTest s (curry f) input
+  , testProperty "traverse' works as expected for any Cell Identy Int Int created with constructor Cell (Vecttor 4 Int)"
+    $ \(input :: [(Int,Int,Int,Int)], s :: Int, Fn (f :: (Int, Int) -> (Int,Int))) -> traverseCellTest s (curry f) (V.fromTuple <$> input)
+  , testCase "traverse' by itself does not force the entire list (ArrM)"
+    $ testError "traverse' is too strict"
+    $ head $ head $ fst $ runIdentity $ steps (traverse' (arr id) :: Cell Identity [Int] [Int]) [1 : error "Bang !"]
+  , testCase "traverse' by itself does not force the entire list (Cell)"
+    $ testError "Traverse' is too strict"
+    $ head $ head $ fst $ runIdentity $ steps (traverse' cellId :: Cell Identity [Int] [Int]) [1 : error "Bang !"]
+  , testCase "traverse' of a Cell composed with another Cell does not force the entire list"
+    $ testError "Traverse' is too strict"
+    $ head $ head $ fst $ runIdentity $ steps (traverse' cellId >>> cellId  :: Cell Identity [Int] [Int]) [1 : error "Bang !"]
+  ]
+
+traverseArrLaw ::
+  Traversable f =>
+  (a -> b) -> [f a] -> CellIdentitySimulation (f a) (f b)
+traverseArrLaw f = CellIdentitySimulation (arr (f <$>)) (traverse' (arr f))
+
+traverseCellTest :: forall s a b t . (Traversable t, Data b, Data s) =>
+  s
+  -> (s -> a -> (b,s))
+  -> [t a]
+  -> CellSimulation (t a) (t b)
+traverseCellTest s f input = CellSimulation
+  { cell = traverse' (Cell s (\s a -> pure $ f s a)) :: Cell Identity (t a) (t b)
+  ,  output = runIdentity $ evalStateT (traverse (traverse (\a -> StateT (Identity . (`f` a)) )) input) s
+  , ..
+  }
+
+-- | Tests whether the value `a` throws an exception.
+testError :: String  -> a -> IO ()
+testError message value = do
+  let
+    handler :: ErrorCall -> IO Bool
+    handler e = pure True
+  errored <- catch (pure $ seq value False) handler
+  when errored $ assertFailure message
+
+cellId :: Monad m => Cell m b b
+cellId = Cell {..} where
+  cellState = ()
+  cellStep s a = pure (a,())
 
 data Stuff a = Stuff a deriving (Eq, Data)
