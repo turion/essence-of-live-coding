@@ -23,6 +23,7 @@ import qualified Handle
 import qualified Monad
 import qualified Monad.Trans
 import qualified RuntimeIO.Launch
+import qualified Migrate.NoMigration
 
 import LiveCoding
 
@@ -115,6 +116,7 @@ tests =
       ]
     , Cell.test
     , Handle.test
+    , Migrate.NoMigration.test
     , Monad.test
     , Feedback.test
     ]

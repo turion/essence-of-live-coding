@@ -25,13 +25,10 @@ import LiveCoding.Cell.Monad.Trans
 import LiveCoding.LiveProgram
 import LiveCoding.LiveProgram.Monad.Trans
 
-data Handling h where
-  Handling
-    :: { key    :: Key
-       , handle :: h
-       }
-    -> Handling h
-  Uninitialized :: Handling h
+data Handling h = Handling
+  { key    :: Key
+  , handle :: h
+  }
 
 type Destructors m = IntMap (Destructor m)
 
@@ -153,22 +150,6 @@ destroyUnregistered = do
   put HandlingState { destructors = registered, .. }
 
 -- * 'Data' instances
-
-dataTypeHandling :: DataType
-dataTypeHandling = mkDataType "Handling" [handlingConstr, uninitializedConstr]
-
-handlingConstr :: Constr
-handlingConstr = mkConstr dataTypeHandling "Handling" [] Prefix
-
-uninitializedConstr :: Constr
-uninitializedConstr = mkConstr dataTypeHandling "Uninitialized" [] Prefix
-
-instance (Typeable h) => Data (Handling h) where
-  dataTypeOf _ = dataTypeHandling
-  toConstr Handling { .. } = handlingConstr
-  toConstr Uninitialized = uninitializedConstr
-  gunfold _cons nil constructor = nil Uninitialized
-
 dataTypeDestructor :: DataType
 dataTypeDestructor = mkDataType "Destructor" [ destructorConstr ]
 
