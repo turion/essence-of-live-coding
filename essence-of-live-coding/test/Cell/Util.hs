@@ -3,6 +3,16 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 module Cell.Util where
 
 -- base
@@ -11,12 +21,16 @@ import Data.Functor.Identity
 import Data.Maybe
 import Control.Monad
 import Data.List
-import Control.Exception
+import GHC.TypeLits (KnownNat)
+import GHC.Arr (Array)
+
+-- containers
+import Data.Sequence (Seq)
+import Data.Map (Map)
 
 -- transformers
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.State.Lazy
-
 
 -- vector-sized
 import qualified Data.Vector.Sized as V
@@ -106,7 +120,7 @@ test = testGroup "Utility unit tests"
         .||. bufferNotEmpty
   , testProperty "delay a >>> changes >>> hold a = delay a"
     $ \(inputs :: [Int]) (startValue :: Int) ->
-      CellIdentitySimulation  (delay startValue) (delay startValue >>> changes >>> hold startValue) inputs
+      CellIdentitySimulation (delay startValue) (delay startValue >>> changes >>> hold startValue) inputs
   , testProperty "changes applied to a cell that outputs a constant, always outputs Nothing"
     $ \(value :: Int) (inputs :: [Int]) -> [] ===
         catMaybes (fst (runIdentity $ steps (arr (const value) >>> changes) inputs))
@@ -182,55 +196,71 @@ test = testGroup "Utility unit tests"
     }
   ]
 
+type TestTraversables' = TestTraversables '[Maybe, [], V.Vector 10, Seq, Map Int]
+
 testTraverse' :: Test
-testTraverse' = testGroup "Traversing unit tests"
-  [ testProperty "traverse' (arr f) = arr (f <$>) ([a])"
-    $ \(input :: [[Int]], Fn (f :: Int -> Int)) -> traverseArrLaw f input
-  , testProperty "traverse' (arr f) = arr (f <$>) (Maybe a)"
-    $ \(input :: [Maybe Int], Fn (f :: Int -> Int)) -> traverseArrLaw f input
-  , testProperty "traverse' (arr f) = arr (f <$>) (Vecttor 4 Int)"
-    $ \(input :: [(Int,Int,Int,Int)], Fn (f :: Int -> Int)) -> traverseArrLaw f (V.fromTuple <$> input)
-  , testProperty "traverse' works as expected for any Cell Identy Int Int created with constructor Cell ([a])"
-    $ \(input :: [[Int]], s :: Int, Fn (f :: (Int, Int) -> (Int,Int))) -> traverseCellTest s (curry f) input
-  , testProperty "traverse' works as expected for any Cell Identy Int Int created with constructor Cell (Maybe a)"
-    $ \(input :: [Maybe Int], s :: Int, Fn (f :: (Int, Int) -> (Int,Int))) -> traverseCellTest s (curry f) input
-  , testProperty "traverse' works as expected for any Cell Identy Int Int created with constructor Cell (Vecttor 4 Int)"
-    $ \(input :: [(Int,Int,Int,Int)], s :: Int, Fn (f :: (Int, Int) -> (Int,Int))) -> traverseCellTest s (curry f) (V.fromTuple <$> input)
-  , testCase "traverse' by itself does not force the entire list (ArrM)"
-    $ testError "traverse' is too strict"
-    $ head $ head $ fst $ runIdentity $ steps (traverse' (arr id) :: Cell Identity [Int] [Int]) [1 : error "Bang !"]
-  , testCase "traverse' by itself does not force the entire list (Cell)"
-    $ testError "Traverse' is too strict"
-    $ head $ head $ fst $ runIdentity $ steps (traverse' cellId :: Cell Identity [Int] [Int]) [1 : error "Bang !"]
-  , testCase "traverse' of a Cell composed with another Cell does not force the entire list"
-    $ testError "Traverse' is too strict"
-    $ head $ head $ fst $ runIdentity $ steps (traverse' cellId >>> cellId  :: Cell Identity [Int] [Int]) [1 : error "Bang !"]
-  ]
+testTraverse' = testGroup "Traversing unit tests" 
+  [ genTraversableTests' @TestTraversables' "traverse' (arr f) = arr (f <$>)"
+    $ makeTraversableTest (traverseArrLaw @Int @Int)
+  , genTraversableTests' @TestTraversables'
+    "traverse' works as expected for any Cell Identy Int Int created with constructor Cell" 
+    $ makeTraversableTest (traverseCellTest @Int @Int @Int)
+  , testProperty "traverse' by itself does not force the entire list (ArrM)" $ CellSimulation
+    { cell = arr head
+    , input = [1 : error "Bang !"]
+    , output = [1] }
+  , testProperty "traverse' by itself does not force the entire list (Cell)" $ CellSimulation
+    { cell = cellId >>> arr head
+    , input = [1 : error "Bang !"]
+    , output = [1] }
+  ]  
 
-traverseArrLaw ::
-  Traversable f =>
-  (a -> b) -> [f a] -> CellIdentitySimulation (f a) (f b)
-traverseArrLaw f = CellIdentitySimulation (arr (f <$>)) (traverse' (arr f))
-
-traverseCellTest :: forall s a b t . (Traversable t, Data b, Data s) =>
-  s
-  -> (s -> a -> (b,s))
+traverseArrLaw :: forall a b t . Traversable t 
+  => Proxy t
   -> [t a]
-  -> CellSimulation (t a) (t b)
-traverseCellTest s f input = CellSimulation
-  { cell = traverse' (Cell s (\s a -> pure $ f s a)) :: Cell Identity (t a) (t b)
-  ,  output = runIdentity $ evalStateT (traverse (traverse (\a -> StateT (Identity . (`f` a)) )) input) s
+  -> Fun a b
+  -> CellIdentitySimulation (t a) (t b)
+traverseArrLaw _ input' (Fn f) = CellIdentitySimulation
+  { cell1' = arr (f <$>)
+  , cell2' = traverse' (arr f)
+  , .. }
+
+traverseCellTest :: forall s a b t . (Traversable t, Data s) 
+  => Proxy t -> s -> Fun (s, a) (b, s) -> [t a] ->
+  CellSimulation (t a) (t b)
+traverseCellTest _ s (Fn2 f) input = CellSimulation
+  { cell = traverse' (Cell s (\s a -> pure $ f s a))
+  , output = runIdentity $ evalStateT (traverse (traverse (\a -> StateT (Identity . (`f` a)) )) input) s
   , ..
   }
 
--- | Tests whether the value `a` throws an exception.
-testError :: String  -> a -> IO ()
-testError message value = do
-  let
-    handler :: ErrorCall -> IO Bool
-    handler e = pure True
-  errored <- catch (pure $ seq value False) handler
-  when errored $ assertFailure message
+makeTraversableTest :: forall (t :: * -> *) a . (Testable a, Typeable t) =>  (Proxy t -> a) -> [Char] -> Proxy t -> Test
+makeTraversableTest a message _ = testProperty (message <> " " <> show (typeRep (Proxy :: Proxy t))) (a (Proxy :: Proxy t))
+
+-- | A data type to store types which are instances of 'Traversable'.
+data TestTraversables :: [* -> *] -> *
+
+-- | A type class for induction on the type-level list containing the Traversables. 
+class GenTests a where
+  genTraversableTests ::  
+    (forall (t :: * -> *) . (Arbitrary (t Int), Show (t Int), Eq (t Int), Traversable t, Typeable t) => Proxy t -> Test)
+    ->  Proxy a -> [Test]
+
+instance GenTests (TestTraversables '[]) where
+  genTraversableTests _ _ = []
+
+instance (GenTests (TestTraversables xs), Arbitrary (x Int), Show (x Int), Eq (x Int), Traversable x, Typeable x) =>
+  GenTests (TestTraversables (x ': xs)) where
+  genTraversableTests f _ = f (Proxy :: Proxy x) : genTraversableTests f (Proxy :: Proxy (TestTraversables xs))
+
+genTraversableTests' :: forall a . GenTests a => 
+  String -> 
+  (forall (t :: * -> *) . (Arbitrary (t Int), Show (t Int), Eq (t Int), Traversable t, Typeable t) => String -> Proxy t -> Test) ->
+  Test
+genTraversableTests' message f = testGroup message $ genTraversableTests (f message) (Proxy :: Proxy a)
+
+instance (Arbitrary a, KnownNat n) => Arbitrary (V.Vector n a) where
+  arbitrary = sequence $ V.replicate arbitrary
 
 cellId :: Monad m => Cell m b b
 cellId = Cell {..} where
