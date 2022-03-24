@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows #-}
+
 module LiveCoding.Pulse where
 
 -- base
@@ -6,18 +7,16 @@ import Control.Arrow as X
 import Control.Concurrent
 import Control.Monad (forever)
 import Control.Monad.Fix
-import Data.Monoid (getSum, Sum(Sum))
-
 -- transformers
-import Control.Monad.Trans.Class (MonadTrans(lift))
+import Control.Monad.Trans.Class (MonadTrans (lift))
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Writer.Strict
-
+import Data.Monoid (Sum (Sum), getSum)
 -- pulse-simple
-import Sound.Pulse.Simple
 
 -- essence-of-live-coding
 import LiveCoding
+import Sound.Pulse.Simple
 
 type PulseT m = WriterT (Sum Float) m
 
@@ -31,40 +30,40 @@ addSample = arr Sum >>> arrM tell
 sampleRate :: Num a => a
 sampleRate = 48000
 
-{- | Create a pulse server backend handle.
-
-Currently, this is always mono,
-but with a future release of @pulse-simple@,
-this might be configurable.
--}
+-- | Create a pulse server backend handle.
+--
+-- Currently, this is always mono,
+-- but with a future release of @pulse-simple@,
+-- this might be configurable.
 pulseHandle :: Handle IO Simple
-pulseHandle = Handle
-  { create = simpleNew
-      Nothing
-      "example"
-      Play
-      Nothing
-      "this is an example application"
-      (SampleSpec (F32 LittleEndian) sampleRate 1)
-      Nothing
-      Nothing
-  , destroy = simpleFree
-  }
+pulseHandle =
+  Handle
+    { create =
+        simpleNew
+          Nothing
+          "example"
+          Play
+          Nothing
+          "this is an example application"
+          (SampleSpec (F32 LittleEndian) sampleRate 1)
+          Nothing
+          Nothing,
+      destroy = simpleFree
+    }
 
-{- | Run a 'PulseCell' with a started pulse backend.
-
-Currently, this is synchronous and blocking,
-i.e. the resulting cell will block until the backend buffer is nearly empty.
-
-This performs several steps of your cell at a time,
-replicating the input so many times.
--}
-pulseWrapC
-  :: Int
-  -- ^ Specifies how many steps of your 'PulseCell' should be performed in one step of 'pulseWrapC'.
-  -> PulseCell IO a b
-  -- ^ Your cell that produces samples.
-  -> Cell (HandlingStateT IO) a [b]
+-- | Run a 'PulseCell' with a started pulse backend.
+--
+-- Currently, this is synchronous and blocking,
+-- i.e. the resulting cell will block until the backend buffer is nearly empty.
+--
+-- This performs several steps of your cell at a time,
+-- replicating the input so many times.
+pulseWrapC ::
+  -- | Specifies how many steps of your 'PulseCell' should be performed in one step of 'pulseWrapC'.
+  Int ->
+  -- | Your cell that produces samples.
+  PulseCell IO a b ->
+  Cell (HandlingStateT IO) a [b]
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
   samplesAndBs <- resampleList $ liftCell $ runWriterC cell -< replicate bufferSize a
@@ -73,19 +72,18 @@ pulseWrapC bufferSize cell = proc a -> do
   arrM $ lift . uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
   returnA -< bs
 
-{- | Returns the sum of all incoming values,
-and wraps it between -1 and 1.
-
-This is to prevent floating number imprecision when the sum gets too large.
--}
+-- | Returns the sum of all incoming values,
+-- and wraps it between -1 and 1.
+--
+-- This is to prevent floating number imprecision when the sum gets too large.
 wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
-wrapSum = Cell
-  { cellState = 0
-  , cellStep  = \accum a ->
-    let
-        (_, accum') = properFraction $ accum + a
-    in return (accum', accum')
-  }
+wrapSum =
+  Cell
+    { cellState = 0,
+      cellStep = \accum a ->
+        let (_, accum') = properFraction $ accum + a
+         in return (accum', accum')
+    }
 
 -- | Like 'wrapSum', but as an integral, assuming the PulseAudio 'sampleRate'.
 wrapIntegral :: (Monad m, Data a, RealFloat a) => Cell m a a
@@ -97,10 +95,11 @@ sawtooth :: (Monad m, Data a, RealFloat a) => Cell m a a
 sawtooth = wrapIntegral
 
 modSum :: (Monad m, Data a, Integral a) => a -> Cell m a a
-modSum denominator = Cell
-  { cellState = 0
-  , cellStep  = \accum a -> let accum' = (accum + a) `mod` denominator in return (accum', accum')
-  }
+modSum denominator =
+  Cell
+    { cellState = 0,
+      cellStep = \accum a -> let accum' = (accum + a) `mod` denominator in return (accum', accum')
+    }
 
 clamp :: (Ord a, Num a) => a -> a -> a -> a
 clamp lower upper a = min upper $ max lower a
@@ -123,11 +122,10 @@ osc' :: (Data a, RealFloat a, Monad m) => Cell m a a
 osc' = proc a -> do
   runReaderC' osc -< (a, ())
 
-{- | A basic musical note (western traditional notation, german nomenclature).
-
-Assumes equal temperament and removes enharmonic equivalents,
-i.e. there is only Dis (= D sharp) but not Eb (= E flat).
--}
+-- | A basic musical note (western traditional notation, german nomenclature).
+--
+-- Assumes equal temperament and removes enharmonic equivalents,
+-- i.e. there is only Dis (= D sharp) but not Eb (= E flat).
 data Note
   = A
   | Bb

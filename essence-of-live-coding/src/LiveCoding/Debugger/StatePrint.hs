@@ -7,49 +7,52 @@
 module LiveCoding.Debugger.StatePrint where
 
 -- base
-import Data.Data
-import Data.Maybe (fromMaybe, fromJust)
-import Data.Proxy
-import Data.Typeable
-import Unsafe.Coerce
 
 -- transformers
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Strict
-
+import Data.Data
 -- syb
 import Data.Generics.Aliases
 import Data.Generics.Text (gshow)
-
+import Data.Maybe (fromJust, fromMaybe)
+import Data.Proxy
+import Data.Typeable
 -- essence-of-live-coding
 import LiveCoding.Cell
 import LiveCoding.Cell.Feedback
 import LiveCoding.Debugger
-import LiveCoding.Forever
 import LiveCoding.Exceptions
+import LiveCoding.Forever
+import Unsafe.Coerce
 
 statePrint :: Debugger IO
-statePrint = Debugger $ liveCell $ arrM $ const $ do
-  s <- get
-  lift $ putStrLn $ stateShow s
+statePrint = Debugger $
+  liveCell $
+    arrM $
+      const $ do
+        s <- get
+        lift $ putStrLn $ stateShow s
 
 stateShow :: Data s => s -> String
-stateShow
-  =       gshow
-  `ext2Q` compositionShow
-  `ext2Q` foreverEShow
-  `ext2Q` feedbackShow
-  `ext2Q` parallelShow
-  `ext2Q` exceptShow
-  `ext2Q` choiceShow
+stateShow =
+  gshow
+    `ext2Q` compositionShow
+    `ext2Q` foreverEShow
+    `ext2Q` feedbackShow
+    `ext2Q` parallelShow
+    `ext2Q` exceptShow
+    `ext2Q` choiceShow
 
 isUnit :: Data s => s -> Bool
-isUnit = mkQ False
-          (\() -> True)
-  `ext2Q` (\(a, b) -> isUnit a && isUnit b)
-  `ext2Q` (\(Composition s1 s2) -> isUnit s1 && isUnit s2)
-  `ext2Q` (\(Parallel s1 s2) -> isUnit s1 && isUnit s2)
-  `ext2Q` (\(Choice sL sR) -> isUnit sL && isUnit sR)
+isUnit =
+  mkQ
+    False
+    (\() -> True)
+    `ext2Q` (\(a, b) -> isUnit a && isUnit b)
+    `ext2Q` (\(Composition s1 s2) -> isUnit s1 && isUnit s2)
+    `ext2Q` (\(Parallel s1 s2) -> isUnit s1 && isUnit s2)
+    `ext2Q` (\(Choice sL sR) -> isUnit sL && isUnit sR)
 
 compositionShow :: (Data s1, Data s2) => Composition s1 s2 -> String
 compositionShow (Composition s1 s2)
@@ -65,26 +68,28 @@ parallelShow (Parallel s1 s2)
   | otherwise = "(" ++ stateShow s1 ++ " *** " ++ stateShow s2 ++ ")"
 
 foreverEShow :: (Data e, Data s) => ForeverE e s -> String
-foreverEShow ForeverE { .. }
-  =  "forever("
-  ++ (if isUnit lastException then "" else gshow lastException ++ ", ")
-  ++ stateShow initState ++ "): " ++ stateShow currentState
+foreverEShow ForeverE {..} =
+  "forever("
+    ++ (if isUnit lastException then "" else gshow lastException ++ ", ")
+    ++ stateShow initState
+    ++ "): "
+    ++ stateShow currentState
 
 feedbackShow :: (Data state, Data s) => Feedback state s -> String
-feedbackShow Feedback { .. } = "feedback " ++ gshow sAdditional ++ " $ " ++ stateShow sPrevious
+feedbackShow Feedback {..} = "feedback " ++ gshow sAdditional ++ " $ " ++ stateShow sPrevious
 
 exceptShow :: (Data s, Data e) => ExceptState s e -> String
 exceptShow (NotThrown s) = "NotThrown: " ++ stateShow s ++ "\n"
-exceptShow (Exception e)
-  =  "Exception"
-  ++ (if isUnit e then "" else " " ++ gshow e)
-  ++ ":\n"
+exceptShow (Exception e) =
+  "Exception"
+    ++ (if isUnit e then "" else " " ++ gshow e)
+    ++ ":\n"
 
 choiceShow :: (Data stateL, Data stateR) => Choice stateL stateR -> String
-choiceShow Choice { .. }
-  | isUnit choiceLeft  = "+" ++ stateShow choiceRight ++ "+"
-  | isUnit choiceRight = "+" ++ stateShow choiceLeft  ++ "+"
-  | otherwise     = "+" ++ stateShow choiceLeft ++ " +++ " ++ stateShow choiceRight ++ "+"
+choiceShow Choice {..}
+  | isUnit choiceLeft = "+" ++ stateShow choiceRight ++ "+"
+  | isUnit choiceRight = "+" ++ stateShow choiceLeft ++ "+"
+  | otherwise = "+" ++ stateShow choiceLeft ++ " +++ " ++ stateShow choiceRight ++ "+"
 
 {-
 -- TODO  Leave out for now from the examples and open bug when public
@@ -98,9 +103,11 @@ gcast2 :: forall c t t' a b. (Typeable t, Typeable t')
        => c (t a b) -> Maybe (c (t' a b))
 gcast2 x = fmap (\Refl -> x) (eqT :: Maybe (t :~: t'))
 -}
-gcast3
-  :: forall f t t' a b c. (Typeable t, Typeable t')
-  => f (t a b c) -> Maybe (f (t' a b c))
+gcast3 ::
+  forall f t t' a b c.
+  (Typeable t, Typeable t') =>
+  f (t a b c) ->
+  Maybe (f (t' a b c))
 gcast3 x = fmap (\Refl -> x) (eqT :: Maybe (t :~: t'))
 
 -- from https://stackoverflow.com/questions/14447050/how-to-define-syb-functions-for-type-extension-for-tertiary-type-constructors-e?rq=1
@@ -119,8 +126,8 @@ dropMaybe :: Proxy a -> Maybe (f a) -> Maybe (f a)
 dropMaybe _ = id
 -}
 
---thing :: (Typeable t) => (forall b c d . (Data b, Data c, Data d) => f (t b c d)) -> TypeRep
---thing = typeRep
+-- thing :: (Typeable t) => (forall b c d . (Data b, Data c, Data d) => f (t b c d)) -> TypeRep
+-- thing = typeRep
 {-
 dataCast3
   :: (Typeable t, Data a)
@@ -144,19 +151,19 @@ ext3
 --ext3 def ext = fromMaybe def $ gcast3' ext
 --ext3 def ext = maybe def id $ dataCast3 ext
 -}
-ext3
-  :: (Data a, Data b, Data c, Data d, Typeable t, Typeable f)
-  => f a
-  -> f (t b c d)
-  -> f a
+ext3 ::
+  (Data a, Data b, Data c, Data d, Typeable t, Typeable f) =>
+  f a ->
+  f (t b c d) ->
+  f a
 ext3 def ext = maybe def id $ cast ext
 
-ext3Q
-  :: (Data a, Data b, Data c, Data d, Typeable t, Typeable q)
-  => (a -> q)
-  -> (t b c d -> q)
-  -> a -> q
+ext3Q ::
+  (Data a, Data b, Data c, Data d, Typeable t, Typeable q) =>
+  (a -> q) ->
+  (t b c d -> q) ->
+  a ->
+  q
 ext3Q def ext = unQ ((Q def) `ext3` (Q ext))
 
-
-newtype Q q x = Q { unQ :: x -> q }
+newtype Q q x = Q {unQ :: x -> q}

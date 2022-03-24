@@ -1,11 +1,8 @@
-module LiveCoding
-  (module X)
-  where
+module LiveCoding (module X) where
 
 -- base
 import Control.Arrow as X hiding (app)
 import Data.Data as X
-
 -- essence-of-live-coding
 import LiveCoding.Bind as X
 import LiveCoding.Cell as X
@@ -24,22 +21,22 @@ import LiveCoding.Exceptions as X
 import LiveCoding.Exceptions.Finite as X
 import LiveCoding.Forever as X
 import LiveCoding.Handle as X
-import LiveCoding.HandlingState as X
-    ( HandlingStateT,
-      HandlingState(..),
-      Handling(..),
-      isRegistered,
-      runHandlingStateT,
-      runHandlingStateC,
-      runHandlingState,
-    )
 import LiveCoding.Handle.Examples as X
+import LiveCoding.HandlingState as X
+  ( Handling (..),
+    HandlingState (..),
+    HandlingStateT,
+    isRegistered,
+    runHandlingState,
+    runHandlingStateC,
+    runHandlingStateT,
+  )
 import LiveCoding.LiveProgram as X
 import LiveCoding.LiveProgram.HotCodeSwap as X
 import LiveCoding.LiveProgram.Monad.Trans as X
 import LiveCoding.Migrate as X
 import LiveCoding.Migrate.Debugger as X
 import LiveCoding.Migrate.Migration as X
-import LiveCoding.Migrate.NoMigration as X hiding (delay, changes)
+import LiveCoding.Migrate.NoMigration as X hiding (changes, delay)
 import LiveCoding.RuntimeIO as X hiding (update)
 import LiveCoding.RuntimeIO.Launch as X hiding (foreground)

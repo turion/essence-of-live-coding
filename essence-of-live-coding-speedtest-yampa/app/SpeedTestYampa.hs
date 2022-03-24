@@ -4,23 +4,20 @@ module Main (main) where
 
 -- base
 import Data.Maybe (isJust)
-
 -- yampa
 import FRP.Yampa
 
 sine k = proc () -> do
-  rec
-    let acc = - k * pos
-    vel <- integral -< acc
-    pos <- (+1) ^<< integral -< vel
+  rec let acc = -k * pos
+      vel <- integral -< acc
+      pos <- (+ 1) ^<< integral -< vel
   returnA -< pos
 
 oscillator :: Double -> Double -> SF a Double
 oscillator amp period = proc _ -> do
-  rec
-    let acc = - (2.0*pi/period)^(2 :: Int) * p
-    v <- integral -< acc
-    p <- (amp +) ^<< integral -< v
+  rec let acc = -(2.0 * pi / period) ^ (2 :: Int) * p
+      v <- integral -< acc
+      p <- (amp +) ^<< integral -< v
   returnA -< p
 
 timestep :: Double
@@ -37,12 +34,13 @@ mainSF = proc _ -> do
     then returnA -< Left s
     else returnA -< Right x
 
-main = reactimate
-  (return ())
-  (const $ return (1/timestep, Just ()))
-  --(const $ \b -> if isJust b then print b >> return True else return False)
-  helper
-  mainSF
+main =
+  reactimate
+    (return ())
+    (const $ return (1 / timestep, Just ()))
+    -- (const $ \b -> if isJust b then print b >> return True else return False)
+    helper
+    mainSF
   where
     helper _ (Left s) = print s >> return True
     helper _ (Right x) = return False

@@ -2,19 +2,16 @@
 
 -- base
 import Control.Monad (unless)
-import System.Exit
-
 -- bytestring
 import Data.ByteString.Lazy
-
 -- http-client
-import Network.HTTP.Client hiding (Response)
 
 -- essence-of-live-coding
 import LiveCoding
-
 -- essence-of-live-coding-warp
 import LiveCoding.Warp
+import Network.HTTP.Client hiding (Response)
+import System.Exit
 
 response :: ByteString -> Response
 response = responseLBS status200 [("Content-Type", "text/plain")]

@@ -1,17 +1,16 @@
 {-# LANGUAGE Arrows #-}
 
 module Main
-  ( module Main
-  , module X
-  ) where
+  ( module Main,
+    module X,
+  )
+where
 
 -- base
 import Control.Arrow
 import Control.Concurrent
-
 -- transformers
 import Control.Monad.Trans.Class
-
 -- essence-of-live-coding
 import LiveCoding
 import LiveCoding.GHCi as X
@@ -36,11 +35,11 @@ mainCell :: Cell (HandlingStateT IO) () ()
 mainCell =
   let keyboard = nonBlocking False $ constM getLine -- Only poll, never abort
       mySlowId = nonBlocking True slowId -- Abort and restart when new data arrives
-  in proc _ -> do
-    n <- count                             -< ()
-    lineMaybe <- keyboard                  -< Just ()
-    let nString = show n <$ lineMaybe
-    resampleMaybe (arrM $ lift . putStrLn) -< ("Calculating " ++) <$> nString
-    resultMaybe <- mySlowId                -< nString
-    resampleMaybe (arrM $ lift . putStrLn) -< ("Calculated "  ++) <$> resultMaybe
-    arrM $ lift .threadDelay               -< 1000 -- Don't hog CPU
+   in proc _ -> do
+        n <- count -< ()
+        lineMaybe <- keyboard -< Just ()
+        let nString = show n <$ lineMaybe
+        resampleMaybe (arrM $ lift . putStrLn) -< ("Calculating " ++) <$> nString
+        resultMaybe <- mySlowId -< nString
+        resampleMaybe (arrM $ lift . putStrLn) -< ("Calculated " ++) <$> resultMaybe
+        arrM $ lift . threadDelay -< 1000 -- Don't hog CPU

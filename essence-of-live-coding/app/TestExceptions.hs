@@ -2,15 +2,13 @@
 
 -- base
 import Control.Arrow
-
 -- transformers
 import Control.Monad.Trans.Class
-
 -- essence-of-live-coding
 import LiveCoding
 
-liveProgram = liveCell
-  $ safely $ do
+liveProgram = liveCell $
+  safely $ do
     try $ throwingCell
     safe $ arr (const (3 :: Integer)) >>> sumC >>> arr (const ())
 

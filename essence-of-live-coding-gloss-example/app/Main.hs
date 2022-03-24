@@ -2,55 +2,48 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
+
 -- base
 import qualified Control.Arrow as Arrow
-
-import Data.Data
-
-import Prelude hiding (Bounded)
-
 -- transformers
 import Control.Monad.Trans.Accum
-
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader (ask)
 import Control.Monad.Trans.State.Strict (StateT)
 import Control.Monad.Trans.Writer.Strict
-
+import Data.Data
 -- syb
 import Data.Generics.Aliases (ext2Q)
-
 -- gloss
 import Graphics.Gloss hiding (translate)
 import qualified Graphics.Gloss as Gloss
-
 -- essence-of-live-coding
 import LiveCoding hiding (left, right)
-
 -- essence-of-live-coding-gloss
-import LiveCoding.Gloss hiding (statePicture, every, translate)
+import LiveCoding.Gloss hiding (every, statePicture, translate)
+import Prelude hiding (Bounded)
 
 main :: IO ()
 main = liveMain liveProgram
 
 liveProgram :: LiveProgram (HandlingStateT IO)
-liveProgram = liveCell $ glossWrapC defaultSettings { debugEvents = True } glossCell >>> arr (const ())
+liveProgram = liveCell $ glossWrapC defaultSettings {debugEvents = True} glossCell >>> arr (const ())
 
 glossCell' :: Cell PictureM () ()
-glossCell'
-  = speed
-  >>> integrate
-  >>> arr sin
-  >>> arr (*10)
-  >>> arr realToFrac
-  >>> arr circleThing
-  >>> addPicture
+glossCell' =
+  speed
+    >>> integrate
+    >>> arr sin
+    >>> arr (* 10)
+    >>> arr realToFrac
+    >>> arr circleThing
+    >>> addPicture
   where
-    circleThing x
-      = (Gloss.translate (x * 10 - 90) 0 $ color green $ thickCircle 10 20)
-      <> (Gloss.translate (-x * 10 - 90) (-40) $ color red $ thickCircle 10 20)
+    circleThing x =
+      (Gloss.translate (x * 10 - 90) 0 $ color green $ thickCircle 10 20)
+        <> (Gloss.translate (-x * 10 - 90) (-40) $ color red $ thickCircle 10 20)
 
-speed ::  Cell PictureM () Float
+speed :: Cell PictureM () Float
 speed = proc () -> do
   events <- arrM (const ask) -< ()
   sumC -< sum $ isEventMouseClick <$> events
@@ -59,7 +52,6 @@ isEventMouseClick :: Event -> Float
 isEventMouseClick (EventKey (MouseButton LeftButton) _ _ _) = 1
 isEventMouseClick (EventKey (MouseButton RightButton) _ _ _) = -1
 isEventMouseClick _ = 0
-
 
 glossCell :: Cell PictureM () ()
 glossCell = withDebuggerC glossCell' glossDebugger
@@ -72,22 +64,23 @@ statePicture = Gloss.translate (-100) 100 . scale 0.1 0.1 . color red . getPic .
 stateBoundedPic :: Data s => s -> BoundedPic
 stateBoundedPic =
   (boundPic . text . stateShow)
-  `ext2Q` compPic
+    `ext2Q` compPic
 
 data Bounds = Bounds
-  { left   :: Float
-  , right  :: Float
-  , bottom :: Float
-  , top    :: Float
+  { left :: Float,
+    right :: Float,
+    bottom :: Float,
+    top :: Float
   }
 
 instance Semigroup Bounds where
-  bounds1 <> bounds2 = Bounds
-    { left   = min (left   bounds1) (left   bounds2)
-    , right  = max (right  bounds1) (right  bounds2)
-    , bottom = min (bottom bounds1) (bottom bounds2)
-    , top    = max (top    bounds1) (top    bounds2)
-    }
+  bounds1 <> bounds2 =
+    Bounds
+      { left = min (left bounds1) (left bounds2),
+        right = max (right bounds1) (right bounds2),
+        bottom = min (bottom bounds1) (bottom bounds2),
+        top = max (top bounds1) (top bounds2)
+      }
 
 instance Monoid Bounds where
   mempty = boundPoint (0, 0)
@@ -99,28 +92,31 @@ boundPath :: Path -> Bounds
 boundPath path = mconcat $ boundPoint <$> path
 
 pad :: Float -> Bounds -> Bounds
-pad padding Bounds { .. } = Bounds
-  { left   = left   - padding
-  , right  = right  + padding
-  , bottom = bottom - padding
-  , top    = top    + padding
-  }
+pad padding Bounds {..} =
+  Bounds
+    { left = left - padding,
+      right = right + padding,
+      bottom = bottom - padding,
+      top = top + padding
+    }
 
 translateBounds :: Point -> Bounds -> Bounds
-translateBounds (x, y) Bounds { .. } = Bounds
-  { left   = left   + x
-  , right  = right  + x
-  , bottom = bottom + y
-  , top    = top    + y
-  }
+translateBounds (x, y) Bounds {..} =
+  Bounds
+    { left = left + x,
+      right = right + x,
+      bottom = bottom + y,
+      top = top + y
+    }
 
 scaleBounds :: Float -> Float -> Bounds -> Bounds
-scaleBounds x y Bounds { .. } = Bounds
-  { left   = left   * x
-  , right  = right  * x
-  , bottom = bottom * y
-  , top    = top    * y
-  }
+scaleBounds x y Bounds {..} =
+  Bounds
+    { left = left * x,
+      right = right * x,
+      bottom = bottom * y,
+      top = top * y
+    }
 
 type Bounded a = Accum Bounds a
 
@@ -132,7 +128,7 @@ getBounds :: BoundedPic -> Bounds
 getBounds = flip execAccum mempty
 
 getPic :: BoundedPic -> Picture
-getPic  = flip evalAccum mempty
+getPic = flip evalAccum mempty
 
 transformBounds :: (Bounds -> Bounds) -> BoundedPic -> BoundedPic
 transformBounds f = mapAccumT $ fmap $ Arrow.second f
@@ -164,7 +160,7 @@ boundPic :: Picture -> BoundedPic
 boundPic picture = accum $ const (picture, bounds picture)
 
 resetLeft :: BoundedPic -> BoundedPic
-resetLeft boundedPic = translate (- (left $ getBounds boundedPic)) 0 boundedPic
+resetLeft boundedPic = translate (-(left $ getBounds boundedPic)) 0 boundedPic
 
 distance = 5
 
@@ -176,10 +172,10 @@ addRight bpic1 bpic2 = do
   return $ pic1 <> pic2
 
 center :: BoundedPic -> BoundedPic
-center boundPic = let Bounds { .. } = getBounds boundPic in translate (left + right) (bottom + top) boundPic
+center boundPic = let Bounds {..} = getBounds boundPic in translate (left + right) (bottom + top) boundPic
 
 compPic :: (Data s1, Data s2) => Composition s1 s2 -> BoundedPic
-compPic Composition { .. }
+compPic Composition {..}
   | isUnit state1 = stateBoundedPic state2
   | isUnit state2 = stateBoundedPic state1
   | otherwise = stateBoundedPic state1 `addRight` stateBoundedPic state2
@@ -191,9 +187,8 @@ every :: Data s => Integer -> Cell (StateT s PictureM) () (Maybe Picture)
 every maxN = proc () -> do
   n <- sumC -< 1
   if n `mod` maxN == 0
-  then do
-    s <- getC -< ()
-    let pic = statePicture s
-    returnA -< Just pic
-  else
-    returnA  -< Nothing
+    then do
+      s <- getC -< ()
+      let pic = statePicture s
+      returnA -< Just pic
+    else returnA -< Nothing
