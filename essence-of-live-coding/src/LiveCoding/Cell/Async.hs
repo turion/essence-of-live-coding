@@ -36,10 +36,15 @@ data Session
   | GiveAndGet [Type] [Type] Session
   | InternalChoice (Session -> Session) (Session -> Session) Session
   | ExternalChoice (Session -> Session) (Session -> Session) Session
+  | Lambda Session Session Session
+  | ExternalChoice2 Session Session
 
 type Give a = GiveAndGet '[] '[a]
 type Get a = GiveAndGet '[a] '[]
 type Act = GiveAndGet '[] '[]
+type Id2 = forall x . Lambda x x
+type family Id3 (session :: Session) :: Session where
+  Id3 session = session
 
 data Prog m (session :: Session) where
   Loop :: Prog m (f (Nu f)) -> Prog m (Nu f)
@@ -51,6 +56,17 @@ data Prog m (session :: Session) where
   ILeft :: Prog m (f session) -> Prog m (InternalChoice f g session)
   IRight :: Prog m (g session) -> Prog m (InternalChoice f g session)
   Both :: Prog m (f session) -> Prog m (g session) -> Prog m (ExternalChoice f g session)
+  Abstract :: Prog m (f session) -> Prog m (Lambda var (f var) session)
+  Both2 :: Prog m session1 -> Prog m session2 -> Prog m (ExternalChoice2 session1 session2)
+
+test :: Monad m => a -> Prog m (Nu (Lambda x (Give a x)))
+test a = Loop $ Abstract $ Step () $ \() _ -> return (a ::: TNil, test a)
+
+-- isoEC :: Prog m (Nu (ExternalChoice (Give a) (Give b))) -> Prog m (Nu (Lambda x (ExternalChoice2 (Give a x) (Give b x))))
+-- isoEC (Loop (Both pr' pr2)) = Loop $ Abstract $ Both2 _ _wf
+
+-- isoC :: Prog m (Nu (Compose f g)) -> Prog m (Nu (Lambda x (f (g x))))
+-- isoC (Loop prog) = Loop $ Abstract _
 
 unThere :: Functor m => Prog m (Give a session) -> m (a, Prog m session)
 unThere (Step s f) = first (\(a ::: TNil) -> a) <$> f s TNil
@@ -107,6 +123,7 @@ underF morph (Yep prog) = Yep $ fmap morph prog
 underF morph (ILeft prog) = ILeft $ underF morph prog
 underF morph (IRight prog) = IRight $ underF morph prog
 underF morph (Both progL progR) = Both (underF morph progL) (underF morph progR)
+underF morph (Abstract prog) = Abstract $ underF morph prog
 
 mapNu :: Functor m => (forall session . Prog m (f session) -> Prog m (g session)) -> Prog m (Nu f) -> Prog m (Nu g)
 mapNu morph (Loop prog) = Loop $ underF (mapNu morph) $ morph prog
