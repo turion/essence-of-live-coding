@@ -104,13 +104,14 @@ underF morph (Step s f) = Step s $ fmap (fmap (fmap (fmap morph))) f
 -- Loop is not possible currently
 underF morph (Two prog) = Two $ underF (underF morph) prog
 underF morph (Yep prog) = Yep $ fmap morph prog
--- FIXME missing cases
+underF morph (ILeft prog) = ILeft $ underF morph prog
+underF morph (IRight prog) = IRight $ underF morph prog
+underF morph (Both progL progR) = Both (underF morph progL) (underF morph progR)
 
 mapNu :: Functor m => (forall session . Prog m (f session) -> Prog m (g session)) -> Prog m (Nu f) -> Prog m (Nu g)
 mapNu morph (Loop prog) = Loop $ underF (mapNu morph) $ morph prog
 
--- FIXME If I'm clever enough I can do this just with Functor I think
-transposeNu :: Monad m => Prog m (Nu (Compose f g)) -> Prog m (f (Nu (Compose g f)))
+transposeNu :: Functor m => Prog m (Nu (Compose f g)) -> Prog m (f (Nu (Compose g f)))
 transposeNu prog = underF (Loop . Two . underF transposeNu) $ unTwo $ unLoop prog
 
 -- TODO isomorphisms
