@@ -1,7 +1,6 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -54,7 +53,7 @@ data Prog m (session :: Session) where
   Both :: Prog m (f session) -> Prog m (g session) -> Prog m (ExternalChoice f g session)
 
 unThere :: Functor m => Prog m (Give a session) -> m (a, Prog m session)
-unThere (Step s f) = fmap (first $ \(a ::: TNil) -> a) $ f s TNil
+unThere (Step s f) = first (\(a ::: TNil) -> a) <$> f s TNil
 
 unHere :: Functor m => Prog m (Get a session) -> a -> m (Prog m session)
 unHere (Step s f) a = fmap snd $ f s $ a ::: TNil
