@@ -1,0 +1,37 @@
+name:                essence-of-live-coding-frp
+version:             0.1.0
+synopsis:            FRP continuous-time combinators for essence-of-live-coding. A port of Yampa.
+description:         Time based cells such as integral, events (using Maybe type) and additional combinators.
+homepage:            https://github.com/turion/essence-of-live-coding
+license:             BSD3
+license-file:        LICENSE
+author:              Iván Perez, Manuel Bärenz, and Miguel Negrão
+maintainer:          miguel.negrao@friendlyvirus.org
+category:            FRP, Live coding
+build-type:          Simple
+cabal-version:       >=1.10
+tested-with:
+  GHC == 8.8.4
+  GHC == 8.10.7
+  GHC == 9.0.2
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     LiveCoding.FRP
+                       LiveCoding.FRP.Curry
+  build-depends:       base >= 4.7
+                     , transformers >= 0.5.2.0
+                     , transformers-base
+                     , mtl
+                     , simple-affine-space
+                     , MonadRandom
+                     , tuple
+                     , clock
+                     , arrow-utils >= 0.1.1 && < 0.2
+                     , essence-of-live-coding >= 0.2.6          
+  default-language: Haskell2010
+  ghc-options:      -Wall -Wno-name-shadowing -Wno-unused-do-bind -Wno-orphans     
+
+source-repository head
+  type:     git
+  location: git@github.com:turion/essence-of-live-coding.git

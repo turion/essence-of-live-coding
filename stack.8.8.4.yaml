@@ -2,6 +2,7 @@ resolver: lts-16.27
 
 packages:
 - essence-of-live-coding
+- essence-of-live-coding-frp
 - essence-of-live-coding-gloss
 - essence-of-live-coding-gloss-example
 - essence-of-live-coding-pulse
@@ -19,6 +20,8 @@ extra-deps:
 - vivid-0.5.2.0@sha256:c3b8a9994c44fe347c1ed0b0d48cd0572e71e91b793c0e2e1887afa2bb01e595,8330
 - vivid-osc-0.5.0.0@sha256:633e5c1c87633feaa26019442c3ae63946001c7afe2afa4d2cf22586bd4b182c,2786
 - vivid-supercollider-0.4.1.2@sha256:c7493f2a67b04589df8943e58a7445803e3365c6ad439603bf35695734b9bd65,1738
+- arrow-utils-0.1.1@sha256:135f527058ef3228a4b7efc91cd2b2a583582e7f1b88d61b084d260b81a8598e,1122
+- vector-sized-1.5.0@sha256:6b827805784b52ee9845ab5c930f627e6e27b6dea2354f6fc46295e63ccdb2ed,1758
 
 nix:
   packages:
