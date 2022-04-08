@@ -1,6 +1,18 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 module Cell.Util where
 
 -- base
@@ -9,9 +21,19 @@ import Data.Functor.Identity
 import Data.Maybe
 import Control.Monad
 import Data.List
+import GHC.TypeLits (KnownNat)
+import GHC.Arr (Array)
+
+-- containers
+import Data.Sequence (Seq)
+import Data.Map (Map)
 
 -- transformers
 import Control.Monad.Trans.Reader
+import Control.Monad.Trans.State.Lazy
+
+-- vector-sized
+import qualified Data.Vector.Sized as V
 
 -- test-framework
 import Test.Framework
@@ -21,6 +43,12 @@ import Test.Framework.Providers.QuickCheck2
 
 -- QuickCheck
 import Test.QuickCheck hiding (output)
+
+-- HUnit
+import Test.HUnit (assertFailure)
+
+-- test-framework-hunit
+import Test.Framework.Providers.HUnit (testCase)
 
 -- essence-of-live-coding
 import LiveCoding
@@ -90,9 +118,9 @@ test = testGroup "Utility unit tests"
         $ counterexample labelString
         $ catMaybes inputs === catMaybes outputs
         .||. bufferNotEmpty
-  , testProperty "delay a >>> changes >>> hold a == delay a"
-    $ \(inputs :: [Int]) (startValue :: Int) -> fst (runIdentity $ steps (delay startValue) inputs) ===
-        fst (runIdentity $ steps (delay startValue >>> changes >>> hold startValue) inputs)
+  , testProperty "delay a >>> changes >>> hold a = delay a"
+    $ \(inputs :: [Int]) (startValue :: Int) ->
+      CellIdentitySimulation (delay startValue) (delay startValue >>> changes >>> hold startValue) inputs
   , testProperty "changes applied to a cell that outputs a constant, always outputs Nothing"
     $ \(value :: Int) (inputs :: [Int]) -> [] ===
         catMaybes (fst (runIdentity $ steps (arr (const value) >>> changes) inputs))
@@ -167,5 +195,76 @@ test = testGroup "Utility unit tests"
     , output = [[0,0,0],[1,1],[2,2,0]]
     }
   ]
+
+type TestTraversables' = TestTraversables '[Maybe, [], V.Vector 10, Seq, Map Int]
+
+testTraverse' :: Test
+testTraverse' = testGroup "Traversing unit tests" 
+  [ genTraversableTests' @TestTraversables' "traverse' (arr f) = arr (f <$>)"
+    $ makeTraversableTest (traverseArrLaw @Int @Int)
+  , genTraversableTests' @TestTraversables'
+    "traverse' works as expected for any Cell Identy Int Int created with constructor Cell" 
+    $ makeTraversableTest (traverseCellTest @Int @Int @Int)
+  , testProperty "traverse' by itself does not force the entire list (ArrM)" $ CellSimulation
+    { cell = arr head
+    , input = [1 : error "Bang !"]
+    , output = [1] }
+  , testProperty "traverse' by itself does not force the entire list (Cell)" $ CellSimulation
+    { cell = cellId >>> arr head
+    , input = [1 : error "Bang !"]
+    , output = [1] }
+  ]  
+
+traverseArrLaw :: forall a b t . Traversable t 
+  => Proxy t
+  -> [t a]
+  -> Fun a b
+  -> CellIdentitySimulation (t a) (t b)
+traverseArrLaw _ input' (Fn f) = CellIdentitySimulation
+  { cell1' = arr (f <$>)
+  , cell2' = traverse' (arr f)
+  , .. }
+
+traverseCellTest :: forall s a b t . (Traversable t, Data s) 
+  => Proxy t -> s -> Fun (s, a) (b, s) -> [t a] ->
+  CellSimulation (t a) (t b)
+traverseCellTest _ s (Fn2 f) input = CellSimulation
+  { cell = traverse' (Cell s (\s a -> pure $ f s a))
+  , output = runIdentity $ evalStateT (traverse (traverse (\a -> StateT (Identity . (`f` a)) )) input) s
+  , ..
+  }
+
+makeTraversableTest :: forall (t :: * -> *) a . (Testable a, Typeable t) =>  (Proxy t -> a) -> [Char] -> Proxy t -> Test
+makeTraversableTest a message _ = testProperty (message <> " " <> show (typeRep (Proxy :: Proxy t))) (a (Proxy :: Proxy t))
+
+-- | A data type to store types which are instances of 'Traversable'.
+data TestTraversables :: [* -> *] -> *
+
+-- | A type class for induction on the type-level list containing the Traversables. 
+class GenTests a where
+  genTraversableTests ::  
+    (forall (t :: * -> *) . (Arbitrary (t Int), Show (t Int), Eq (t Int), Traversable t, Typeable t) => Proxy t -> Test)
+    ->  Proxy a -> [Test]
+
+instance GenTests (TestTraversables '[]) where
+  genTraversableTests _ _ = []
+
+instance (GenTests (TestTraversables xs), Arbitrary (x Int), Show (x Int), Eq (x Int), Traversable x, Typeable x) =>
+  GenTests (TestTraversables (x ': xs)) where
+  genTraversableTests f _ = f (Proxy :: Proxy x) : genTraversableTests f (Proxy :: Proxy (TestTraversables xs))
+
+genTraversableTests' :: forall a . GenTests a => 
+  String -> 
+  (forall (t :: * -> *) . (Arbitrary (t Int), Show (t Int), Eq (t Int), Traversable t, Typeable t) => String -> Proxy t -> Test) ->
+  Test
+genTraversableTests' message f = testGroup message $ genTraversableTests (f message) (Proxy :: Proxy a)
+
+instance (Arbitrary a, KnownNat n) => Arbitrary (V.Vector n a) where
+  arbitrary = sequence $ V.replicate arbitrary
+
+cellId :: Monad m => Cell m b b
+cellId = Cell {..} where
+  cellState = ()
+  cellStep s a = pure (a,())
 
 data Stuff a = Stuff a deriving (Eq, Data)

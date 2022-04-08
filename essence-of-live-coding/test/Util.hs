@@ -81,3 +81,18 @@ instance (Eq b, Show b) => Testable (CellSimulation a b) where
     , output1 = output
     , output2 = []
     }
+
+-- | Basic unit test for 'Cell' identities.
+--   Check whether one cell behaves the same as another cell.
+data CellIdentitySimulation a b = CellIdentitySimulation
+  { cell1' :: Cell Identity a b
+  , cell2' :: Cell Identity a b
+  , input' :: [a]  
+  }
+
+instance (Eq b, Show b) => Testable (CellIdentitySimulation a b) where
+  property CellIdentitySimulation { .. }
+    = let 
+        Identity (outputa, _) = simulateCellMigration cell1' cell2' input' []
+        Identity (outputb, _) = simulateCellMigration cell1' cell2' input' []
+      in outputa === outputb

@@ -2,6 +2,7 @@ resolver: lts-18.21
 
 packages:
 - essence-of-live-coding
+- essence-of-live-coding-frp
 - essence-of-live-coding-gloss
 - essence-of-live-coding-gloss-example
 - essence-of-live-coding-PortMidi
@@ -15,12 +16,14 @@ packages:
 - gears
 
 extra-deps:
-- Yampa-0.13.1@sha256:4612a2646c27bcd3ac55c90dbc34249303e28aa5b3bc3e0c6fa9ce58b889843c,5436
+- Yampa-0.13.3@sha256:44319b7cd2a54094b19c78515a8a8f174b96d674835ce7658dbf45a11448b327,6332
 - http-client-0.7.8@sha256:ed76dcd7edec3aaebe012541ca0a52594405e9b21d69420d26c0223bc4d5dc82,5400
 - PortMidi-0.2.0.0@sha256:0671e36ec72e95138bf396234b205864a8a6d0ee353e09e01cbfd57004c56f40,2383
 - vivid-0.5.2.0@sha256:c3b8a9994c44fe347c1ed0b0d48cd0572e71e91b793c0e2e1887afa2bb01e595,8330
 - vivid-osc-0.5.0.0@sha256:633e5c1c87633feaa26019442c3ae63946001c7afe2afa4d2cf22586bd4b182c,2786
 - vivid-supercollider-0.4.1.2@sha256:c7493f2a67b04589df8943e58a7445803e3365c6ad439603bf35695734b9bd65,1738
+- arrow-utils-0.1.1@sha256:135f527058ef3228a4b7efc91cd2b2a583582e7f1b88d61b084d260b81a8598e,1122
+- vector-sized-1.5.0@sha256:6b827805784b52ee9845ab5c930f627e6e27b6dea2354f6fc46295e63ccdb2ed,1758
 
 nix:
   packages:
