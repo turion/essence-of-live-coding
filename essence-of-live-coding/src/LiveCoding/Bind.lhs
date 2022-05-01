@@ -4,6 +4,8 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeApplications #-}
 module LiveCoding.Bind where
 
 -- base
@@ -17,6 +19,9 @@ import Data.Void
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Reader
+
+-- has-trasnformers
+import Control.Monad.Trans.Has.Except
 
 -- essence-of-live-coding
 import LiveCoding.Cell
@@ -35,16 +40,16 @@ but at the moment the position reaches 0:
 
 \begin{code}
 throwWhen0
-  :: Monad m
-  => Cell (ExceptT () m) Double Double
+  :: (Monad m, HasExcept () m)
+  => Cell m Double Double
 throwWhen0 = proc pos ->
   if pos < 0
   then throwC  -< ()
   else returnA -< pos
 
 sineChangeE = do
-  try $ sine 6 >>> throwWhen0
-  try $ (constM $ lift $ putStrLn "I changed!")
+  try_ $ sine 6 >>> throwWhen0
+  try_ $ (constM $ lift $ putStrLn "I changed!")
       >>> throwC
   safe $ sine 10
 \end{code}
@@ -54,7 +59,7 @@ sineChangeE = do
 sineWait
   :: Double -> CellExcept () String IO Void
 sineWait t = do
-  try $ arr (const "Waiting...") >>> wait 2
+  try_ $ arr (const "Waiting...") >>> wait 2
   safe $ sine t >>> arr asciiArt
 \end{code}
 This \mintinline{haskell}{do}-block can be read intuitively.

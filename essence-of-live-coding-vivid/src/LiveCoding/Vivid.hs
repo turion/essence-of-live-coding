@@ -23,6 +23,7 @@ import Vivid
 
 -- essence-of-live-coding
 import LiveCoding.Handle
+import LiveCoding.HandlingState
 import LiveCoding
 
 {- | Whether a synthesizer should currently be running or not.
@@ -85,11 +86,12 @@ For an example, have a look at the source code of 'sine'.
 -}
 liveSynth
   :: ( VividAction m
+     , HasHandlingState m t
      , Eq params, Typeable params, VarList params
      , Typeable (InnerVars params), Subset (InnerVars params) (InnerVars params)
      , Elem "gate" (InnerVars params), Data params
      )
-  => Cell (HandlingStateT m)
+  => Cell t
        (params, SDBody' (InnerVars params) [Signal], SynthState)
        (Maybe (Synth (InnerVars params)))
 liveSynth = proc (params, sdbody, synthstate) -> do
@@ -97,7 +99,7 @@ liveSynth = proc (params, sdbody, synthstate) -> do
   handlingParametrised vividHandleParametrised -< (params, sd paramsFirstValue sdbody, synthstate)
 
 -- | Example sine synthesizer that creates a sine wave at the given input frequency.
-sine :: (VividAction m) => Cell (HandlingStateT m) Float ()
+sine :: (VividAction m, HasHandlingState m t) => Cell t Float ()
 sine = proc frequency -> do
   liveSynth -<
     (

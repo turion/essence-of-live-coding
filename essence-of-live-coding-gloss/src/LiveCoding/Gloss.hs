@@ -1,6 +1,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module LiveCoding.Gloss
   ( module X
@@ -10,6 +11,7 @@ module LiveCoding.Gloss
 -- base
 import Control.Concurrent
 import Control.Monad (when)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.IORef
 import System.Exit (exitSuccess)
 
@@ -28,6 +30,8 @@ import LiveCoding
 -- essence-of-live-coding-gloss
 import LiveCoding.Gloss.Debugger as X
 import LiveCoding.Gloss.PictureM as X
+import LiveCoding.HandlingState (HasHandlingState)
+
 
 -- | In a 'Handle', store a separate thread where the gloss main loop is executed,
 --   and several concurrent variables to communicate with it.
@@ -108,12 +112,13 @@ The resulting cell never blocks,
 but returns 'Nothing' if there currently is no gloss tick.
 -}
 glossWrapC
-  :: GlossSettings
+  :: (MonadIO m, HasHandlingState IO m)
+  => GlossSettings
   -> Cell PictureM a b
-  -> Cell (HandlingStateT IO) a (Maybe b)
+  -> Cell m a (Maybe b)
 glossWrapC glossSettings cell = proc a -> do
   GlossHandle { .. } <- handling $ glossHandle glossSettings -< ()
-  liftCell pump -< (glossVars, a)
+  hoistCell liftIO pump -< (glossVars, a)
   where
     pump = proc (GlossVars { .. }, a) -> do
       timeMaybe <- arrM tryTakeMVar                        -< glossDTimeVar

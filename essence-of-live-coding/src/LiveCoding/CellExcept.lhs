@@ -121,5 +121,11 @@ once kleisli = try $ arrM $ ExceptT . (Left <$>) . kleisli
 -- | Like 'once', but the action does not have an input.
 once_ :: (Monad m, Data e, Finite e) => m e -> CellExcept a arbitrary m e
 once_ = once . const
+
+-- | Like 'try', but the exception is of type '()'.
+try_ ::
+  Cell (ExceptT () m) a b
+  -> CellExcept a b m ()
+try_ = Try
 \end{code}
 \end{comment}

@@ -1,6 +1,7 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE FlexibleContexts #-}
 {- | Live coding backend to the [@warp@](https://hackage.haskell.org/package/warp) server.
 
 If you write a cell that consumes 'Request's and produces 'Response's,
@@ -27,6 +28,7 @@ import Network.Wai.Handler.Warp
 
 -- essence-of-live-coding
 import LiveCoding
+import LiveCoding.HandlingState
 
 data WaiHandle = WaiHandle
   { requestVar  :: MVar Request
@@ -59,15 +61,16 @@ waiHandle port = Handle
 -}
 
 runWarpC
-  :: Port
+  :: (MonadIO m, HasHandlingState IO m)
+  => Port
   -> Cell IO (a, Request) (b, Response)
-  -> Cell (HandlingStateT IO) a (Maybe b)
+  -> Cell m a (Maybe b)
 runWarpC port cell = proc a -> do
   WaiHandle { .. } <- handling $ waiHandle port -< ()
   requestMaybe <- arrM $ liftIO . tryTakeMVar   -< requestVar
   case requestMaybe of
     Just request -> do
-      (b, response) <- liftCell cell  -< (a, request)
+      (b, response) <- hoistCell liftIO cell  -< (a, request)
       arrM $ liftIO . uncurry putMVar -< (responseVar, response)
       returnA                         -< Just b
     Nothing -> do
@@ -94,7 +97,8 @@ main = liveMain liveProgram
 -}
 
 runWarpC_
-  :: Port
+  :: (MonadIO m, HasHandlingState IO m)
+  => Port
   -> LiveWebApp
-  -> Cell (HandlingStateT IO) () ()
+  -> Cell m () ()
 runWarpC_ port cell = runWarpC port (arr snd >>> cell >>> arr ((), )) >>> arr (const ())

@@ -5,19 +5,22 @@ With this module, you can add cells which receive and send MIDI events.
 You don't need to initialise PortMidi, or open devices,
 this is all done by @essence-of-live-coding@ using the "LiveCoding.Handle" mechanism.
 -}
-
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE UndecidableInstances #-}
 module LiveCoding.PortMidi where
 
 -- base
@@ -33,12 +36,22 @@ import GHC.TypeLits (Symbol, symbolVal, KnownSymbol)
 
 -- transformers
 import Control.Monad.Trans.Class
+import Control.Monad.Trans.State.Strict ( StateT(StateT) )
+
+-- has-transformers
+import Control.Monad.Trans.Has ( Has(..) )
+import Control.Monad.Trans.Has.Except ( HasExcept )
+import Control.Monad.Trans.Has.State (HasState, get, put)
+
+-- transformers-base
+import Control.Monad.Base
 
 -- PortMidi
 import Sound.PortMidi
 
 -- essence-of-live-coding
 import LiveCoding
+import LiveCoding.HandlingState (HasHandlingState)
 
 -- essence-of-live-coding-PortMidi
 import LiveCoding.PortMidi.Internal
@@ -58,6 +71,17 @@ newtype PortMidiT m a = PortMidiT
 
 instance MonadTrans PortMidiT where
   lift = PortMidiT . lift . lift
+
+-- This appears to need UndecidableInstances
+instance (MonadBase b m) => MonadBase b (PortMidiT m) where liftBase = liftBaseDefault
+
+instance Monad m => Has (StateT (HandlingState m)) (PortMidiT m) where
+  liftH m = PortMidiT $ liftH m
+
+instance Monad m => Has (ExceptT EOLCPortMidiError) (PortMidiT m) where
+  liftH m = PortMidiT $ liftH m
+
+type HasPortMidiT m t = (HasHandlingState m t, Has (ExceptT EOLCPortMidiError) t)
 
 {- | Exceptions that can occur while doing livecoding with PortMidi.
 
@@ -85,25 +109,14 @@ deriving instance Data PMError
 deriving instance Generic PMError
 instance Finite PMError
 
--- ** Constructing values in 'PortMidiT'
+-- ** Lifting an error
 
--- | Given an exception value, throw it immediately.
-throwPortMidi :: Monad m => EOLCPortMidiError -> PortMidiT m arbitrary
-throwPortMidi = PortMidiT . throwE
-
--- | Like 'throwPortMidi', but as a 'Cell'.
-throwPortMidiC :: Monad m => Cell (PortMidiT m) EOLCPortMidiError arbitrary
-throwPortMidiC = arrM throwPortMidi
-
--- | Given a monadic action that produces a value or a 'PMError',
---   run it as an action in 'PortMidiT'.
---   Typically needed to lift PortMidi backend functions.
-liftPMError :: Monad m => m (Either PMError a) -> PortMidiT m a
-liftPMError = PortMidiT . ExceptT . fmap (left PMError) . lift
-
--- | Given a cell with existing handles, lift it into 'PortMidiT'.
-liftHandlingState :: Monad m => Cell (HandlingStateT m) a b -> Cell (PortMidiT m) a b
-liftHandlingState = hoistCell $ PortMidiT . lift
+liftPMError 
+  :: (Monad m, HasExcept EOLCPortMidiError t, MonadBase m t)
+  => m (Either PMError a) -> t a
+liftPMError m = do
+  e <- liftBase m
+  liftH $ ExceptT $ return $ left PMError e
 
 -- ** Running values in 'PortMidiT'
 
@@ -116,9 +129,11 @@ liftHandlingState = hoistCell $ PortMidiT . lift
 3. Shut the MIDI system down
 4. Throw the exception in 'CellExcept'
 -}
-runPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> CellExcept a b (HandlingStateT m) EOLCPortMidiError
+runPortMidiC 
+  :: forall m a b . (MonadIO m, MonadBase m m)
+  => Cell (PortMidiT m) a b -> CellExcept a b (HandlingStateT m) EOLCPortMidiError
 runPortMidiC cell = try $ proc a -> do
-  _ <- liftCell $ handling portMidiHandle -< ()
+  _ <- (handling @PortMidiHandle @m @(ExceptT EOLCPortMidiError (HandlingStateT m))) portMidiHandle -< ()
   hoistCell unPortMidiT cell -< a
 
 {- | Repeatedly run a cell containing PortMidi effects.
@@ -126,7 +141,9 @@ runPortMidiC cell = try $ proc a -> do
 Effectively loops over 'runPortMidiC',
 and prints the exception after it occurred.
 -}
-loopPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> Cell (HandlingStateT m) a b
+loopPortMidiC 
+  :: (MonadIO m, MonadBase m m)
+  => Cell (PortMidiT m) a b -> Cell (HandlingStateT m) a b
 loopPortMidiC cell = foreverC $ runCellExcept $ do
   e <- runPortMidiC cell
   once_ $ liftIO $ do
@@ -202,8 +219,8 @@ portMidiInputStreamHandle name = Handle
 
 -- | Read all events from the 'PortMidiInputStream' that accumulated since the last tick.
 readEventsFrom
-  :: MonadIO m
-  => Cell (PortMidiT m) PortMidiInputStream [PMEvent]
+  :: (MonadIO m, HasPortMidiT m t)
+  => Cell t PortMidiInputStream [PMEvent]
 readEventsFrom = arrM $ liftPMError . liftIO . readEvents . unPortMidiInputStream
 
 {- | Read all events from the input device of the given name.
@@ -213,11 +230,11 @@ Automatically opens the device.
 This is basically a convenient combination of 'portMidiInputStreamHandle' and 'readEventsFrom'.
 -}
 readEventsC
-  :: MonadIO m
-  => String -> Cell (PortMidiT m) arbitrary [PMEvent]
+  :: (MonadIO m, HasPortMidiT m t)
+  => String -> Cell t arbitrary [PMEvent]
 readEventsC name = proc _ -> do
-  pmStreamE <- liftHandlingState $ handling $ portMidiInputStreamHandle name -< ()
-  pmStream <- hoistCell PortMidiT exceptC -< pmStreamE
+  pmStreamE <- handling $ portMidiInputStreamHandle name -< ()
+  pmStream <- exceptC -< pmStreamE
   readEventsFrom -< pmStream
 
 -- | A 'Handle' that opens a 'PortMidiOutputStream' of the given device name.
@@ -236,8 +253,8 @@ portMidiOutputStreamHandle name = Handle
 
 -- | Write all events to the 'PortMidiOutputStream'.
 writeEventsTo
-  :: MonadIO m
-  => Cell (PortMidiT m) (PortMidiOutputStream, [PMEvent]) ()
+  :: (MonadIO m, HasPortMidiT m t)
+  => Cell t (PortMidiOutputStream, [PMEvent]) ()
 writeEventsTo = arrM writer
   where
     writer (PortMidiOutputStream { .. }, events) = writeEvents unPortMidiOutputStream events
@@ -252,12 +269,12 @@ Automatically opens the device.
 This is basically a convenient combination of 'portMidiOutputStreamHandle' and 'writeEventsTo'.
 -}
 writeEventsC
-  :: MonadIO m
+  :: (MonadIO m, HasPortMidiT m t)
   => String
-  -> Cell (PortMidiT m) [PMEvent] ()
+  -> Cell t [PMEvent] ()
 writeEventsC name = proc events -> do
-  portMidiOutputStreamE <- liftHandlingState $ handling (portMidiOutputStreamHandle name) -< ()
-  portMidiOutputStream <- hoistCell PortMidiT exceptC -< portMidiOutputStreamE
+  portMidiOutputStreamE <- handling (portMidiOutputStreamHandle name) -< ()
+  portMidiOutputStream <- exceptC -< portMidiOutputStreamE
   writeEventsTo -< (portMidiOutputStream, events)
 
 -- | All devices that the PortMidi backend has connected.

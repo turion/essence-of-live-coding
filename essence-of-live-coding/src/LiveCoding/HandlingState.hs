@@ -2,6 +2,8 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module LiveCoding.HandlingState where
 
@@ -12,7 +14,16 @@ import Data.Data
 -- transformers
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import Control.Monad.Trans.State.Strict
+    ( StateT, evalStateT)
+import qualified Control.Monad.Trans.State.Strict as ST
 import Data.Foldable (traverse_)
+
+-- has-transformers
+import Control.Monad.Trans.Has
+import Control.Monad.Trans.Has.State
+
+-- transformers-base
+import Control.Monad.Base
 
 -- containers
 import Data.IntMap
@@ -43,6 +54,9 @@ data HandlingState m = HandlingState
 --   and their destructors automatically executed.
 --   It is basically a monad in which handles are automatically garbage collected.
 type HandlingStateT m = StateT (HandlingState m) m
+
+type HasHandlingState' m t = HasState (HandlingState m) t
+type HasHandlingState m t = (HasState (HandlingState m) t, MonadBase m t)
 
 initHandlingState :: HandlingState m
 initHandlingState = HandlingState
@@ -101,9 +115,9 @@ data Destructor m = Destructor
 
 
 register
-  :: Monad m
+  :: (Monad m, Monad t, HasHandlingState' m t)
   => m () -- ^ Destructor
-  -> HandlingStateT m Key
+  -> t Key
 register destructor = do
   HandlingState { .. } <- get
   let key = nHandles + 1
@@ -114,10 +128,10 @@ register destructor = do
   return key
 
 reregister
-  :: Monad m
+  :: (Monad m, Monad t, HasHandlingState' m t)
   => m ()
   -> Key
-  -> HandlingStateT m ()
+  -> t ()
 reregister action key = do
   HandlingState { .. } <- get
   put HandlingState { destructors = insertDestructor action key destructors, .. }
@@ -135,19 +149,19 @@ unregisterAll
   :: Monad m
   => HandlingStateT m ()
 unregisterAll = do
-  HandlingState { .. } <- get
+  HandlingState { .. } <- ST.get
   let newDestructors = IntMap.map (\destructor -> destructor { isRegistered = False }) destructors
-  put HandlingState { destructors = newDestructors, .. }
+  ST.put HandlingState { destructors = newDestructors, .. }
 
 destroyUnregistered
   :: Monad m
   => HandlingStateT m ()
 destroyUnregistered = do
-  HandlingState { .. } <- get
+  HandlingState { .. } <- ST.get
   let
       (registered, unregistered) = partition isRegistered destructors
   traverse_ (lift . action) unregistered
-  put HandlingState { destructors = registered, .. }
+  ST.put HandlingState { destructors = registered, .. }
 
 -- * 'Data' instances
 dataTypeDestructor :: DataType
