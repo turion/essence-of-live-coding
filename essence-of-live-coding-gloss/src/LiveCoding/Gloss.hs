@@ -11,7 +11,6 @@ module LiveCoding.Gloss
 -- base
 import Control.Concurrent
 import Control.Monad (when)
-import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.IORef
 import System.Exit (exitSuccess)
 
@@ -19,6 +18,9 @@ import System.Exit (exitSuccess)
 import Control.Arrow (returnA)
 import Control.Monad.Trans.Writer
 import Control.Monad.Trans.State.Strict (StateT)
+
+-- transformers-base
+import Control.Monad.Base
 
 -- gloss
 import Graphics.Gloss as X
@@ -112,13 +114,13 @@ The resulting cell never blocks,
 but returns 'Nothing' if there currently is no gloss tick.
 -}
 glossWrapC
-  :: (MonadIO m, HasHandlingState IO m)
+  :: (HasHandlingState IO m)
   => GlossSettings
   -> Cell PictureM a b
   -> Cell m a (Maybe b)
 glossWrapC glossSettings cell = proc a -> do
   GlossHandle { .. } <- handling $ glossHandle glossSettings -< ()
-  hoistCell liftIO pump -< (glossVars, a)
+  hoistCell liftBase pump -< (glossVars, a)
   where
     pump = proc (GlossVars { .. }, a) -> do
       timeMaybe <- arrM tryTakeMVar                        -< glossDTimeVar

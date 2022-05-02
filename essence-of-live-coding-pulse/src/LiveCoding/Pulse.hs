@@ -71,7 +71,7 @@ replicating the input so many times.
 -}
 pulseWrapC
   :: 
-  (MonadIO m, HasHandlingState IO m) =>
+  (MonadBase IO m, HasHandlingState IO m) =>
   Int
   -- ^ Specifies how many steps of your 'PulseCell' should be performed in one step of 'pulseWrapC'.
   -> PulseCell IO a b
@@ -79,10 +79,10 @@ pulseWrapC
   -> Cell m a [b]
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
-  samplesAndBs <- resampleList $ hoistCell liftIO $ runWriterC cell -< replicate bufferSize a
+  samplesAndBs <- resampleList $ hoistCell liftBase $ runWriterC cell -< replicate bufferSize a
   let (samples, bs) = unzip samplesAndBs
       samples' = getSum <$> samples
-  arrM $ liftIO . uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
+  arrM $ liftBase . uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
   returnA -< bs
 
 {- | Returns the sum of all incoming values,

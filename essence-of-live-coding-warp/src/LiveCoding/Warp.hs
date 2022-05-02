@@ -15,7 +15,9 @@ module LiveCoding.Warp
 
 -- base
 import Control.Concurrent
-import Control.Monad.IO.Class
+
+-- transformers-base
+import Control.Monad.Base
 
 -- http-types
 import Network.HTTP.Types as X
@@ -61,20 +63,20 @@ waiHandle port = Handle
 -}
 
 runWarpC
-  :: (MonadIO m, HasHandlingState IO m)
+  :: (MonadBase IO m, HasHandlingState IO m)
   => Port
   -> Cell IO (a, Request) (b, Response)
   -> Cell m a (Maybe b)
 runWarpC port cell = proc a -> do
   WaiHandle { .. } <- handling $ waiHandle port -< ()
-  requestMaybe <- arrM $ liftIO . tryTakeMVar   -< requestVar
+  requestMaybe <- arrM $ liftBase . tryTakeMVar   -< requestVar
   case requestMaybe of
     Just request -> do
-      (b, response) <- hoistCell liftIO cell  -< (a, request)
-      arrM $ liftIO . uncurry putMVar -< (responseVar, response)
+      (b, response) <- hoistCell liftBase cell  -< (a, request)
+      arrM $ liftBase . uncurry putMVar -< (responseVar, response)
       returnA                         -< Just b
     Nothing -> do
-      arrM $ liftIO . threadDelay     -< 1000 -- Prevent too much CPU load
+      arrM $ liftBase . threadDelay     -< 1000 -- Prevent too much CPU load
       returnA                         -< Nothing
 
 -- | A simple live-codable web application is a cell that consumes HTTP 'Request's and emits 'Response's for each.
@@ -97,7 +99,7 @@ main = liveMain liveProgram
 -}
 
 runWarpC_
-  :: (MonadIO m, HasHandlingState IO m)
+  :: (MonadBase IO m, HasHandlingState IO m)
   => Port
   -> LiveWebApp
   -> Cell m () ()

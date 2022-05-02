@@ -26,7 +26,6 @@ module LiveCoding.PortMidi where
 -- base
 import Control.Concurrent (threadDelay)
 import Control.Monad (void, forM, join)
-import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Either (fromRight)
 import Data.Foldable (traverse_, find)
 import Data.Function ((&))
@@ -67,7 +66,7 @@ This transformer adds two kinds of effects to your stack:
 -}
 newtype PortMidiT m a = PortMidiT
   { unPortMidiT :: ExceptT EOLCPortMidiError (HandlingStateT m) a }
-  deriving (Functor, Applicative, Monad, MonadIO)
+  deriving (Functor, Applicative, Monad)
 
 instance MonadTrans PortMidiT where
   lift = PortMidiT . lift . lift
@@ -130,7 +129,7 @@ liftPMError m = do
 4. Throw the exception in 'CellExcept'
 -}
 runPortMidiC 
-  :: forall m a b . (MonadIO m, MonadBase m m)
+  :: forall m a b . (MonadBase IO m, MonadBase m m)
   => Cell (PortMidiT m) a b -> CellExcept a b (HandlingStateT m) EOLCPortMidiError
 runPortMidiC cell = try $ proc a -> do
   _ <- (handling @PortMidiHandle @m @(ExceptT EOLCPortMidiError (HandlingStateT m))) portMidiHandle -< ()
@@ -142,11 +141,11 @@ Effectively loops over 'runPortMidiC',
 and prints the exception after it occurred.
 -}
 loopPortMidiC 
-  :: (MonadIO m, MonadBase m m)
+  :: (MonadBase IO m, MonadBase m m)
   => Cell (PortMidiT m) a b -> Cell (HandlingStateT m) a b
 loopPortMidiC cell = foreverC $ runCellExcept $ do
   e <- runPortMidiC cell
-  once_ $ liftIO $ do
+  once_ $ liftBase $ do
     putStrLn "Encountered PortMidi exception:"
     print e
     threadDelay 1000
@@ -182,15 +181,15 @@ You will rarely need this function.
 Consider 'readEventsC' and 'writeEventsC' instead.
 -}
 lookupDeviceID
-  :: MonadIO m
+  :: MonadBase IO m
   => String
   -> DeviceDirection
   -> m (Either EOLCPortMidiError DeviceID)
 lookupDeviceID nameLookingFor inputOrOutput = do
-  nDevices <- liftIO countDevices
+  nDevices <- liftBase countDevices
   -- This is a bit of a race condition, but PortMidi has no better API
   devices <- forM [0..nDevices-1] $ \deviceID -> do
-    deviceInfo <- liftIO $ getDeviceInfo deviceID
+    deviceInfo <- liftBase $ getDeviceInfo deviceID
     return (deviceInfo, deviceID)
   let allDevicesWithName = filter ((nameLookingFor ==) . name . fst) devices
       inputDevices = filter (input . fst) allDevicesWithName
@@ -205,23 +204,23 @@ lookupDeviceID nameLookingFor inputOrOutput = do
 
 -- | A 'Handle' that opens a 'PortMidiInputStream' of the given device name.
 portMidiInputStreamHandle
-  :: MonadIO m
+  :: MonadBase IO m
   => String
   -> Handle m (Either EOLCPortMidiError PortMidiInputStream)
 portMidiInputStreamHandle name = Handle
   { create = runExceptT $ do
       deviceID <- ExceptT $ lookupDeviceID name Input
-      fmap PortMidiInputStream $ withExceptT PMError $ ExceptT $ liftIO $ openInput deviceID
+      fmap PortMidiInputStream $ withExceptT PMError $ ExceptT $ liftBase $ openInput deviceID
   -- TODO I don't get the error from closing here.
   -- Actually I really want ExceptT in the monad
-  , destroy = either (const $ return ()) $ liftIO . void . close . unPortMidiInputStream
+  , destroy = either (const $ return ()) $ liftBase . void . close . unPortMidiInputStream
   }
 
 -- | Read all events from the 'PortMidiInputStream' that accumulated since the last tick.
 readEventsFrom
-  :: (MonadIO m, HasPortMidiT m t)
+  :: (MonadBase IO m, HasPortMidiT m t)
   => Cell t PortMidiInputStream [PMEvent]
-readEventsFrom = arrM $ liftPMError . liftIO . readEvents . unPortMidiInputStream
+readEventsFrom = arrM $ liftPMError . liftBase . readEvents . unPortMidiInputStream
 
 {- | Read all events from the input device of the given name.
 
@@ -230,7 +229,7 @@ Automatically opens the device.
 This is basically a convenient combination of 'portMidiInputStreamHandle' and 'readEventsFrom'.
 -}
 readEventsC
-  :: (MonadIO m, HasPortMidiT m t)
+  :: (MonadBase IO m, HasPortMidiT m t)
   => String -> Cell t arbitrary [PMEvent]
 readEventsC name = proc _ -> do
   pmStreamE <- handling $ portMidiInputStreamHandle name -< ()
@@ -239,7 +238,7 @@ readEventsC name = proc _ -> do
 
 -- | A 'Handle' that opens a 'PortMidiOutputStream' of the given device name.
 portMidiOutputStreamHandle
-  :: MonadIO m
+  :: MonadBase IO m
   => String
   -> Handle m (Either EOLCPortMidiError PortMidiOutputStream)
 portMidiOutputStreamHandle name = Handle
@@ -247,18 +246,18 @@ portMidiOutputStreamHandle name = Handle
       deviceID <- ExceptT $ lookupDeviceID name Output
       -- Choose same latency as supercollider, see https://github.com/supercollider/supercollider/blob/18c4aad363c49f29e866f884f5ac5bd35969d828/lang/LangPrimSource/SC_PortMIDI.cpp#L416
       -- Thanks Miguel Negrão
-      fmap PortMidiOutputStream $ withExceptT PMError $ ExceptT $ liftIO $ openOutput deviceID 0
-  , destroy = either (const $ return ()) $ liftIO . void . close . unPortMidiOutputStream
+      fmap PortMidiOutputStream $ withExceptT PMError $ ExceptT $ liftBase $ openOutput deviceID 0
+  , destroy = either (const $ return ()) $ liftBase . void . close . unPortMidiOutputStream
   }
 
 -- | Write all events to the 'PortMidiOutputStream'.
 writeEventsTo
-  :: (MonadIO m, HasPortMidiT m t)
+  :: (MonadBase IO m, HasPortMidiT m t)
   => Cell t (PortMidiOutputStream, [PMEvent]) ()
 writeEventsTo = arrM writer
   where
     writer (PortMidiOutputStream { .. }, events) = writeEvents unPortMidiOutputStream events
-      & liftIO
+      & liftBase
       & liftPMError
       & void
 
@@ -269,7 +268,7 @@ Automatically opens the device.
 This is basically a convenient combination of 'portMidiOutputStreamHandle' and 'writeEventsTo'.
 -}
 writeEventsC
-  :: (MonadIO m, HasPortMidiT m t)
+  :: (MonadBase IO m, HasPortMidiT m t)
   => String
   -> Cell t [PMEvent] ()
 writeEventsC name = proc events -> do
