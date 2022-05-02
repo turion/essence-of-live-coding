@@ -5,6 +5,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Handle where
 
 -- base
@@ -15,6 +16,9 @@ import Data.Functor.Identity
 -- transformers
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Strict
+
+-- transformers-base
+import Control.Monad.Base
 
 -- test-framework
 import Test.Framework
@@ -44,6 +48,9 @@ testUnitHandle = Handle
   { create = return ()
   , destroy = const $ put 20000
   }
+
+instance {-# OVERLAPPING #-} MonadBase (StateT Int Identity) (StateT Int Identity) where
+  liftBase = id
 
 cellWithAction
   :: forall a b . State Int b

@@ -5,6 +5,9 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module LiveCoding.Exceptions
   ( module LiveCoding.Exceptions
@@ -21,6 +24,10 @@ import Control.Monad.Trans.Class
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Reader
 
+-- has-transformers
+import Control.Monad.Trans.Has
+import Control.Monad.Trans.Has.Except
+
 -- essence-of-live-coding
 import LiveCoding.Cell
 import LiveCoding.Cell.Monad.Trans
@@ -33,9 +40,9 @@ No new concepts beyond the function \mintinline{haskell}{throwE :: Monad m => e 
 from the package \texttt{transformers} \cite{jones1995functional, transformers} are needed:
 \begin{code}
 throwC
-  :: Monad m
-  => Cell (ExceptT e m) e arbitrary
-throwC = arrM throwE
+  :: (Monad m, HasExcept e m)
+  => Cell m e arbitrary
+throwC = arrM (\e -> liftH $ ExceptT $ return $ Left e) -- can't avoid lambda, doesn't know the type of n
 \end{code}
 The above function simply throws the incoming exception.
 To do this only if a condition is satisfied,
@@ -44,9 +51,9 @@ For example, this cell forwards its input for a given number of seconds,
 and then throws an exception:
 \begin{code}
 wait
-  :: Monad            m
+  :: (Monad m, HasExcept () m)
   => Double
-  -> Cell (ExceptT () m) a a
+  -> Cell m a a
 wait tMax = proc a -> do
   t <- localTime -< ()
   if t >= tMax
@@ -56,19 +63,19 @@ wait tMax = proc a -> do
 
 \begin{comment}
 \begin{code}
-throwIf :: Monad m => (a -> Bool) -> e -> Cell (ExceptT e m) a a
+throwIf :: (Monad m, HasExcept e m) => (a -> Bool) -> e -> Cell m a a
 throwIf condition e = proc a -> do
   if condition a
   then throwC  -< e
   else returnA -< a
 
-throwIf_ :: Monad m => (a -> Bool) -> Cell (ExceptT () m) a a
+throwIf_ :: (Monad m, HasExcept () m) => (a -> Bool) -> Cell m a a
 throwIf_ condition = throwIf condition ()
 
 -- | When the incoming value is @'Right' a@, forward it.
 --   When it is @'Left' e@, throw it as an exception.
 --   Compare with 'except'.
-exceptC :: Monad m => Cell (ExceptT e m) (Either e a) a
+exceptC :: (Monad m, HasExcept e m) => Cell m (Either e a) a
 exceptC = proc ea -> do
   case ea of
     Left e -> throwC -< e

@@ -21,6 +21,7 @@ import LiveCoding
 accum :: (Monad m, Semigroup w, Data w) => w -> Cell m w w
 accum w0 = feedback w0 $ arr $ \(w, state) -> (state, w <> state)
 
+mainCell :: Cell (ExceptT () IO) t ()
 mainCell = proc _ -> do
   x <- sine 1 -< ()
   s <- sumC   -< x
@@ -30,7 +31,7 @@ mainCell = proc _ -> do
   if c > 1000 * 1000
     then do
       arrM (lift . print) -< (s, getMax m, getMin m')
-      throwC  -< ()
+      throwC -< ()
     else returnA -< ()
 
 main :: IO ()

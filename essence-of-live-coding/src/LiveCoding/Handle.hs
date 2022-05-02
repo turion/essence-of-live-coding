@@ -3,6 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 module LiveCoding.Handle where
 
@@ -12,6 +13,13 @@ import Data.Data
 
 -- transformers
 import Control.Monad.Trans.Class (MonadTrans(lift))
+
+-- has-transformers
+import Control.Monad.Trans.Has
+import Control.Monad.Trans.Has.State
+
+-- transformers-base
+import Control.Monad.Base
 
 -- mmorph
 import Control.Monad.Morph
@@ -77,9 +85,10 @@ This means that handles are only migrated if they have exactly the same type.
 handling
   :: ( Typeable h
      , Monad m
+     , HasHandlingState m t
      )
   => Handle m h
-  -> Cell (HandlingStateT m) arbitrary h
+  -> Cell t arbitrary h
 handling handle = arr (const ()) >>> handlingParametrised (toParametrised handle)
 
 {- | Generalisation of 'Handle' carrying an additional parameter which may change at runtime.
@@ -139,14 +148,15 @@ handlingParametrised
   :: ( Typeable h, Typeable p
      , Monad m
      , Eq p
+     , HasHandlingState m t
      )
   => ParametrisedHandle p m h
-  -> Cell (HandlingStateT m) p h
+  -> Cell t p h
 handlingParametrised handleImpl@ParametrisedHandle { .. } = Cell { .. }
   where
     cellState = Uninitialized
     cellStep Uninitialized parameter = do
-      mereHandle <- lift $ createParametrised parameter
+      mereHandle <- liftBase $ createParametrised parameter
       let handle = (mereHandle, parameter)
       key <- register $ destroyParametrised parameter mereHandle
       return (mereHandle, Initialized Handling { handle = handle, .. })
@@ -155,7 +165,7 @@ handlingParametrised handleImpl@ParametrisedHandle { .. } = Cell { .. }
           reregister (destroyParametrised parameter mereHandle) key
           return (mereHandle, handling)
       | otherwise = do
-          mereHandle <- lift $ changeParametrised lastParameter parameter mereHandle
+          mereHandle <- liftBase $ changeParametrised lastParameter parameter mereHandle
           reregister (destroyParametrised parameter mereHandle) key
           return (mereHandle, Initialized Handling { handle = (mereHandle, parameter), .. })
 

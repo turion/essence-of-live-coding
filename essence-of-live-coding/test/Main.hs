@@ -106,7 +106,7 @@ tests =
       [ testProperty "Into safe" CellMigrationSimulation
         { cell1 = countFrom 0
         , cell2 = safely $ do
-            try $ countFrom 10  >>> throwIf (>  1) ()
+            try_ $ countFrom 10  >>> throwIf (>  1) ()
             safe $ countFrom 20
         , input1 = replicate 3 ()
         , input2 = replicate 3 ()

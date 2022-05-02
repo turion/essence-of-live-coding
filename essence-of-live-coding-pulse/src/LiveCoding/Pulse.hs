@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE FlexibleContexts #-}
 module LiveCoding.Pulse where
 
 -- base
@@ -7,17 +8,26 @@ import Control.Concurrent
 import Control.Monad (forever)
 import Control.Monad.Fix
 import Data.Monoid (getSum, Sum(Sum))
+import Control.Monad.IO.Class
 
 -- transformers
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Writer.Strict
 
+-- has-transformers
+import Control.Monad.Trans.Has
+import Control.Monad.Trans.Has.State
+
+-- transformers-base
+import Control.Monad.Base
+
 -- pulse-simple
 import Sound.Pulse.Simple
 
 -- essence-of-live-coding
 import LiveCoding
+import LiveCoding.HandlingState (HasHandlingState)
 
 type PulseT m = WriterT (Sum Float) m
 
@@ -60,17 +70,19 @@ This performs several steps of your cell at a time,
 replicating the input so many times.
 -}
 pulseWrapC
-  :: Int
+  :: 
+  (MonadBase IO m, HasHandlingState IO m) =>
+  Int
   -- ^ Specifies how many steps of your 'PulseCell' should be performed in one step of 'pulseWrapC'.
   -> PulseCell IO a b
   -- ^ Your cell that produces samples.
-  -> Cell (HandlingStateT IO) a [b]
+  -> Cell m a [b]
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
-  samplesAndBs <- resampleList $ liftCell $ runWriterC cell -< replicate bufferSize a
+  samplesAndBs <- resampleList $ hoistCell liftBase $ runWriterC cell -< replicate bufferSize a
   let (samples, bs) = unzip samplesAndBs
       samples' = getSum <$> samples
-  arrM $ lift . uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
+  arrM $ liftBase . uncurry simpleWrite -< samples' `seq` bs `seq` (simple, samples')
   returnA -< bs
 
 {- | Returns the sum of all incoming values,

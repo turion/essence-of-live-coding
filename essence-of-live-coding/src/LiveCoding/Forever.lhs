@@ -35,8 +35,8 @@ sinesWaitAndTry
   :: MonadFix m
   => CellExcept () String m ()
 sinesWaitAndTry = do
-  try $ arr (const "Waiting...") >>> wait 1
-  try $ sine 5 >>> arr asciiArt  >>> wait 5
+  try_ $ arr (const "Waiting...") >>> wait 1
+  try_ $ sine 5 >>> arr asciiArt  >>> wait 5
 \end{code}
 \fxwarning{wait is an unintuitive name. Sounds blocking. "forwardFor"?}
 The one temptation we have to resist is to recurse in the \mintinline{haskell}{CellExcept} context to prove the absence of exceptions:

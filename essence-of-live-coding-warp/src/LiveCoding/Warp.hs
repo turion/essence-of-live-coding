@@ -1,6 +1,7 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE FlexibleContexts #-}
 {- | Live coding backend to the [@warp@](https://hackage.haskell.org/package/warp) server.
 
 If you write a cell that consumes 'Request's and produces 'Response's,
@@ -14,7 +15,9 @@ module LiveCoding.Warp
 
 -- base
 import Control.Concurrent
-import Control.Monad.IO.Class
+
+-- transformers-base
+import Control.Monad.Base
 
 -- http-types
 import Network.HTTP.Types as X
@@ -27,6 +30,7 @@ import Network.Wai.Handler.Warp
 
 -- essence-of-live-coding
 import LiveCoding
+import LiveCoding.HandlingState
 
 data WaiHandle = WaiHandle
   { requestVar  :: MVar Request
@@ -59,19 +63,20 @@ waiHandle port = Handle
 -}
 
 runWarpC
-  :: Port
+  :: (MonadBase IO m, HasHandlingState IO m)
+  => Port
   -> Cell IO (a, Request) (b, Response)
-  -> Cell (HandlingStateT IO) a (Maybe b)
+  -> Cell m a (Maybe b)
 runWarpC port cell = proc a -> do
   WaiHandle { .. } <- handling $ waiHandle port -< ()
-  requestMaybe <- arrM $ liftIO . tryTakeMVar   -< requestVar
+  requestMaybe <- arrM $ liftBase . tryTakeMVar   -< requestVar
   case requestMaybe of
     Just request -> do
-      (b, response) <- liftCell cell  -< (a, request)
-      arrM $ liftIO . uncurry putMVar -< (responseVar, response)
+      (b, response) <- hoistCell liftBase cell  -< (a, request)
+      arrM $ liftBase . uncurry putMVar -< (responseVar, response)
       returnA                         -< Just b
     Nothing -> do
-      arrM $ liftIO . threadDelay     -< 1000 -- Prevent too much CPU load
+      arrM $ liftBase . threadDelay     -< 1000 -- Prevent too much CPU load
       returnA                         -< Nothing
 
 -- | A simple live-codable web application is a cell that consumes HTTP 'Request's and emits 'Response's for each.
@@ -94,7 +99,8 @@ main = liveMain liveProgram
 -}
 
 runWarpC_
-  :: Port
+  :: (MonadBase IO m, HasHandlingState IO m)
+  => Port
   -> LiveWebApp
-  -> Cell (HandlingStateT IO) () ()
+  -> Cell m () ()
 runWarpC_ port cell = runWarpC port (arr snd >>> cell >>> arr ((), )) >>> arr (const ())
