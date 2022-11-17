@@ -1,8 +1,8 @@
--- | For a simple speedtest, run e.g. the following command in Linux:
---   stack build && time stack exec SpeedTest
-
 {-# LANGUAGE Arrows #-}
 
+{- | For a simple speedtest, run e.g. the following command in Linux:
+   stack build && time stack exec SpeedTest
+-}
 module Main (main) where
 
 -- base
@@ -23,14 +23,14 @@ accum w0 = feedback w0 $ arr $ \(w, state) -> (state, w <> state)
 
 mainCell = proc _ -> do
   x <- sine 1 -< ()
-  s <- sumC   -< x
+  s <- sumC -< x
   m <- accum (Max 0) -< Max x
   m' <- accum (Min 0) -< Min x
-  c <- sumC   -< (1 :: Int)
+  c <- sumC -< (1 :: Int)
   if c > 1000 * 1000
     then do
       arrM (lift . print) -< (s, getMax m, getMin m')
-      throwC  -< ()
+      throwC -< ()
     else returnA -< ()
 
 main :: IO ()

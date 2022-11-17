@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows #-}
+
 module LiveCoding.Gloss.Debugger where
 
 -- base
@@ -6,9 +7,10 @@ import Control.Arrow
 import Data.Data
 
 -- transformers
-import Control.Monad.Trans.Writer.Strict
+
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State.Strict
+import Control.Monad.Trans.Writer.Strict
 
 -- syb
 import Data.Generics.Text
@@ -32,9 +34,8 @@ every :: Data s => Integer -> Cell (StateT s PictureM) () (Maybe Picture)
 every maxN = proc () -> do
   n <- sumC -< 1
   if n `mod` maxN == 0
-  then do
-    s <- getC -< ()
-    let pic = statePicture s
-    returnA -< Just pic
-  else
-    returnA  -< Nothing
+    then do
+      s <- getC -< ()
+      let pic = statePicture s
+      returnA -< Just pic
+    else returnA -< Nothing

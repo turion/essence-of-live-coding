@@ -1,7 +1,8 @@
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
 {- | Support functions to call common live coding functionalities like launching and reloading
 from a @ghci@ or @cabal repl@ session.
 
@@ -14,8 +15,8 @@ module LiveCoding.GHCi where
 
 -- base
 import Control.Concurrent
-import Control.Exception (SomeException, try, Exception (toException, displayException))
-import Control.Monad (void, (>=>), join)
+import Control.Exception (Exception (displayException, toException), SomeException, try)
+import Control.Monad (join, void, (>=>))
 import Data.Data
 import Data.Function ((&))
 
@@ -34,25 +35,27 @@ proxyFromLiveProgram _ = Proxy
 
 -- | An exception type marking the absence of a foreign store of the correct type.
 data NoStore = NoStore
-  deriving Show
+  deriving (Show)
 
 instance Exception NoStore
 
 -- * Retrieving launched programs from the foreign store
 
--- | Try to retrieve a 'LiveProgram' of a given type from the 'Store',
---   handling all 'IO' exceptions.
---   Returns 'Right Nothing' if the store didn't exist.
-possiblyLaunchedProgram
-  :: Launchable m
-  => Proxy m
-  -> IO (Either SomeException (LaunchedProgram m))
+{- | Try to retrieve a 'LiveProgram' of a given type from the 'Store',
+   handling all 'IO' exceptions.
+   Returns 'Right Nothing' if the store didn't exist.
+-}
+possiblyLaunchedProgram ::
+  Launchable m =>
+  Proxy m ->
+  IO (Either SomeException (LaunchedProgram m))
 possiblyLaunchedProgram _ = do
   storeMaybe <- lookupStore 0
   fmap join $ try $ traverse readStore $ maybe (Left $ toException NoStore) Right storeMaybe
 
--- | Try to load a 'LiveProgram' of a given type from the 'Store'.
---   If the store doesn't contain a program, it is (re)started.
+{- | Try to load a 'LiveProgram' of a given type from the 'Store'.
+   If the store doesn't contain a program, it is (re)started.
+-}
 sync :: Launchable m => LiveProgram m -> IO ()
 sync program = do
   launchedProgramPossibly <- possiblyLaunchedProgram $ proxyFromLiveProgram program
@@ -75,12 +78,13 @@ launchAndSave = launch >=> save
 save :: Launchable m => LaunchedProgram m -> IO ()
 save = writeStore $ Store 0
 
--- | Try to retrieve a 'LaunchedProgram' from the 'Store',
---   and if successful, stop it.
-stopStored
-  :: Launchable m
-  => Proxy m
-  -> IO ()
+{- | Try to retrieve a 'LaunchedProgram' from the 'Store',
+   and if successful, stop it.
+-}
+stopStored ::
+  Launchable m =>
+  Proxy m ->
+  IO ()
 stopStored proxy = do
   launchedProgramPossibly <- possiblyLaunchedProgram proxy
   either (putStrLn . displayException) stop launchedProgramPossibly
@@ -88,15 +92,19 @@ stopStored proxy = do
 -- * GHCi commands
 
 -- ** Debugging
+
 -- TODO Could also parametrise this and all other commands by the 'liveProgram'
 
--- | Initialise a launched program in the store,
---   but don't start it.
-liveinit _ = return $ unlines
-  [ "programVar <- newMVar liveProgram"
-  , "threadId <- myThreadId"
-  , "save LaunchedProgram { .. }"
-  ]
+{- | Initialise a launched program in the store,
+   but don't start it.
+-}
+liveinit _ =
+  return $
+    unlines
+      [ "programVar <- newMVar liveProgram"
+      , "threadId <- myThreadId"
+      , "save LaunchedProgram { .. }"
+      ]
 
 -- | Run one program step, assuming you have a launched program in a variable @launchedProgram@.
 livestep _ = return "stepLaunchedProgram launchedProgram"
@@ -107,10 +115,12 @@ livestep _ = return "stepLaunchedProgram launchedProgram"
 livelaunch _ = return "sync liveProgram"
 
 -- | Reload the code and do hot code swap and migration.
-livereload _ = return $ unlines
-  [ ":reload"
-  , "sync liveProgram"
-  ]
+livereload _ =
+  return $
+    unlines
+      [ ":reload"
+      , "sync liveProgram"
+      ]
 
 -- | Stop the program.
 livestop _ = return "stopStored $ proxyFromLiveProgram liveProgram"

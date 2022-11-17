@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RecordWildCards #-}
+
 module Util where
 
 -- base
@@ -37,14 +38,15 @@ data CellMigrationSimulation a b = CellMigrationSimulation
   }
 
 instance (Eq b, Show b) => Testable (CellMigrationSimulation a b) where
-  property CellMigrationSimulation { .. }
-    = let Identity (output1', output2') = simulateCellMigration cell1 cell2 input1 input2
-      in output1 === output1' .&&. output2 === output2'
+  property CellMigrationSimulation {..} =
+    let Identity (output1', output2') = simulateCellMigration cell1 cell2 input1 input2
+     in output1 === output1' .&&. output2 === output2'
 
--- | Step the first cell with the first input,
---   migrate it to the second cell,
---   and step the migration result with the second input.
---   Return both outputs.
+{- | Step the first cell with the first input,
+   migrate it to the second cell,
+   and step the migration result with the second input.
+   Return both outputs.
+-}
 simulateCellMigration :: Monad m => Cell m a b -> Cell m a b -> [a] -> [a] -> m ([b], [b])
 simulateCellMigration cell1 cell2 as1 as2 = do
   (bs1, cell1') <- steps cell1 as1
@@ -64,8 +66,9 @@ instance (Arbitrary a, Testable prop) => Testable (Cell Identity a prop) where
 inIdentityT :: Cell Identity a prop -> Cell Identity a prop
 inIdentityT = id
 
--- | Basic unit test for 'Cell's.
---   Check whether a given 'input' to your 'cell' results in a given 'output'.
+{- | Basic unit test for 'Cell's.
+   Check whether a given 'input' to your 'cell' results in a given 'output'.
+-}
 data CellSimulation a b = CellSimulation
   { cell :: Cell Identity a b
   , input :: [a]
@@ -73,11 +76,13 @@ data CellSimulation a b = CellSimulation
   }
 
 instance (Eq b, Show b) => Testable (CellSimulation a b) where
-  property CellSimulation { .. } = property CellMigrationSimulation
-    { cell1 = cell
-    , cell2 = cell
-    , input1 = input
-    , input2 = []
-    , output1 = output
-    , output2 = []
-    }
+  property CellSimulation {..} =
+    property
+      CellMigrationSimulation
+        { cell1 = cell
+        , cell2 = cell
+        , input1 = input
+        , input2 = []
+        , output1 = output
+        , output2 = []
+        }
