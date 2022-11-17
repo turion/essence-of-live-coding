@@ -17,7 +17,6 @@ import Prelude hiding ((!))
 import Control.Monad.Trans.Reader
 
 -- vector
-
 import Data.Vector ((!))
 import qualified Data.Vector as Vector
 
