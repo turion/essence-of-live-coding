@@ -20,7 +20,13 @@ jobs:
           enable-stack: true
           stack-version: '2.7'
       - name: Install dependencies
-        run: sudo apt-get install -y libxml2-utils libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev libpulse-dev libblas-dev liblapack-dev libasound2-dev
+        run: sudo apt-get install -y libxml2-utils libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev libpulse-dev libblas-dev liblapack-dev libasound2-dev wget
+      - name: Install fourmolu
+        run: |
+          wget https://github.com/fourmolu/fourmolu/releases/download/v0.9.0.0/fourmolu-0.9.0.0-linux-x86_64
+          chmod u+x fourmolu-0.9.0.0-linux-x86_64
+      - name: Check formatting with fourmolu
+        run: ./fourmolu-0.9.0.0-linux-x86_64 --mode check $(git ls-files '*.hs')  
       - name: Cabal update
         run: cabal update
       - name: Cache Cabal build artifacts
