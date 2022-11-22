@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+
 module TestData.Foo1 where
 
 -- base
@@ -13,21 +14,22 @@ foo' = Foo 2 False
 
 data Bar
   = Bar
-  { barA :: Integer
-  , barD :: Integer
-  , barC :: Bool
-  }
+      { barA :: Integer
+      , barD :: Integer
+      , barC :: Bool
+      }
   | Baar
-  { baarB :: Bool
-  , baarA :: Int
-  }
+      { baarB :: Bool
+      , baarA :: Int
+      }
   deriving (Show, Eq, Typeable, Data)
 
-bar = Bar
-  { barA = 23
-  , barD = 5
-  , barC = True
-  }
+bar =
+  Bar
+    { barA = 23
+    , barD = 5
+    , barC = True
+    }
 
 data Baz = Baz
   { bazFoo :: Foo

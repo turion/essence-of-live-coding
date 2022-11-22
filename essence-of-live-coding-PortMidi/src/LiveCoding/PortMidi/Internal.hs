@@ -1,7 +1,7 @@
 module LiveCoding.PortMidi.Internal where
 
 -- base
-import Control.Monad ( void )
+import Control.Monad (void)
 import Control.Monad.IO.Class
 
 -- PortMidi
@@ -14,9 +14,10 @@ import LiveCoding.Handle
 data PortMidiHandle = PortMidiHandle
 
 portMidiHandle :: MonadIO m => Handle m PortMidiHandle
-portMidiHandle = Handle
-  { create = do
-      liftIO initialize
-      return PortMidiHandle
-  , destroy = const $ liftIO $ void terminate
-  }
+portMidiHandle =
+  Handle
+    { create = do
+        liftIO initialize
+        return PortMidiHandle
+    , destroy = const $ liftIO $ void terminate
+    }

@@ -10,14 +10,16 @@ import Test.HUnit
 import Test.Framework.Providers.HUnit
 
 -- essence-of-live-coding
-import LiveCoding
+
 import Control.Concurrent (threadDelay)
+import LiveCoding
 
 loggingHandle :: IORef [String] -> Handle IO ()
-loggingHandle ref = Handle
-  { create = modifyIORef ref ("Created handle" :)
-  , destroy = const $ modifyIORef ref ("Destroyed handle" :)
-  }
+loggingHandle ref =
+  Handle
+    { create = modifyIORef ref ("Created handle" :)
+    , destroy = const $ modifyIORef ref ("Destroyed handle" :)
+    }
 
 testProgram :: IORef [String] -> LiveProgram (HandlingStateT IO)
 testProgram ref = liveCell $ handling $ loggingHandle ref

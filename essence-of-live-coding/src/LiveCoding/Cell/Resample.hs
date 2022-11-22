@@ -1,13 +1,13 @@
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards #-}
+
 {- |
 Run a cell at a fixed integer multiple speed.
 The general approach is to take an existing cell (the "inner" cell)
 and produce a new cell (the "outer" cell) that will accept several copies of the input.
 The inner cell is stepped for each input.
 -}
-
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RecordWildCards #-}
 module LiveCoding.Cell.Resample where
 
 -- base
@@ -16,7 +16,7 @@ import Data.Maybe
 import GHC.TypeNats
 
 -- vector-sized
-import Data.Vector.Sized ( fromList, toList, Vector )
+import Data.Vector.Sized (Vector, fromList, toList)
 
 -- essence-of-live-coding
 import LiveCoding.Cell
@@ -32,22 +32,24 @@ resampleList = hoistCellKleisli morph
   where
     morph _ s [] = return ([], s)
     morph singleStep s (a : as) = do
-      (!b , s' ) <- singleStep s a
+      (!b, s') <- singleStep s a
       (!bs, s'') <- morph singleStep s' as
       return (b : bs, s'')
 
 resampleMaybe :: Monad m => Cell m a b -> Cell m (Maybe a) (Maybe b)
 resampleMaybe cell = arr maybeToList >>> resampleList cell >>> arr listToMaybe
 
--- | Create as many cells as the input list is long and execute them in parallel 
--- (in the sense that each one has a separate state). At each tick the list with
--- the different states grows or shrinks depending on the size of the input list.
---
--- Similar to Yampa's [parC](https://hackage.haskell.org/package/Yampa-0.13.3/docs/FRP-Yampa-Switches.html#v:parC).
+{- | Create as many cells as the input list is long and execute them in parallel
+ (in the sense that each one has a separate state). At each tick the list with
+ the different states grows or shrinks depending on the size of the input list.
+
+ Similar to Yampa's [parC](https://hackage.haskell.org/package/Yampa-0.13.3/docs/FRP-Yampa-Switches.html#v:parC).
+-}
 resampleListPar :: Monad m => Cell m a b -> Cell m [a] [b]
-resampleListPar (Cell initial step) = Cell { .. } where
-  cellState = []
-  cellStep s xs = unzip <$> traverse (uncurry step) (zip s' xs)
-    where
-      s' = s ++ replicate (length xs - length s) initial
+resampleListPar (Cell initial step) = Cell {..}
+  where
+    cellState = []
+    cellStep s xs = unzip <$> traverse (uncurry step) (zip s' xs)
+      where
+        s' = s ++ replicate (length xs - length s) initial
 resampleListPar (ArrM f) = ArrM (traverse f)

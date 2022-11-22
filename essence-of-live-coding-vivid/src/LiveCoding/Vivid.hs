@@ -1,3 +1,10 @@
+{-# LANGUAGE Arrows #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StandaloneDeriving #-}
+
 {- | Support for [@vivid@](https://hackage.haskell.org/package/vivid),
 a Haskell library for [SuperCollider](https://supercollider.github.io/).
 
@@ -5,13 +12,6 @@ With this module, you can create cells corresponding to synthesizers.
 
 The synthesizers automatically start and stop on reload.
 -}
-
-{-# LANGUAGE Arrows #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE StandaloneDeriving #-}
 module LiveCoding.Vivid where
 
 -- base
@@ -22,8 +22,9 @@ import GHC.TypeLits (KnownSymbol)
 import Vivid
 
 -- essence-of-live-coding
-import LiveCoding.Handle
+
 import LiveCoding
+import LiveCoding.Handle
 
 {- | Whether a synthesizer should currently be running or not.
 
@@ -39,10 +40,10 @@ data SynthState
 
 Usually, you will want to use 'liveSynth' instead, it is easier to handle.
 -}
-vividHandleParametrised
-  :: (VividAction m, Eq params, VarList params, Subset (InnerVars params) args, Elem "gate" args)
-  => ParametrisedHandle (params, SynthDef args, SynthState) m (Maybe (Synth args))
-vividHandleParametrised = ParametrisedHandle { .. }
+vividHandleParametrised ::
+  (VividAction m, Eq params, VarList params, Subset (InnerVars params) args, Elem "gate" args) =>
+  ParametrisedHandle (params, SynthDef args, SynthState) m (Maybe (Synth args))
+vividHandleParametrised = ParametrisedHandle {..}
   where
     createParametrised (params, synthDef, Started) = Just <$> synth synthDef params
     createParametrised (params, synthDef, Stopped) = defineSD synthDef >> pure Nothing
@@ -83,15 +84,20 @@ in order to ensure release of the synths without clipping.
 
 For an example, have a look at the source code of 'sine'.
 -}
-liveSynth
-  :: ( VividAction m
-     , Eq params, Typeable params, VarList params
-     , Typeable (InnerVars params), Subset (InnerVars params) (InnerVars params)
-     , Elem "gate" (InnerVars params), Data params
-     )
-  => Cell (HandlingStateT m)
-       (params, SDBody' (InnerVars params) [Signal], SynthState)
-       (Maybe (Synth (InnerVars params)))
+liveSynth ::
+  ( VividAction m
+  , Eq params
+  , Typeable params
+  , VarList params
+  , Typeable (InnerVars params)
+  , Subset (InnerVars params) (InnerVars params)
+  , Elem "gate" (InnerVars params)
+  , Data params
+  ) =>
+  Cell
+    (HandlingStateT m)
+    (params, SDBody' (InnerVars params) [Signal], SynthState)
+    (Maybe (Synth (InnerVars params)))
 liveSynth = proc (params, sdbody, synthstate) -> do
   paramsFirstValue <- holdFirst -< params
   handlingParametrised vividHandleParametrised -< (params, sd paramsFirstValue sdbody, synthstate)
@@ -99,12 +105,14 @@ liveSynth = proc (params, sdbody, synthstate) -> do
 -- | Example sine synthesizer that creates a sine wave at the given input frequency.
 sine :: (VividAction m) => Cell (HandlingStateT m) Float ()
 sine = proc frequency -> do
-  liveSynth -<
-    (
-      ( 1 :: I "gate"
-      , 2 :: I "fadeSecs"
-      , I frequency :: I "freq"
+  liveSynth
+    -<
+      (
+        ( 1 :: I "gate"
+        , 2 :: I "fadeSecs"
+        , I frequency :: I "freq"
+        )
+      , out (0 :: Int) [envGate ~* sinOsc (freq_ (V :: V "freq"))]
+      , Started
       )
-    , out (0 :: Int) [envGate ~* sinOsc (freq_ (V :: V "freq"))]
-    , Started)
   returnA -< ()

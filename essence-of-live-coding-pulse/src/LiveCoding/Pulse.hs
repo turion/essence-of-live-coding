@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows #-}
+
 module LiveCoding.Pulse where
 
 -- base
@@ -6,10 +7,10 @@ import Control.Arrow as X
 import Control.Concurrent
 import Control.Monad (forever)
 import Control.Monad.Fix
-import Data.Monoid (getSum, Sum(Sum))
+import Data.Monoid (Sum (Sum), getSum)
 
 -- transformers
-import Control.Monad.Trans.Class (MonadTrans(lift))
+import Control.Monad.Trans.Class (MonadTrans (lift))
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Writer.Strict
 
@@ -38,18 +39,20 @@ but with a future release of @pulse-simple@,
 this might be configurable.
 -}
 pulseHandle :: Handle IO Simple
-pulseHandle = Handle
-  { create = simpleNew
-      Nothing
-      "example"
-      Play
-      Nothing
-      "this is an example application"
-      (SampleSpec (F32 LittleEndian) sampleRate 1)
-      Nothing
-      Nothing
-  , destroy = simpleFree
-  }
+pulseHandle =
+  Handle
+    { create =
+        simpleNew
+          Nothing
+          "example"
+          Play
+          Nothing
+          "this is an example application"
+          (SampleSpec (F32 LittleEndian) sampleRate 1)
+          Nothing
+          Nothing
+    , destroy = simpleFree
+    }
 
 {- | Run a 'PulseCell' with a started pulse backend.
 
@@ -59,12 +62,12 @@ i.e. the resulting cell will block until the backend buffer is nearly empty.
 This performs several steps of your cell at a time,
 replicating the input so many times.
 -}
-pulseWrapC
-  :: Int
-  -- ^ Specifies how many steps of your 'PulseCell' should be performed in one step of 'pulseWrapC'.
-  -> PulseCell IO a b
-  -- ^ Your cell that produces samples.
-  -> Cell (HandlingStateT IO) a [b]
+pulseWrapC ::
+  -- | Specifies how many steps of your 'PulseCell' should be performed in one step of 'pulseWrapC'.
+  Int ->
+  -- | Your cell that produces samples.
+  PulseCell IO a b ->
+  Cell (HandlingStateT IO) a [b]
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
   samplesAndBs <- resampleList $ liftCell $ runWriterC cell -< replicate bufferSize a
@@ -79,35 +82,40 @@ and wraps it between -1 and 1.
 This is to prevent floating number imprecision when the sum gets too large.
 -}
 wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
-wrapSum = Cell
-  { cellState = 0
-  , cellStep  = \accum a ->
-    let
-        (_, accum') = properFraction $ accum + a
-    in return (accum', accum')
-  }
+wrapSum =
+  Cell
+    { cellState = 0
+    , cellStep = \accum a ->
+        let
+          (_, accum') = properFraction $ accum + a
+         in
+          return (accum', accum')
+    }
 
 -- | Like 'wrapSum', but as an integral, assuming the PulseAudio 'sampleRate'.
 wrapIntegral :: (Monad m, Data a, RealFloat a) => Cell m a a
 wrapIntegral = arr (/ sampleRate) >>> wrapSum
 
--- | A sawtooth, or triangle wave, generator,
---   outputting a sawtooth wave with the given input as frequency.
+{- | A sawtooth, or triangle wave, generator,
+   outputting a sawtooth wave with the given input as frequency.
+-}
 sawtooth :: (Monad m, Data a, RealFloat a) => Cell m a a
 sawtooth = wrapIntegral
 
 modSum :: (Monad m, Data a, Integral a) => a -> Cell m a a
-modSum denominator = Cell
-  { cellState = 0
-  , cellStep  = \accum a -> let accum' = (accum + a) `mod` denominator in return (accum', accum')
-  }
+modSum denominator =
+  Cell
+    { cellState = 0
+    , cellStep = \accum a -> let accum' = (accum + a) `mod` denominator in return (accum', accum')
+    }
 
 clamp :: (Ord a, Num a) => a -> a -> a -> a
 clamp lower upper a = min upper $ max lower a
 
--- | A sine oscillator.
---   Supply the frequency via the 'ReaderT' environment.
---   See 'osc'' and 'oscAt'.
+{- | A sine oscillator.
+   Supply the frequency via the 'ReaderT' environment.
+   See 'osc'' and 'oscAt'.
+-}
 osc :: (Data a, RealFloat a, Monad m) => Cell (ReaderT a m) () a
 osc = proc _ -> do
   f <- constM ask -< ()
@@ -143,8 +151,9 @@ data Note
   | Gis
   deriving (Enum, Show)
 
--- | Calculate the frequency of a note,
---   with 'A' corresponding to 220 Hz.
+{- | Calculate the frequency of a note,
+   with 'A' corresponding to 220 Hz.
+-}
 f :: Note -> Float
 f note = 220 * (2 ** (fromIntegral (fromEnum note) / 12))
 

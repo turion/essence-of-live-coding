@@ -1,5 +1,6 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
 module Cell.Monad.Trans where
 
 -- transformers
@@ -19,8 +20,10 @@ import LiveCoding
 
 import Util
 
-test = testGroup "Cell.Monad.Trans"
-  [ testProperty "readerC" $ inIdentityT $ proc (n :: Int) -> do
-      nReader <- runReaderC' $ constM ask -< (n, ())
-      returnA -< n === nReader
-  ]
+test =
+  testGroup
+    "Cell.Monad.Trans"
+    [ testProperty "readerC" $ inIdentityT $ proc (n :: Int) -> do
+        nReader <- runReaderC' $ constM ask -< (n, ())
+        returnA -< n === nReader
+    ]

@@ -1,7 +1,7 @@
-module LiveCoding.Gloss.PictureM
-  ( module LiveCoding.Gloss.PictureM
-  , module X
-  ) where
+module LiveCoding.Gloss.PictureM (
+  module LiveCoding.Gloss.PictureM,
+  module X,
+) where
 
 -- transformers
 import Control.Monad.Trans.Class
@@ -29,10 +29,10 @@ type PictureT m = ReaderT [Event] (WriterT Picture m)
 type PictureM = PictureT IO
 
 -- | Run the effects of the gloss monad stack by explicitly passing events and pictures.
-runPictureT
-  :: Monad m
-  => Cell (PictureT m) a b
-  -> Cell m ([Event], a) (Picture, b)
+runPictureT ::
+  Monad m =>
+  Cell (PictureT m) a b ->
+  Cell m ([Event], a) (Picture, b)
 runPictureT = runWriterC . runReaderC'
 
 addPicture :: Monad m => Cell (PictureT m) Picture ()

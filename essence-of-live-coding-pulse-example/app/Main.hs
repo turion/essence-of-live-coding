@@ -1,5 +1,6 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE TupleSections #-}
+
 module Main where
 
 -- base
@@ -7,8 +8,8 @@ import Control.Arrow as X
 import Control.Concurrent
 import Control.Monad (void)
 import Control.Monad.Fix
-import qualified Data.List.NonEmpty as NonEmpty
 import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NonEmpty
 
 import Prelude hiding ((!))
 
@@ -16,8 +17,8 @@ import Prelude hiding ((!))
 import Control.Monad.Trans.Reader
 
 -- vector
-import qualified Data.Vector as Vector
 import Data.Vector ((!))
+import qualified Data.Vector as Vector
 
 -- pulse-simple
 import Sound.Pulse.Simple
@@ -31,17 +32,17 @@ import LiveCoding.Pulse
 fastSine :: (Data a, Floating a, MonadFix m) => Cell (ReaderT a m) () a
 fastSine = proc _ -> do
   t <- constM ask -< ()
-  rec
-    let acc = - (2 * pi / t) ^ 2 * pos
-    vel <- sumC' <<< delay 0 -< acc
-    pos <- arr (+ 1) <<< sumC' -< vel
+  rec let acc = -(2 * pi / t) ^ 2 * pos
+      vel <- sumC' <<< delay 0 -< acc
+      pos <- arr (+ 1) <<< sumC' -< vel
   returnA -< pos
 
 sumC' :: (Monad m, Data a, Num a) => Cell m a a
-sumC' = Cell
-  { cellState = 0
-  , cellStep  = \accum a -> let accum' = accum + a in return (accum', accum')
-  }
+sumC' =
+  Cell
+    { cellState = 0
+    , cellStep = \accum a -> let accum' = accum + a in return (accum', accum')
+    }
 
 cellA :: MonadFix m => Cell m () Float
 cellA = runReaderC (44100 / 440) fastSine
@@ -62,9 +63,11 @@ frequencies :: Monad m => Cell m () Float
 frequencies = foreverC $ runCellExcept $ sequence $ (short . f) <$> [C, E, G]
 
 cycleThrough :: Monad m => NonEmpty a -> Int -> Cell m () a
-cycleThrough bs cycleLength = let vector = Vector.fromList (NonEmpty.toList bs) in proc _ -> do
-  n <- modSum (cycleLength * length bs) -< 1
-  returnA -< vector ! (n `div` cycleLength)
+cycleThrough bs cycleLength =
+  let vector = Vector.fromList (NonEmpty.toList bs)
+   in proc _ -> do
+        n <- modSum (cycleLength * length bs) -< 1
+        returnA -< vector ! (n `div` cycleLength)
 
 frequencies' :: Monad m => Cell m () Float
 frequencies' = cycleThrough (NonEmpty.fromList $ [f D, f G, o $ f Bb]) 8000
