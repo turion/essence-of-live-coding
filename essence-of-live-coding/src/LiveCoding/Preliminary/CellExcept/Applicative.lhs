@@ -37,6 +37,10 @@ cell1 `andThen` Cell { .. } = cell1 >>>= Cell
 \end{code}
 
 \begin{comment}
+\begin{code}
+cell1 `andThen` cell2 = cell1 `andThen` toCell cell2
+\end{code}
+
 \begin{spec}
   hoistCell readException cell2
   where
