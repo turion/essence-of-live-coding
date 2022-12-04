@@ -16,9 +16,7 @@ jobs:
         id: setup-haskell-build
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: '3.6.2.0'
           enable-stack: true
-          stack-version: '2.7'
       - name: Install dependencies
         run: sudo apt-get install -y libxml2-utils libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev libpulse-dev libblas-dev liblapack-dev libasound2-dev wget
       - name: Install fourmolu
