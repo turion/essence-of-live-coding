@@ -617,6 +617,7 @@ and make typical control flow patterns such as exception handling and looping am
 
 \begin{comment}
 \begin{code}
+-- FIXME Could get away with only requiring Selective m!
 -- FIXME Why the hell is my left definition wrong or leads to the wrong instance?
 data Choice stateL stateR = Choice
   { choiceLeft  :: stateL

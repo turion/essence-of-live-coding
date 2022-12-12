@@ -82,6 +82,7 @@ library
     , LiveCoding.Preliminary.CellExcept.Applicative
     , LiveCoding.Preliminary.CellExcept.Monad
     , LiveCoding.Preliminary.CellExcept.Newtype
+    , LiveCoding.Preliminary.CellExcept.Selective
     , LiveCoding.Preliminary.LiveProgram.HotCodeSwap
     , LiveCoding.Preliminary.LiveProgram.LiveProgram2
     , LiveCoding.Preliminary.LiveProgram.LiveProgramPreliminary

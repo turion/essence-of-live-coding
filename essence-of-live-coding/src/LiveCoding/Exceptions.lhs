@@ -126,6 +126,7 @@ runExceptC cell = runExceptC $ toCell cell
 
 As soon as the exception is thrown,
 we can ``live bind'' it to further cells as an extra input:
+% FIXME Only need Selective?
 \begin{code}
 (>>>=) :: (Data e1, Monad m)
   => Cell (ExceptT e1    m)      a  b
