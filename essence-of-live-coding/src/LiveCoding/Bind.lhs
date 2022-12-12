@@ -10,7 +10,6 @@ module LiveCoding.Bind where
 import Control.Arrow
 import Control.Concurrent (threadDelay)
 import Data.Data
-import Data.Either (fromRight)
 import Data.Void
 
 -- transformers

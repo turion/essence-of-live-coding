@@ -8,7 +8,6 @@ module LiveCoding.Preliminary.CellExcept where
 -- base
 import Control.Arrow
 import Data.Data
-import Data.Either (fromRight)
 import Data.Void
 
 -- transformers

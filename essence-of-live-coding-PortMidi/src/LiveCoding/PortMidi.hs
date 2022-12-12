@@ -24,7 +24,6 @@ module LiveCoding.PortMidi where
 import Control.Concurrent (threadDelay)
 import Control.Monad (forM, join, void)
 import Control.Monad.IO.Class (MonadIO (liftIO))
-import Data.Either (fromRight)
 import Data.Foldable (find, traverse_)
 import Data.Function ((&))
 import Data.Maybe (catMaybes)
