@@ -25,11 +25,11 @@ cabal-version:       >=1.10
 
 source-repository head
   type:     git
-  location: git@github.com:turion/essence-of-live-coding.git
+  location: https://github.com/turion/essence-of-live-coding.git
 
 source-repository this
   type:     git
-  location: git@github.com:turion/essence-of-live-coding.git
+  location: https://github.com/turion/essence-of-live-coding.git
   tag:      v0.2.6
 
 

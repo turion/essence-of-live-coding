@@ -26,7 +26,7 @@ jobs:
           wget https://github.com/fourmolu/fourmolu/releases/download/v0.9.0.0/fourmolu-0.9.0.0-linux-x86_64
           chmod u+x fourmolu-0.9.0.0-linux-x86_64
       - name: Check formatting with fourmolu
-        run: ./fourmolu-0.9.0.0-linux-x86_64 --mode check $(git ls-files '*.hs')  
+        run: ./fourmolu-0.9.0.0-linux-x86_64 --mode check $(git ls-files '*.hs')
       - name: Cabal update
         run: cabal update
       - name: Cache Cabal build artifacts
@@ -48,7 +48,7 @@ jobs:
         run: |
           cabal test all --enable-tests --test-show-details=Always --project-file=cabal.project.${{ matrix.ghc }}
       - name: Cache stack build artifacts
-        uses:  freckle/stack-cache-action@v1.0.1 
+        uses:  freckle/stack-cache-action@v1.0.1
         with:
           stack-yaml: stack.${{ matrix.ghc }}.yaml
       - name: Stack build and test
