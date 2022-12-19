@@ -5,14 +5,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        ghc: ['8.8.4','8.10.7','9.0.2','9.2.4']
+        ghc: ['8.8','8.10','9.0','9.2']
         os: [ubuntu-latest]
     name: Haskell GHC ${{ matrix.ghc }} cabal + stack
     env:
       cabal_project_freeze: cabal.project.${{ matrix.ghc }}.freeze
     steps:
-      - uses: actions/checkout@v2
-      - uses: haskell/actions/setup@v2.0.2
+      - uses: actions/checkout@v3
+      - uses: haskell/actions/setup@v2
         id: setup-haskell-build
         with:
           ghc-version: ${{ matrix.ghc }}
