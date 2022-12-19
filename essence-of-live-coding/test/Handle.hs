@@ -12,6 +12,8 @@ module Handle where
 import Control.Arrow
 import Data.Functor
 import Data.Functor.Identity
+import GHC.Natural (naturalToInteger)
+import GHC.TypeNats (KnownNat, Nat, natVal)
 
 -- transformers
 import Control.Monad.Trans.Class (lift)
@@ -24,10 +26,6 @@ import Test.Framework
 import Test.Framework.Providers.QuickCheck2
 
 -- essence-of-live-coding
-
-import GHC.Base (Nat, Symbol)
-import GHC.Natural (naturalToInteger)
-import GHC.TypeNats (KnownNat, natVal)
 import qualified Handle.LiveProgram
 import LiveCoding
 import Util
