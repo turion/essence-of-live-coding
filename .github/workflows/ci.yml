@@ -21,8 +21,8 @@ jobs:
         os: [ubuntu-latest]
     name: Haskell GHC ${{ matrix.ghc }} cabal + stack
     steps:
-      - uses: actions/checkout@v2
-      - uses: haskell/actions/setup@v2.0.2
+      - uses: actions/checkout@v3
+      - uses: haskell/actions/setup@v2
         id: setup-haskell-build
         with:
           ghc-version: ${{ matrix.ghc }}
