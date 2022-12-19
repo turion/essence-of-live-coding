@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         ghc: ['8.8','8.10','9.0','9.2']
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
     name: Haskell GHC ${{ matrix.ghc }} cabal + stack
     env:
       cabal_project_freeze: cabal.project.${{ matrix.ghc }}.freeze
