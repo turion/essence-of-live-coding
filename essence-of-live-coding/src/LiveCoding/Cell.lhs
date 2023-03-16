@@ -13,9 +13,18 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DerivingVia #-}
 module LiveCoding.Cell where
 
 -- base
+import Data.Profunctor
+    ( Strong, WrappedArrow(WrapArrow), Profunctor )
+import Data.Profunctor.Strong ( Strong )
+import Data.Profunctor.Choice ( Choice )
+import Data.Profunctor.Traversing ( Traversing(traverse') )
+import Control.Monad.Trans.State.Lazy 
+  (StateT(runStateT, StateT))
 import Control.Arrow
 import Control.Category
 import Control.Concurrent (threadDelay)
@@ -412,6 +421,15 @@ Then we can execute the live program in the same way as before.
 
 \begin{comment}
 \begin{code}
+deriving via (WrappedArrow (Cell m)) instance Monad m => Profunctor (Cell m) 
+deriving via (WrappedArrow (Cell m)) instance Monad m => Strong (Cell m)
+deriving via (WrappedArrow (Cell m)) instance Monad m => Data.Profunctor.Choice.Choice (Cell m)
+
+instance Monad m => Traversing (Cell m) where
+  traverse' (Cell state step) = Cell state step' where
+    step' s a = runStateT (traverse (\a -> StateT (`step` a)) a) s
+  traverse' (ArrM f) = ArrM (traverse f)
+
 data Parallel stateP1 stateP2 = Parallel
   { stateP1 :: stateP1
   , stateP2 :: stateP2

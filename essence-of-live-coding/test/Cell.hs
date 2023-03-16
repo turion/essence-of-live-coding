@@ -36,5 +36,6 @@ test =
           sum (init inputs)
             === last (fst (runIdentity $ steps (sumC :: Cell Identity Int Int) inputs))
     , Cell.Util.test
+    , Cell.Util.testTraverse'
     , Cell.Monad.Trans.test
     ]

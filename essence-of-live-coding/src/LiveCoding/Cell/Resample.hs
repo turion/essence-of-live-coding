@@ -15,6 +15,9 @@ import Control.Arrow
 import Data.Maybe
 import GHC.TypeNats
 
+-- profunctors
+import Data.Profunctor.Traversing ( Traversing(traverse') )
+
 -- vector-sized
 import Data.Vector.Sized (Vector, fromList, toList)
 
@@ -24,20 +27,14 @@ import LiveCoding.Cell.Monad
 
 -- | Execute the inner cell for n steps per outer step.
 resample :: (Monad m, KnownNat n) => Cell m a b -> Cell m (Vector n a) (Vector n b)
-resample cell = arr toList >>> resampleList cell >>> arr (fromList >>> fromJust)
+resample = traverse'
 
 -- | Execute the cell for as many steps as the input list is long.
 resampleList :: Monad m => Cell m a b -> Cell m [a] [b]
-resampleList = hoistCellKleisli morph
-  where
-    morph _ s [] = return ([], s)
-    morph singleStep s (a : as) = do
-      (!b, s') <- singleStep s a
-      (!bs, s'') <- morph singleStep s' as
-      return (b : bs, s'')
+resampleList = traverse'
 
 resampleMaybe :: Monad m => Cell m a b -> Cell m (Maybe a) (Maybe b)
-resampleMaybe cell = arr maybeToList >>> resampleList cell >>> arr listToMaybe
+resampleMaybe = traverse'
 
 {- | Create as many cells as the input list is long and execute them in parallel
  (in the sense that each one has a separate state). At each tick the list with
