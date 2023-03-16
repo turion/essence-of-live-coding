@@ -16,7 +16,7 @@ import Data.Maybe
 import GHC.TypeNats
 
 -- profunctors
-import Data.Profunctor.Traversing ( Traversing(traverse') )
+import Data.Profunctor.Traversing (Traversing (traverse'))
 
 -- vector-sized
 import Data.Vector.Sized (Vector, fromList, toList)
