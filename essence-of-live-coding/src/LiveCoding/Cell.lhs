@@ -6,12 +6,14 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DerivingVia #-}
@@ -105,6 +107,7 @@ data Cell m a b = forall s . Data s => Cell
   | ArrM { runArrM :: a -> m b }
   -- ^ Effectively a cell with trivial state.
   --   Added to improve performance and keep state types simpler.
+deriving instance Functor m => Functor (Cell m a)
 \end{code}
 \end{comment}
 \begin{comment}
