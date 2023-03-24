@@ -263,6 +263,22 @@ garbageCollected actionHS = do
   liftH $ put HandlingState { destructors = registeredConstructors, registered = [] }
   return a
 
+garbageCollected' action = do
+  unregisterAll
+  a <- action
+  collectGarbage
+  return a
+
+unregisterAll :: HandlingStateStateT m ()
+unregisterAll = modify $ \handlingState -> handlingState { registered = [] }
+
+collectGarbage :: HandlingStateStateT m ()
+collectGarbage = do
+  HandlingState { .. } <- liftH get
+  let registeredKeys = IntSet.fromList registered
+      registeredConstructors = restrictKeys destructors registeredKeys
+      unregisteredConstructors = withoutKeys destructors registeredKeys
+  lift $ lift $ traverse_ action unregisteredConstructors
 
 data Destructor m = Destructor
   { isRegistered :: Bool -- TODO we don't need this anymore
