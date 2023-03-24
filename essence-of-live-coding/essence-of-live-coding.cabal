@@ -85,7 +85,7 @@ library
   build-depends:
       base >= 4.11 && < 5
     , transformers >= 0.5
-    , mtl >= 2.2
+    , mtl >= 2.3
     , containers >= 0.6
     , syb >= 0.7
     , vector-sized >= 1.2

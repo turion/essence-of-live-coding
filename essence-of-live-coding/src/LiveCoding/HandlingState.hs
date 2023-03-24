@@ -50,8 +50,6 @@ import Control.Monad.Trans.State.Strict (StateT (StateT), runStateT, evalStateT,
 import Control.Monad.Morph (hoist, MFunctor)
 import Control.Monad.Trans.Has
 
-import LiveCoding.HandlingState.AccumTOrphan
-
 data Handling h = Handling
   { key :: Key
   , handle :: h
