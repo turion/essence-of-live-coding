@@ -24,7 +24,6 @@ import Data.Maybe
 import GHC.TypeLits (KnownNat)
 
 -- containers
-
 import Data.Map (Map)
 import Data.Sequence (Seq)
 
@@ -212,15 +211,15 @@ test =
           }
     ]
 
-type TestTraversables' = TestTraversables '[Maybe, [], V.Vector 10, Seq, Map Int]
+type TestTraversables = Traversables '[Maybe, [], V.Vector 10, Seq, Map Int]
 
 testTraverse' :: Test
 testTraverse' =
   testGroup
     "Traversing unit tests"
-    [ genTraversableTests' @TestTraversables' "traverse' (arr f) = arr (f <$>)" $
+    [ genTraversableTests' @TestTraversables "traverse' (arr f) = arr (f <$>)" $
         makeTraversableTest (traverseArrLaw @Int @Int)
-    , genTraversableTests' @TestTraversables'
+    , genTraversableTests' @TestTraversables
         "traverse' works as expected for any Cell Identy Int Int created with constructor Cell"
         $ makeTraversableTest (traverseCellTest @Int @Int @Int)
     , testProperty "traverse' by itself does not force the entire list (ArrM)" $
@@ -231,7 +230,7 @@ testTraverse' =
           }
     , testProperty "traverse' by itself does not force the entire list (Cell)" $
         CellSimulation
-          { cell = cellId >>> arr head
+          { cell = toCell $ arr head
           , input = [1 : error "Bang !"]
           , output = [1]
           }
@@ -244,10 +243,10 @@ traverseArrLaw ::
   [t a] ->
   Fun a b ->
   CellIdentitySimulation (t a) (t b)
-traverseArrLaw _ input' (Fn f) =
+traverseArrLaw _ joinInput (Fn f) =
   CellIdentitySimulation
-    { cell1' = arr (f <$>)
-    , cell2' = traverse' (arr f)
+    { cellL = arr (f <$>)
+    , cellR = traverse' (arr f)
     , ..
     }
 
@@ -270,7 +269,7 @@ makeTraversableTest :: forall (t :: * -> *) a. (Testable a, Typeable t) => (Prox
 makeTraversableTest a _ = testProperty (show (typeRep (Proxy :: Proxy t))) (a (Proxy :: Proxy t))
 
 -- | A data type to store types which are instances of 'Traversable'.
-data TestTraversables :: [* -> *] -> *
+data Traversables :: [* -> *] -> *
 
 -- | A type class for induction on the type-level list containing the Traversables.
 class GenTests a where
@@ -279,14 +278,14 @@ class GenTests a where
     Proxy a ->
     [Test]
 
-instance GenTests (TestTraversables '[]) where
+instance GenTests (Traversables '[]) where
   genTraversableTests _ _ = []
 
 instance
-  (GenTests (TestTraversables xs), Arbitrary (x Int), Show (x Int), Eq (x Int), Traversable x, Typeable x) =>
-  GenTests (TestTraversables (x ': xs))
+  (GenTests (Traversables xs), Arbitrary (x Int), Show (x Int), Eq (x Int), Traversable x, Typeable x) =>
+  GenTests (Traversables (x ': xs))
   where
-  genTraversableTests f _ = f (Proxy :: Proxy x) : genTraversableTests f (Proxy :: Proxy (TestTraversables xs))
+  genTraversableTests f _ = f (Proxy :: Proxy x) : genTraversableTests f (Proxy :: Proxy (Traversables xs))
 
 genTraversableTests' ::
   forall a.
@@ -299,11 +298,5 @@ genTraversableTests' message f = testGroup message $ genTraversableTests f (Prox
 instance (Arbitrary a, KnownNat n) => Arbitrary (V.Vector n a) where
   arbitrary = V.replicateM arbitrary
   shrink = V.mapM shrink
-
-cellId :: Monad m => Cell m b b
-cellId = Cell {..}
-  where
-    cellState = ()
-    cellStep s a = pure (a, ())
 
 data Stuff a = Stuff a deriving (Eq, Data)

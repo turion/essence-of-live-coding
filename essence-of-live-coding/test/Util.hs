@@ -91,15 +91,15 @@ instance (Eq b, Show b) => Testable (CellSimulation a b) where
    Check whether one cell behaves the same as another cell.
 -}
 data CellIdentitySimulation a b = CellIdentitySimulation
-  { cell1' :: Cell Identity a b
-  , cell2' :: Cell Identity a b
-  , input' :: [a]
+  { cellL :: Cell Identity a b
+  , cellR :: Cell Identity a b
+  , joinInput :: [a]
   }
 
 instance (Eq b, Show b) => Testable (CellIdentitySimulation a b) where
   property CellIdentitySimulation {..} =
     let
-      Identity (outputa, _) = simulateCellMigration cell1' cell2' input' []
-      Identity (outputb, _) = simulateCellMigration cell1' cell2' input' []
+      Identity (outputa, _) = simulateCellMigration cellL cellR joinInput []
+      Identity (outputb, _) = simulateCellMigration cellL cellR joinInput []
      in
       outputa === outputb
