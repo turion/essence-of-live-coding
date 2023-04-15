@@ -103,6 +103,7 @@ test-suite test
     , Migrate.NoMigration
     , Cell.Monad.Trans
     , Cell.Util
+    , Cell.Util.Traversable
     , Feedback
     , Handle
     , Handle.LiveProgram
