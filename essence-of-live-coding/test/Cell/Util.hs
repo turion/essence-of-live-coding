@@ -1,6 +1,17 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Cell.Util where
 
@@ -10,9 +21,18 @@ import Control.Monad
 import Data.Functor.Identity
 import Data.List
 import Data.Maybe
+import GHC.TypeLits (KnownNat)
+
+-- containers
+import Data.Map (Map)
+import Data.Sequence (Seq)
 
 -- transformers
 import Control.Monad.Trans.Reader
+import Control.Monad.Trans.State.Lazy
+
+-- vector-sized
+import qualified Data.Vector.Sized as V
 
 -- test-framework
 import Test.Framework
@@ -95,10 +115,9 @@ test =
           counterexample labelString $
             catMaybes inputs === catMaybes outputs
               .||. bufferNotEmpty
-    , testProperty "delay a >>> changes >>> hold a == delay a" $
+    , testProperty "delay a >>> changes >>> hold a = delay a" $
         \(inputs :: [Int]) (startValue :: Int) ->
-          fst (runIdentity $ steps (delay startValue) inputs)
-            === fst (runIdentity $ steps (delay startValue >>> changes >>> hold startValue) inputs)
+          CellIdentitySimulation (delay startValue) (delay startValue >>> changes >>> hold startValue) inputs
     , testProperty "changes applied to a cell that outputs a constant, always outputs Nothing" $
         \(value :: Int) (inputs :: [Int]) ->
           []

@@ -25,6 +25,7 @@ import LiveCoding
 
 import qualified Cell.Monad.Trans
 import qualified Cell.Util
+import qualified Cell.Util.Traversable
 
 test =
   testGroup
@@ -36,5 +37,6 @@ test =
           sum (init inputs)
             === last (fst (runIdentity $ steps (sumC :: Cell Identity Int Int) inputs))
     , Cell.Util.test
+    , Cell.Util.Traversable.testTraverse'
     , Cell.Monad.Trans.test
     ]
