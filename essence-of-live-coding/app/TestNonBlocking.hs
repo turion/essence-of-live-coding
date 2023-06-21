@@ -1,4 +1,6 @@
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Main
   ( module Main
@@ -11,9 +13,16 @@ import Control.Concurrent
 
 -- transformers
 import Control.Monad.Trans.Class
+import Control.Monad.Trans.Except
+import Control.Monad.Trans.State
+
+-- has-transformers
+import Control.Monad.Trans.Has
+import Control.Monad.Trans.Has.Writer
 
 -- essence-of-live-coding
 import LiveCoding
+import LiveCoding.HandlingState (HasHandlingState)
 import LiveCoding.GHCi as X
 
 -- | An identity function that takes a long time to pass on its value.
@@ -21,6 +30,18 @@ slowId :: Cell IO a a
 slowId = proc a -> do
   arrM threadDelay -< 1000000
   returnA -< a
+
+writerHandle :: (HasWriter w m, Monad m) => Cell (HandlingStateT m) () ()
+writerHandle = handling (Handle (return ()) (const (return ())))
+
+liftCH :: Has t m => (forall n . Cell (t n) a b) -> Cell m a b
+liftCH cell = hoistCell liftH cell
+
+test :: Monad m => Cell (ExceptT () (HandlingStateT m)) () ()
+test = proc () -> do
+  hoistCell liftH stupidhandle -< ()
+  throwC -< ()
+
 
 main :: IO ()
 main = do

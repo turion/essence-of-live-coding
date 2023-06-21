@@ -2,6 +2,8 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module LiveCoding.HandlingState where
 
@@ -17,6 +19,10 @@ import Data.Foldable (traverse_)
 -- containers
 import Data.IntMap
 import qualified Data.IntMap as IntMap
+
+-- has-transformers
+import Control.Monad.Trans.Has
+import Control.Monad.Trans.Has.State (HasState)
 
 -- essence-of-live-coding
 import LiveCoding.Cell
@@ -43,6 +49,8 @@ data HandlingState m = HandlingState
 --   and their destructors automatically executed.
 --   It is basically a monad in which handles are automatically garbage collected.
 type HandlingStateT m = StateT (HandlingState m) m
+
+type HasHandlingState m n = HasState (HandlingState m) n
 
 initHandlingState :: HandlingState m
 initHandlingState = HandlingState
