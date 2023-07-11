@@ -25,7 +25,7 @@ import Data.Profunctor
 import Data.Profunctor.Strong ( Strong )
 import Data.Profunctor.Choice ( Choice )
 import Data.Profunctor.Traversing ( Traversing(traverse') )
-import Control.Monad.Trans.State.Lazy 
+import Control.Monad.Trans.State.Lazy
   (StateT(runStateT, StateT))
 import Control.Arrow
 import Control.Category
@@ -424,7 +424,7 @@ Then we can execute the live program in the same way as before.
 
 \begin{comment}
 \begin{code}
-deriving via (WrappedArrow (Cell m)) instance Monad m => Profunctor (Cell m) 
+deriving via (WrappedArrow (Cell m)) instance Monad m => Profunctor (Cell m)
 deriving via (WrappedArrow (Cell m)) instance Monad m => Strong (Cell m)
 deriving via (WrappedArrow (Cell m)) instance Monad m => Data.Profunctor.Choice.Choice (Cell m)
 
