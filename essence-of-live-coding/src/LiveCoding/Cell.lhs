@@ -478,8 +478,15 @@ arrM = ArrM
 constM :: m b -> Cell m a b
 constM = arrM . const
 
-constC :: Monad m => b -> Cell m a b
-constC = constM . return
+constC :: Applicative m => b -> Cell m a b
+constC = constM . pure
+
+instance Applicative m => Applicative (Cell m a) where
+  pure = constC
+  Cell fState0 fStep <*> Cell aState0 aStep = Cell
+    { cellStep = \(Parallel fState aState) a -> (\(f, fState') (a, aState') -> (f a, Parallel fState' aState')) <$> fStep fState a <*> aStep aState a
+    , cellState = Parallel fState0 aState0
+    }
 \end{code}
 \end{comment}
 
