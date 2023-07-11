@@ -1,4 +1,4 @@
-resolver: nightly-2022-11-12
+resolver: lts-20.11
 
 packages:
 - essence-of-live-coding

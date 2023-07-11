@@ -64,10 +64,13 @@ matchingAlgebraicDataTypes :: (Data a, Data b) => a -> b -> Bool
 matchingAlgebraicDataTypes a b
   = isAlgType typeA
   && isAlgType typeB
-  && dataTypeName typeA == dataTypeName typeB
+  && withoutModule (dataTypeName typeA) == withoutModule (dataTypeName typeB)
   where
     typeA = dataTypeOf a
     typeB = dataTypeOf b
+    withoutModule string = let
+      (prefix, suffix) = break (== '.') string
+      in if null suffix then prefix else withoutModule $ tail suffix
 
 -- | Assuming that both are algebraic data types, possibly the constructor names match.
 --   In that case, we will try and recursively migrate as much data as possible onto the new constructor.

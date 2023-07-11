@@ -6,6 +6,16 @@ module TestData.Foo2 where
 import Data.Data
 import Data.Typeable
 
+data Same = Same String Int
+  deriving (Show, Eq, Typeable, Data)
+
+same = Same "the same" 42
+
+data Similar = Similar String Int
+  deriving (Show, Eq, Typeable, Data)
+
+similar = Similar "similar" 100
+
 data Foo
   = Fooo Integer
   | Foo Integer

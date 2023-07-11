@@ -1,0 +1,29 @@
+resolver: lts-21.2
+
+packages:
+- essence-of-live-coding
+- essence-of-live-coding-gloss
+- essence-of-live-coding-gloss-example
+- essence-of-live-coding-PortMidi
+- essence-of-live-coding-pulse
+- essence-of-live-coding-pulse-example
+- essence-of-live-coding-quickcheck
+- essence-of-live-coding-speedtest-yampa
+- essence-of-live-coding-vivid
+- essence-of-live-coding-warp
+- demos
+- gears
+
+extra-deps:
+- PortMidi-0.2.0.0@sha256:0671e36ec72e95138bf396234b205864a8a6d0ee353e09e01cbfd57004c56f40,2383
+- vector-sized-1.5.0@sha256:900bfb7b358b2f40ae817d2f04e320db800d255d179b2bd3e07b44d6343093f5,1835
+
+nix:
+  packages:
+    - alsa-lib
+    - libGL
+    - libGLU
+    - libpulseaudio
+    - zlib
+    - blas
+    - lapack

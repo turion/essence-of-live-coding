@@ -60,7 +60,7 @@ initializedConstr = mkConstr dataTypeNoMigration "Initialized" [] Prefix
 uninitializedConstr :: Constr
 uninitializedConstr = mkConstr dataTypeNoMigration "Uninitialized" [] Prefix
 
--- |The Data instance for @'NoMigration' a@ doesn't require a 'Data' instance for @a@.
+-- | The Data instance for @'NoMigration' a@ doesn't require a 'Data' instance for @a@.
 instance (Typeable a) => Data (NoMigration a) where
   dataTypeOf _ = dataTypeNoMigration
   toConstr (Initialized _) = initializedConstr

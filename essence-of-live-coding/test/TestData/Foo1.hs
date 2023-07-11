@@ -6,6 +6,12 @@ module TestData.Foo1 where
 import Data.Data
 import Data.Typeable
 
+data Same = Same String Int
+  deriving (Show, Eq, Typeable, Data)
+
+same = Same "same" 23
+same' = Same "the same" 42
+
 data Foo = Foo Integer Bool
   deriving (Show, Eq, Typeable, Data)
 

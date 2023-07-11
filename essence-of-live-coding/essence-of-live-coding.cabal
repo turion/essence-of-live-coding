@@ -22,6 +22,12 @@ category:            FRP, Live coding
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
 cabal-version:       >=1.10
+tested-with:
+  GHC == 8.8.4
+  GHC == 8.10.7
+  GHC == 9.0.2
+  GHC == 9.2.5
+  GHC == 9.4.5
 
 source-repository head
   type:     git
@@ -82,7 +88,7 @@ library
 
   other-extensions:    DeriveDataTypeable
   build-depends:
-      base >= 4.11 && < 5
+      base >= 4.13 && < 4.18
     , transformers >= 0.5
     , containers >= 0.6
     , syb >= 0.7
@@ -100,6 +106,7 @@ test-suite test
   main-is: Main.hs
   other-modules:
       Cell
+    , Migrate
     , Migrate.NoMigration
     , Cell.Monad.Trans
     , Cell.Util
