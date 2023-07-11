@@ -11,7 +11,7 @@ import Control.Arrow (arr, (>>>))
 import Data.Data (Data)
 
 -- transformers
-import Control.Monad.Trans.Reader (ReaderT, runReaderT)
+import Control.Monad.Trans.Reader (ReaderT (..), reader, runReaderT)
 import Control.Monad.Trans.State.Strict (StateT (..), evalStateT, runStateT)
 import Control.Monad.Trans.Writer.Strict
 
@@ -65,6 +65,13 @@ runReaderC' ::
   Cell (ReaderT r m) a b ->
   Cell m (r, a) b
 runReaderC' = hoistCellKleisli_ $ \action (r, a) -> runReaderT (action a) r
+
+-- | Inverse to 'runReaderC''
+readerC' ::
+  Monad m =>
+  Cell m (r, a) b ->
+  Cell (ReaderT r m) a b
+readerC' = hoistCellKleisli_ $ \action a -> ReaderT $ \r -> action (r, a)
 
 {- | Run the effects of the 'WriterT' monad,
    collecting all its output in the second element of the tuple.

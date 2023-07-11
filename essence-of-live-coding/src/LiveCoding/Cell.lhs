@@ -6,12 +6,14 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DerivingVia #-}
@@ -23,7 +25,7 @@ import Data.Profunctor
 import Data.Profunctor.Strong ( Strong )
 import Data.Profunctor.Choice ( Choice )
 import Data.Profunctor.Traversing ( Traversing(traverse') )
-import Control.Monad.Trans.State.Lazy 
+import Control.Monad.Trans.State.Lazy
   (StateT(runStateT, StateT))
 import Control.Arrow
 import Control.Category
@@ -105,6 +107,7 @@ data Cell m a b = forall s . Data s => Cell
   | ArrM { runArrM :: a -> m b }
   -- ^ Effectively a cell with trivial state.
   --   Added to improve performance and keep state types simpler.
+deriving instance Functor m => Functor (Cell m a)
 \end{code}
 \end{comment}
 \begin{comment}
@@ -421,7 +424,7 @@ Then we can execute the live program in the same way as before.
 
 \begin{comment}
 \begin{code}
-deriving via (WrappedArrow (Cell m)) instance Monad m => Profunctor (Cell m) 
+deriving via (WrappedArrow (Cell m)) instance Monad m => Profunctor (Cell m)
 deriving via (WrappedArrow (Cell m)) instance Monad m => Strong (Cell m)
 deriving via (WrappedArrow (Cell m)) instance Monad m => Data.Profunctor.Choice.Choice (Cell m)
 
@@ -475,8 +478,15 @@ arrM = ArrM
 constM :: m b -> Cell m a b
 constM = arrM . const
 
-constC :: Monad m => b -> Cell m a b
-constC = constM . return
+constC :: Applicative m => b -> Cell m a b
+constC = constM . pure
+
+instance Applicative m => Applicative (Cell m a) where
+  pure = constC
+  Cell fState0 fStep <*> Cell aState0 aStep = Cell
+    { cellStep = \(Parallel fState aState) a -> (\(f, fState') (a, aState') -> (f a, Parallel fState' aState')) <$> fStep fState a <*> aStep aState a
+    , cellState = Parallel fState0 aState0
+    }
 \end{code}
 \end{comment}
 
