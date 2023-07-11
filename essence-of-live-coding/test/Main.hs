@@ -20,7 +20,7 @@ import Test.QuickCheck
 import qualified Cell
 import qualified Feedback
 import qualified Handle
-import qualified Migrate.NoMigration
+import qualified Migrate
 import qualified Monad
 import qualified Monad.Trans
 import qualified RuntimeIO.Launch
@@ -68,6 +68,8 @@ tests =
           \barA barB barC baarA baarB -> migrate Foo2.Bar {..} Foo1.Baar {..} === Foo2.Baar {..}
       , testProperty "Finds correct constructor if type doesn't change" $
           \(x :: Int) -> migrate Nothing (Just x) === Just x
+      , testProperty "Does not migrate for different types" $
+          migrate Foo1.same Foo2.similar === Foo1.same
       ]
   , testGroup
       "User migration"
@@ -133,7 +135,7 @@ tests =
           ]
       , Cell.test
       , Handle.test
-      , Migrate.NoMigration.test
+      , Migrate.test
       , Monad.test
       , Feedback.test
       ]
