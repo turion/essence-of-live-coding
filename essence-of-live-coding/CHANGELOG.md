@@ -2,6 +2,12 @@
 
 ## 0.2.7
 
+* Add support for GHC 9.2
+* Formatting with Fourmolu
+* Added `NoMigration`
+
+## 0.2.6
+
 * Add `changes`
 * Add support for GHC 9.0.2
 
