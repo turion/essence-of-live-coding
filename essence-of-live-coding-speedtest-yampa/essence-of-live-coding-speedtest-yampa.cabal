@@ -43,6 +43,7 @@ executable SpeedTest
     , essence-of-live-coding
     , transformers >= 0.5
   default-extensions: StrictData
+  ghc-options: -ddump-simpl -ddump-to-file -dsuppress-idinfo -ddump-simpl-stats
 
 executable SpeedTestYampa
   main-is: SpeedTestYampa.hs
