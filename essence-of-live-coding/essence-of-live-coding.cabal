@@ -110,6 +110,7 @@ test-suite test
     , Migrate.NoMigration
     , Cell.Monad.Trans
     , Cell.Util
+    , Cell.Util.Random
     , Cell.Util.Traversable
     , Feedback
     , Handle
