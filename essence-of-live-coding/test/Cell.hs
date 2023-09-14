@@ -24,6 +24,7 @@ import Test.QuickCheck
 import LiveCoding
 
 import qualified Cell.Monad.Trans
+import qualified Cell.Selective
 import qualified Cell.Util
 import qualified Cell.Util.Traversable
 
@@ -36,6 +37,7 @@ test =
         forAll (vector 100) $ \(inputs :: [Int]) ->
           sum (init inputs)
             === last (fst (runIdentity $ steps (sumC :: Cell Identity Int Int) inputs))
+    , Cell.Selective.test
     , Cell.Util.test
     , Cell.Util.Traversable.testTraverse'
     , Cell.Monad.Trans.test

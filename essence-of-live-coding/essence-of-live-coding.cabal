@@ -75,14 +75,14 @@ library
     , LiveCoding.Migrate.Debugger
     , LiveCoding.RuntimeIO
     , LiveCoding.RuntimeIO.Launch
-
-  other-modules:
-      LiveCoding.Cell.Util.Internal
     , LiveCoding.Preliminary.CellExcept
     , LiveCoding.Preliminary.CellExcept.Applicative
     , LiveCoding.Preliminary.CellExcept.Monad
-    , LiveCoding.Preliminary.CellExcept.Newtype
     , LiveCoding.Preliminary.CellExcept.Selective
+
+  other-modules:
+      LiveCoding.Cell.Util.Internal
+    , LiveCoding.Preliminary.CellExcept.Newtype
     , LiveCoding.Preliminary.LiveProgram.HotCodeSwap
     , LiveCoding.Preliminary.LiveProgram.LiveProgram2
     , LiveCoding.Preliminary.LiveProgram.LiveProgramPreliminary
@@ -111,6 +111,7 @@ test-suite test
     , Migrate
     , Migrate.NoMigration
     , Cell.Monad.Trans
+    , Cell.Selective
     , Cell.Util
     , Cell.Util.Traversable
     , Feedback
@@ -137,6 +138,7 @@ test-suite test
     , test-framework-hunit >= 0.3
     , HUnit >= 1.3
     , vector-sized >= 1.2
+    , selective >= 0.5
   default-language:    Haskell2010
 
 executable TestExceptions

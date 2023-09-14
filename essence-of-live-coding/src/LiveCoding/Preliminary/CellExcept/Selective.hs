@@ -42,11 +42,9 @@ selectC' cell f Cell {..} = cell >>>= Cell
   }
 
 
-data Select state1 state2 e = Select
-  { stateSelective1 :: state1
-  , stateSelective2 :: state2
-  , thrown :: Maybe e
-  }
+data Select state1 state2 e
+  = NotThrownS state1 state2
+  | ThrownS state2 e
   deriving (Typeable, Data)
 
 
@@ -82,15 +80,16 @@ instance Monad m => Selective (CellExcept a b m) where
         _ -> error "CellExcept.select: Internal error (fmap1 was nondeterministic)"
     , cellExcept = Cell
       { cellStep = go
-      , cellState = Select state1 state2 Nothing
+      , cellState = NotThrownS state1 state2
       }
     }
       where
-        go (state@Select { stateSelective1, thrown = Nothing }) i = do
-          result <- lift $ runExceptT $ step1 stateSelective1 i
+        go (NotThrownS state1 state2) i = do
+          result <- lift $ runExceptT $ step1 state1 i
           case result of
-            Right (o, state1') -> return (o, state { stateSelective1 = state1' })
-            Left e -> go state { thrown = Just e } i
-        go (state@Select { stateSelective2, thrown = Just e }) i = case fmap1 e of
-          Left a -> fmap (fmap (\state2' -> state { stateSelective2 = state2' })) . withExceptT ((e, ) . Just) $ step2 stateSelective2 i
-          Right b -> throwE (e, Nothing)
+            Right (o, state1') -> return (o, NotThrownS state1' state2)
+            Left e -> case fmap1 e of
+                Left a -> go (ThrownS state2 e) i
+                Right b -> throwE (e, Nothing)
+        go (ThrownS state2 e) i = fmap (fmap (`ThrownS` e)) . withExceptT ((e, ) . Just) $ step2 state2 i
+  select (CellExcept fmap1 cell1) (CellExcept fmap2 cell2) = select (CellExcept fmap1 $ toCell cell1) (CellExcept fmap2 $ toCell cell2)
