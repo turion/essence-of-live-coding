@@ -41,6 +41,7 @@ import Control.Monad.Trans.Reader
 
 -- essence-of-live-coding
 import LiveCoding.LiveProgram
+import Data.Functor ((<&>))
 
 \end{code}
 \end{comment}
@@ -266,6 +267,14 @@ data Composition state1 state2 = Composition
   }
   deriving Data
 
+mkCell :: (Functor m, Data s) => s -> (s -> a -> m (b, s)) -> Cell m a b
+mkCell = Cell
+{-# INLINE CONLIKE [1] mkCell #-}
+{-# RULES
+"Composition with trivial LHS state" forall (s :: Data s => s) f . mkCell (Composition () s) f =
+  Cell s (\s1 a -> f (Composition () s1) a <&> \(b, Composition () s2) -> (b, s))
+#-}
+
 instance Monad m => Category (Cell m) where
   id = ArrM return
 
@@ -278,7 +287,7 @@ instance Monad m => Category (Cell m) where
     { cellStep = \state -> (runKleisli $ first $ Kleisli runArrM) <=< cellStep state
     , ..
     }
-  Cell state2 step2 . Cell state1 step1 = Cell { .. }
+  Cell state2 step2 . Cell state1 step1 = mkCell cellState cellStep
     where
       cellState = Composition state1 state2
       cellStep (Composition state1 state2) a = do
