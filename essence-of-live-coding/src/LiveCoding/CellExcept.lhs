@@ -1,6 +1,8 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE QuantifiedConstraints #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 
 module LiveCoding.CellExcept where
@@ -38,9 +40,8 @@ data CellExcept a b m e where
     -> (e1 -> CellExcept a b m e2)
     -> CellExcept a b m e2
   Try
-    :: (Data e, Finite e)
-    => (e :~: Either e1 e2 -> Dict (Data e2))
-    -> Cell (ExceptT e m) a b
+    :: (Data e, Finite e, forall e1 e2 . e ~ Either e1 e2 => Data e2)
+    => Cell (ExceptT e m) a b
     -> CellExcept a b m e
 \end{code}
 
@@ -64,7 +65,7 @@ instance MFunctor (CellExcept a b) where
   hoist morphism (Bind action cont) = Bind
     (hoist morphism action)
     (hoist morphism . cont)
-  hoist morphism (Try proof cell) = Try _ $ hoistCell (mapExceptT morphism) cell
+  hoist morphism (Try cell) = Try $ hoistCell (mapExceptT morphism) cell
 \end{code}
 \end{comment}
 The \mintinline{haskell}{Monad} instance is now trivial:
@@ -87,8 +88,8 @@ runCellExcept ... = ...
 \begin{comment}
 \begin{code}
 runCellExcept (Return e) = constM $ throwE e
-runCellExcept (Try _ cell) = cell
-runCellExcept (Bind (Try _ cell) g) = cell >>>== commute (runCellExcept . g)
+runCellExcept (Try cell) = cell
+runCellExcept (Bind (Try cell) g) = cell >>>== commute (runCellExcept . g)
 runCellExcept (Bind (Return e) f) = runCellExcept $ f e
 runCellExcept (Bind (Bind ce f) g) = runCellExcept $ Bind ce $ \e -> Bind (f e) g
 \end{code}
@@ -98,7 +99,7 @@ As a slight restriction of the framework,
 throwing exceptions is now only allowed for finite types:
 \begin{code}
 try
-  :: (Data e, Finite e)
+  :: (Data e, Finite e, forall e1 e2 . e ~ Either e1 e2 => Data e2)
   => Cell (ExceptT e m) a b
   -> CellExcept a b m e
 try = Try
