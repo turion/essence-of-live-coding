@@ -23,14 +23,6 @@ import LiveCoding.Preliminary.CellExcept
 -- selective
 import Control.Selective
 
-selectC :: (Monad m, Data a, Data b) => Cell (ExceptT (Either a b) m) i o -> Cell (ExceptT (a -> b) m) i o -> Cell (ExceptT b m) i o
-selectC cell Cell {..} = cell >>>= Cell
-  { cellStep =
-      \state -> \case
-        (Left a, i) -> withExceptT ($ a) $ cellStep state i
-        (Right b, _i) -> throwE b
-  , ..
-  }
 
 selectC' :: (Monad m, Data e) => Cell (ExceptT e m) i o -> (e -> Either a b) -> Cell (ExceptT (a -> b) m) i o -> Cell (ExceptT b m) i o
 selectC' cell f Cell {..} = cell >>>= Cell

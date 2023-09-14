@@ -3,6 +3,7 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StrictData #-}
 
@@ -121,6 +122,15 @@ runExceptC (Cell state step) = Cell { .. }
     cellStep (Exception e) _
       = return (Left e, Exception e)
 runExceptC cell = runExceptC $ toCell cell
+
+selectC :: (Monad m, Data a, Data b) => Cell (ExceptT (Either a b) m) i o -> Cell (ExceptT (a -> b) m) i o -> Cell (ExceptT b m) i o
+selectC cell Cell {..} = cell >>>= Cell
+  { cellStep =
+      \state -> \case
+        (Left a, i) -> withExceptT ($ a) $ cellStep state i
+        (Right b, _i) -> throwE b
+  , ..
+  }
 \end{code}
 \end{comment}
 

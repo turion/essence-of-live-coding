@@ -663,5 +663,6 @@ instance Monad m => ArrowChoice (Cell m) where
       cellStep (Choice stateL stateR) (Right c) = do
         (!d, stateR') <- stepR stateR c
         return (Right d, (Choice stateL stateR'))
+
 \end{code}
 \end{comment}

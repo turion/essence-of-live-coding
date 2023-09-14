@@ -49,7 +49,7 @@ instance Monad m => Applicative (CellExcept a b m) where
   (<*>) = ap
 
 instance Monad m => Selective (CellExcept a b m) where
-  select = selectM
+  select (Try cell1) (Try cell2) = Try $ selectC cell1 cell2
 
 instance MFunctor (CellExcept a b) where
   hoist morphism (Return e) = Return e
