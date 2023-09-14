@@ -1,6 +1,7 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE TypeOperators #-}
 
 module LiveCoding.CellExcept where
 
@@ -8,6 +9,9 @@ module LiveCoding.CellExcept where
 import Control.Monad
 import Data.Data
 import Data.Void
+
+-- constraints
+import Data.Constraint
 
 -- transformers
 import Control.Monad.Trans.Except
@@ -19,6 +23,7 @@ import Control.Monad.Morph
 import LiveCoding.Cell
 import LiveCoding.Exceptions
 import LiveCoding.Exceptions.Finite
+import Control.Selective
 \end{code}
 \end{comment}
 
@@ -34,7 +39,8 @@ data CellExcept a b m e where
     -> CellExcept a b m e2
   Try
     :: (Data e, Finite e)
-    => Cell (ExceptT e m) a b
+    => (e :~: Either e1 e2 -> Dict (Data e2))
+    -> Cell (ExceptT e m) a b
     -> CellExcept a b m e
 \end{code}
 
@@ -44,21 +50,26 @@ instance Monad m => Functor (CellExcept a b m) where
   fmap = liftM
 
 instance Monad m => Applicative (CellExcept a b m) where
-  pure = return
+  pure = Return
   (<*>) = ap
 
+{-
+instance Monad m => Selective (CellExcept a b m) where
+  select (Return (Left a)) (Return f) = Return $ f a
+  select (Return (Right b)) _ = Return b
+  select (Try cell1) (Try cell2) = Try _ -- Can't prove Data b here!
+-}
 instance MFunctor (CellExcept a b) where
   hoist morphism (Return e) = Return e
   hoist morphism (Bind action cont) = Bind
     (hoist morphism action)
     (hoist morphism . cont)
-  hoist morphism (Try cell) = Try $ hoistCell (mapExceptT morphism) cell
+  hoist morphism (Try proof cell) = Try _ $ hoistCell (mapExceptT morphism) cell
 \end{code}
 \end{comment}
 The \mintinline{haskell}{Monad} instance is now trivial:
 \begin{code}
 instance Monad m => Monad (CellExcept a b m) where
-  return = Return
   (>>=) = Bind
 \end{code}
 As is typical for operational monads, all of the effort now goes into the interpretation function:
@@ -76,8 +87,8 @@ runCellExcept ... = ...
 \begin{comment}
 \begin{code}
 runCellExcept (Return e) = constM $ throwE e
-runCellExcept (Try cell) = cell
-runCellExcept (Bind (Try cell) g) = cell >>>== commute (runCellExcept . g)
+runCellExcept (Try _ cell) = cell
+runCellExcept (Bind (Try _ cell) g) = cell >>>== commute (runCellExcept . g)
 runCellExcept (Bind (Return e) f) = runCellExcept $ f e
 runCellExcept (Bind (Bind ce f) g) = runCellExcept $ Bind ce $ \e -> Bind (f e) g
 \end{code}
