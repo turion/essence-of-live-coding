@@ -277,6 +277,7 @@ mkCell = Cell
 
 instance Monad m => Category (Cell m) where
   id = ArrM return
+  {-# INLINE id #-}
 
   ArrM f . ArrM g = ArrM $ f <=< g
   Cell { .. } . ArrM { .. } = Cell
@@ -451,6 +452,7 @@ data Parallel stateP1 stateP2 = Parallel
 
 instance Monad m => Arrow (Cell m) where
   arr = arrM . (return .)
+  {-# INLINE arr #-}
 
   -- For efficiency because Arrow desugaring favours 'first'
   first ArrM { .. } = ArrM { runArrM = \(a, c) -> ( , c) <$> runArrM a }
@@ -458,6 +460,7 @@ instance Monad m => Arrow (Cell m) where
     { cellStep = \s (a, c) -> first ((, c) $!) <$> cellStep s a
     , ..
     }
+  {-# INLINE first #-}
 
   ArrM f *** ArrM g = ArrM $ runKleisli $ Kleisli f *** Kleisli g
   ArrM { .. } *** Cell { .. } = Cell
@@ -481,22 +484,30 @@ instance Monad m => Arrow (Cell m) where
         (!b, stateP1') <- step1 stateP1 a
         (!d, stateP2') <- step2 stateP2 c
         return ((b, d), Parallel stateP1' stateP2')
+  {-# INLINE (***) #-}
 
 arrM :: (a -> m b) -> Cell m a b
 arrM = ArrM
+{-# INLINE CONLIKE arrM #-}
 
 constM :: m b -> Cell m a b
 constM = arrM . const
+{-# INLINE CONLIKE constM #-}
 
 constC :: Applicative m => b -> Cell m a b
 constC = constM . pure
+{-# INLINE CONLIKE constC #-}
 
 instance Applicative m => Applicative (Cell m a) where
   pure = constC
+  {-# INLINE pure #-}
+
   Cell fState0 fStep <*> Cell aState0 aStep = Cell
     { cellStep = \(Parallel fState aState) a -> (\(f, fState') (a, aState') -> (f a, Parallel fState' aState')) <$> fStep fState a <*> aStep aState a
     , cellState = Parallel fState0 aState0
     }
+  {-# INLINE (<*>) #-}
+
 \end{code}
 \end{comment}
 
@@ -514,6 +525,7 @@ instance MonadFix m => ArrowLoop (Cell m) where
       cellStep state a = do
         rec ((b, c), state') <- (\c' -> step state (a, c')) c
         return (b, state')
+  -- {-# INLINE loop #-} -- FIXME Unsure about this one
 
 {-
 instance ArrowLoop (Cell Identity) where
@@ -642,6 +654,7 @@ instance Monad m => ArrowChoice (Cell m) where
         return (Left b, cellState')
       cellStep cellState (Right b) = return (Right b, cellState)
       -}
+
   ArrM f +++ ArrM g = ArrM $ runKleisli $ Kleisli f +++ Kleisli g
   ArrM { .. } +++ Cell { .. } = Cell
     { cellStep = \state -> \case
@@ -672,5 +685,6 @@ instance Monad m => ArrowChoice (Cell m) where
       cellStep (Choice stateL stateR) (Right c) = do
         (!d, stateR') <- stepR stateR c
         return (Right d, (Choice stateL stateR'))
+  {-# INLINE (+++) #-}
 \end{code}
 \end{comment}
