@@ -33,7 +33,6 @@ import Control.Concurrent (threadDelay)
 import Control.Monad
 import Control.Monad.Fix
 import Data.Data
-import GHC.Exts (lazy)
 import Prelude hiding ((.), id)
 
 -- transformers
@@ -96,35 +95,14 @@ but for efficiency purposes there is an additional constructor.
 -}
 \end{code}
 \end{comment}
-\begin{spec}
+\begin{code}
 data Cell m a b = forall s . Data s => Cell
   { cellState :: s
   , cellStep  :: s -> a -> m (b, s)
   }
-\end{spec}
+\end{code}
 \begin{comment}
 \begin{code}
-data Result s b = Result s ~b
-  deriving Functor
-
-uncurryResult :: (a -> b -> c) -> Result a b -> c
-uncurryResult f (Result a b) = f a b
-
-unzipResult :: [Result a b] -> Result [a] [b]
-unzipResult [] = Result [] []
-unzipResult (Result a b : abs) = let Result as bs = unzipResult abs in Result (a : as) (b : bs)
-
-zipResult :: [a] -> [b] -> [Result a b]
-zipResult (a : as) (b : bs) = Result a b : zipResult as bs
-zipResult _ _  = []
-
-resultSecond :: (s1 -> s2) -> Result s1 b -> Result s2 b
-resultSecond f (Result s1 b) = Result (f s1) b
-
-data Cell m a b = forall s . Data s => Cell
-  { cellState :: s
-  , cellStep  :: s -> a -> m (Result s b)
-  }
   -- ^ A cell consists of an internal state,
   --   and an effectful state transition function.
   | ArrM { runArrM :: a -> m b }
@@ -141,7 +119,7 @@ toCell :: Functor m => Cell m a b -> Cell m a b
 toCell cell@Cell {} = cell
 toCell ArrM { .. } = Cell
   { cellState = ()
-  , cellStep  = const $ fmap (Result ()) . runArrM
+  , cellStep  = const $ fmap (, ()) . runArrM
   }
 \end{code}
 \end{comment}
@@ -162,7 +140,7 @@ step
   => Cell m a b
   -> a -> m (b, Cell m a b)
 step Cell { .. } a = do
-  Result cellState' b <- cellStep cellState a
+  (b, cellState') <- cellStep cellState a
   return (b, Cell { cellState = cellState', .. })
 \end{code}
 \begin{comment}
@@ -199,7 +177,7 @@ sumC :: (Monad m, Num a, Data a) => Cell m a a
 sumC = Cell { .. }
   where
     cellState = 0
-    cellStep accum a = return $! Result accum $! accum + a
+    cellStep accum a = return (accum, accum + a)
 \end{code}
 
 We recover live programs as the special case of trivial input and output:
@@ -217,7 +195,7 @@ liveCell
 liveCell Cell { .. } = LiveProgram
   { liveState = cellState
   , liveStep  = \state -> do
-      Result state' _ <- cellStep state ()
+      (_, state') <- cellStep state ()
       return state'
   }
 \end{code}
@@ -238,7 +216,7 @@ toLiveCell
   -> Cell        m () ()
 toLiveCell LiveProgram { .. } = Cell
   { cellState = liveState
-  , cellStep  = \s () -> flip Result () <$> liveStep s
+  , cellStep  = \s () -> ((), ) <$> liveStep s
   }
 \end{code}
 \end{comment}
@@ -289,12 +267,12 @@ data Composition state1 state2 = Composition
   }
   deriving Data
 
-mkCell :: (Functor m, Data s) => s -> (s -> a -> m (Result s b)) -> Cell m a b
+mkCell :: (Functor m, Data s) => s -> (s -> a -> m (b, s)) -> Cell m a b
 mkCell = Cell
 {-# INLINE CONLIKE [1] mkCell #-}
 {-# RULES
 "Composition with trivial LHS state" forall (s :: Data s => s) f . mkCell (Composition () s) f =
-  Cell s (\s1 a -> f (Composition () s1) a <&> \(Result (Composition () s2) b) -> Result s b)
+  Cell s (\s1 a -> f (Composition () s1) a <&> \(b, Composition () s2) -> (b, s))
 #-}
 
 instance Monad m => Category (Cell m) where
@@ -307,19 +285,16 @@ instance Monad m => Category (Cell m) where
     , ..
     }
   ArrM { .. } . Cell { .. } = Cell
-    { cellStep = \state a -> do
-        Result s b <- cellStep state a
-        c <- runArrM b
-        return $! Result s c
+    { cellStep = \state -> (runKleisli $ first $ Kleisli runArrM) <=< cellStep state
     , ..
     }
   Cell state2 step2 . Cell state1 step1 = mkCell cellState cellStep
     where
       cellState = Composition state1 state2
       cellStep (Composition state1 state2) a = do
-        Result state1' !b <- step1 state1 a
-        Result state2' !c <- step2 state2 b
-        return $! Result (Composition state1' state2') c
+        (!b, state1') <- step1 state1 a
+        (!c, state2') <- step2 state2 b
+        return (c, Composition state1' state2')
   {-# INLINE CONLIKE (.) #-}
 -- {-# RULES
 -- "arrM/>>>" forall (f :: forall a b m . Monad m => a -> m b) g . arrM f >>> arrM g = arrM (f >=> g)
@@ -465,8 +440,8 @@ deriving via (WrappedArrow (Cell m)) instance Monad m => Strong (Cell m)
 deriving via (WrappedArrow (Cell m)) instance Monad m => Data.Profunctor.Choice.Choice (Cell m)
 
 instance Monad m => Traversing (Cell m) where
-  traverse' (Cell state step) = Cell state (fmap (fmap (\(fb, s) -> Result s fb)) . step') where
-    step' s a = runStateT (traverse (\a -> StateT (fmap (\(Result s b) -> (b, s)) . (`step` a))) a) s
+  traverse' (Cell state step) = Cell state step' where
+    step' s a = runStateT (traverse (\a -> StateT (`step` a)) a) s
   traverse' (ArrM f) = ArrM (traverse f)
 
 data Parallel stateP1 stateP2 = Parallel
@@ -482,7 +457,7 @@ instance Monad m => Arrow (Cell m) where
   -- For efficiency because Arrow desugaring favours 'first'
   first ArrM { .. } = ArrM { runArrM = \(a, c) -> ( , c) <$> runArrM a }
   first Cell { .. } = Cell
-    { cellStep = \s (a, c) -> fmap ((, c) $!) <$> cellStep s a
+    { cellStep = \s (a, c) -> first ((, c) $!) <$> cellStep s a
     , ..
     }
   {-# INLINE first #-}
@@ -491,24 +466,24 @@ instance Monad m => Arrow (Cell m) where
   ArrM { .. } *** Cell { .. } = Cell
     { cellStep = \state (a, c) -> do
       !b <- runArrM a
-      Result state' !d <- cellStep state c
-      return $! Result state' (b, d)
+      (!d, state') <- cellStep state c
+      return ((b, d), state')
     , ..
     }
   Cell { .. } *** ArrM { .. } = Cell
     { cellStep = \state (a, c) -> do
-      Result state' !b <- cellStep state a
+      (!b, state') <- cellStep state a
       !d <- runArrM c
-      return $! Result state' (b, d)
+      return ((b, d), state')
     , ..
     }
   Cell stateP1 step1 *** Cell stateP2 step2 = Cell { .. }
     where
       cellState = Parallel { .. }
       cellStep (Parallel { .. }) (a, c) = do
-        Result stateP1' !b <- step1 stateP1 a
-        Result stateP2' !d <- step2 stateP2 c
-        return $! Result (Parallel stateP1' stateP2') (b, d)
+        (!b, stateP1') <- step1 stateP1 a
+        (!d, stateP2') <- step2 stateP2 c
+        return ((b, d), Parallel stateP1' stateP2')
   {-# INLINE (***) #-}
 
 arrM :: (a -> m b) -> Cell m a b
@@ -528,7 +503,7 @@ instance Applicative m => Applicative (Cell m a) where
   {-# INLINE pure #-}
 
   Cell fState0 fStep <*> Cell aState0 aStep = Cell
-    { cellStep = \(Parallel fState aState) a -> (\(Result fState' f) (Result aState' a) -> Result (Parallel fState' aState') (f a)) <$> fStep fState a <*> aStep aState a
+    { cellStep = \(Parallel fState aState) a -> (\(f, fState') (a, aState') -> (f a, Parallel fState' aState')) <$> fStep fState a <*> aStep aState a
     , cellState = Parallel fState0 aState0
     }
   {-# INLINE (<*>) #-}
@@ -538,10 +513,6 @@ instance Applicative m => Applicative (Cell m a) where
 
 \begin{comment}
 \begin{code}
--- For laziness
-data Loop a = Loop ~a
-  deriving (Typeable, Data)
-
 instance MonadFix m => ArrowLoop (Cell m) where
   loop ArrM { .. } = ArrM
     { runArrM = \a -> do
@@ -550,10 +521,10 @@ instance MonadFix m => ArrowLoop (Cell m) where
     }
   loop (Cell state step) = Cell { .. }
     where
-      cellState = Loop state
-      cellStep (Loop state) a = do
-        rec Result state' (b, c) <- (\c' -> step (lazy state) (a, c')) c
-        return $ Result (Loop $ lazy state') b
+      cellState = state
+      cellStep state a = do
+        rec ((b, c), state') <- (\c' -> step state (a, c')) c
+        return (b, state')
   -- {-# INLINE loop #-} -- FIXME Unsure about this one
 
 {-
@@ -689,31 +660,31 @@ instance Monad m => ArrowChoice (Cell m) where
     { cellStep = \state -> \case
         Left a -> do
           !b <- runArrM a
-          return $! Result state $ Left b
+          return (Left b, state)
         Right c -> do
-          Result state' !d <- cellStep state c
-          return $! Result state' $ Right d
+          (!d, state') <- cellStep state c
+          return (Right d, state')
     , ..
     }
   Cell { .. } +++ ArrM { .. } = Cell
     { cellStep = \state -> \case
         Left a -> do
-          Result state' !b <- cellStep state a
-          return $! Result state' $ Left b
+          (!b, state') <- cellStep state a
+          return (Left b, state')
         Right c -> do
           !d <- runArrM c
-          return $! Result state $ Right d
+          return (Right d, state)
     , ..
     }
   (Cell stateL stepL) +++ (Cell stateR stepR) = Cell { .. }
     where
       cellState = Choice stateL stateR
       cellStep (Choice stateL stateR) (Left a) = do
-        Result stateL' !b <- stepL stateL a
-        return $! Result (Choice stateL' stateR) $ Left b
+        (!b, stateL') <- stepL stateL a
+        return (Left b, (Choice stateL' stateR))
       cellStep (Choice stateL stateR) (Right c) = do
-        Result stateR' !d <- stepR stateR c
-        return $! Result (Choice stateL stateR') $ Right d
+        (!d, stateR') <- stepR stateR c
+        return (Right d, (Choice stateL stateR'))
   {-# INLINE (+++) #-}
 \end{code}
 \end{comment}

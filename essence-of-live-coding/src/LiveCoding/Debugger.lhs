@@ -100,9 +100,9 @@ withDebuggerC (Cell state step) (Debugger (LiveProgram dbgState dbgStep)) = Cell
   where
     cellState = Debugging { .. }
     cellStep Debugging { .. } a = do
-      Result state' b <- step state a
+      (b, state') <- step state a
       states <- runStateT (dbgStep dbgState) state'
-      return $! Result (uncurry (flip Debugging) states) b
+      return (b, uncurry (flip Debugging) states)
 withDebuggerC noCell debugger = withDebuggerC (toCell noCell) debugger
 \end{code}
 \end{comment}

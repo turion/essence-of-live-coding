@@ -46,7 +46,7 @@ resampleListPar :: Monad m => Cell m a b -> Cell m [a] [b]
 resampleListPar (Cell initial step) = Cell {..}
   where
     cellState = []
-    cellStep s xs = unzipResult <$> traverse (uncurryResult step) (zipResult s' xs)
+    cellStep s xs = unzip <$> traverse (uncurry step) (zip s' xs)
       where
         s' = s ++ replicate (length xs - length s) initial
 resampleListPar (ArrM f) = ArrM (traverse f)

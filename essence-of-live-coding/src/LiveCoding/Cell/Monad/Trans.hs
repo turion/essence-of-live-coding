@@ -27,12 +27,12 @@ runStateC ::
   -- | The initial state
   stateT ->
   -- | The cell, returning its current state
-  Cell m a (Result stateT b)
+  Cell m a (b, stateT)
 runStateC cell stateT = hoistCellKleisliStateChange morph init cell
   where
     morph step State {..} a = do
-      (Result stateInternal b, stateT) <- runStateT (step stateInternal a) stateT
-      return $! Result State {..} (Result stateT b)
+      ((b, stateInternal), stateT) <- runStateT (step stateInternal a) stateT
+      return ((b, stateT), State {..})
     init stateInternal = State {..}
 
 -- | Like 'runStateC', but does not return the current state.
@@ -43,7 +43,7 @@ runStateC_ ::
   -- | The initial state
   stateT ->
   Cell m a b
-runStateC_ cell stateT = runStateC cell stateT >>> arr (\(Result _ b) -> b)
+runStateC_ cell stateT = runStateC cell stateT >>> arr fst
 
 -- | The internal state of a cell to which 'runStateC' or 'runStateL' has been applied.
 data State stateT stateInternal = State
@@ -79,4 +79,4 @@ readerC' = hoistCellKleisli_ $ \action a -> ReaderT $ \r -> action (r, a)
 runWriterC :: (Monoid w, Monad m) => Cell (WriterT w m) a b -> Cell m a (w, b)
 runWriterC = hoistCellOutput $ fmap reorder . runWriterT
   where
-    reorder (Result s b, w) = Result s (w, b)
+    reorder ((b, s), w) = ((w, b), s)

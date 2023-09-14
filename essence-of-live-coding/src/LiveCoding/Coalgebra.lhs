@@ -66,7 +66,7 @@ And analogously, every cell can be easily made into an \mintinline{haskell}{MSF}
 \begin{code}
 finalityC :: Monad m => Cell m a b -> MSF m a b
 finalityC Cell { .. } = MSF $ \a -> do
-  Result cellState' b <- cellStep cellState a
+  (b, cellState') <- cellStep cellState a
   return (b, finalityC $ Cell cellState' cellStep)
 \end{code}
 And the final coalgebra is of course a mere coalgebra itself:
@@ -77,10 +77,10 @@ coalgebra msf = Coalg msf unMSF
 But we miss the abilty to encode \mintinline{haskell}{MSF}s as \mintinline{haskell}{Cell}s by just the \mintinline{haskell}{Data} type class:
 \begin{code}
 coalgebraC
-  :: (Data (MSF m a b), Functor m)
+  :: Data (MSF m a b)
   => MSF m a b
   -> Cell m a b
-coalgebraC msf = Cell msf $ fmap (fmap (\(b, msf) -> Result msf b)) . unMSF
+coalgebraC msf = Cell msf unMSF
 \end{code}
 We are out of luck if we would want to derive an instance of \mintinline{haskell}{Data (MSF m a b)}.
 Monadic stream functions are, well, functions,

@@ -100,12 +100,12 @@ arrChangesM f = Cell {cellState = Uninitialized, ..}
     cellStep Uninitialized a = h a
     cellStep (Initialized (a', b)) a =
       if a == a'
-        then return $! Result (Initialized (a, b)) b
+        then return (b, Initialized (a, b))
         else h a
-    h a = (\b' -> Result (Initialized (a, b')) b') <$> f a
+    h a = (\b' -> (b', Initialized (a, b'))) <$> f a
 
-cellNoMigration :: (Typeable s, Functor m) => s -> (s -> a -> m (Result s b)) -> Cell m a b
+cellNoMigration :: (Typeable s, Functor m) => s -> (s -> a -> m (b, s)) -> Cell m a b
 cellNoMigration state step = Cell {cellState = Uninitialized, ..}
   where
-    cellStep Uninitialized a = resultSecond Initialized <$> step state a
-    cellStep (Initialized s) a = resultSecond Initialized <$> step s a
+    cellStep Uninitialized a = second Initialized <$> step state a
+    cellStep (Initialized s) a = second Initialized <$> step s a

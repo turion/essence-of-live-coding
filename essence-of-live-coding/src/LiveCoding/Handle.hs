@@ -155,15 +155,15 @@ handlingParametrised handleImpl@ParametrisedHandle {..} = Cell {..}
       mereHandle <- lift $ createParametrised parameter
       let handle = (mereHandle, parameter)
       key <- register $ destroyParametrised parameter mereHandle
-      return $! Result (Initialized Handling {handle = handle, ..}) mereHandle
+      return (mereHandle, Initialized Handling {handle = handle, ..})
     cellStep handling@(Initialized Handling {handle = (mereHandle, lastParameter), ..}) parameter
       | parameter == lastParameter = do
           reregister (destroyParametrised parameter mereHandle) key
-          return $! Result handling mereHandle
+          return (mereHandle, handling)
       | otherwise = do
           mereHandle <- lift $ changeParametrised lastParameter parameter mereHandle
           reregister (destroyParametrised parameter mereHandle) key
-          return $! Result (Initialized Handling {handle = (mereHandle, parameter), ..}) mereHandle
+          return (mereHandle, Initialized Handling {handle = (mereHandle, parameter), ..})
 
 {- | Every 'Handle' is trivially a 'ParametrisedHandle'
    when the parameter is the trivial type.
