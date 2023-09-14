@@ -19,6 +19,7 @@ import Control.Monad.Morph
 import LiveCoding.Cell
 import LiveCoding.Exceptions
 import LiveCoding.Exceptions.Finite
+import Control.Selective
 \end{code}
 \end{comment}
 
@@ -46,6 +47,9 @@ instance Monad m => Functor (CellExcept a b m) where
 instance Monad m => Applicative (CellExcept a b m) where
   pure = return
   (<*>) = ap
+
+instance Monad m => Selective (CellExcept a b m) where
+  select = selectM
 
 instance MFunctor (CellExcept a b) where
   hoist morphism (Return e) = Return e

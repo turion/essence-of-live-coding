@@ -16,14 +16,11 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Util (CellSimulation(..))
 
 -- essence-of-live-coding
-import LiveCoding.Preliminary.CellExcept
-import LiveCoding.Preliminary.CellExcept.Selective
+import LiveCoding
 
 test = testGroup "Selective"
   [ testProperty "Short circuits" CellSimulation
-      { cell = safely
-          $ pure (Left ())
-          <*? safe id
+      { cell = safely $ pure (Left ()) <*? fmap const (safe id)
       , input = "hello"
       , output = "hello"
       }

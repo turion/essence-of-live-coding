@@ -1,6 +1,7 @@
 \begin{comment}
 \begin{code}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -69,10 +70,14 @@ instance Finite e => GFinite (K1 a e) where
   gcommute handler = hoistCell (withReaderT unK1) $ commute $ handler . K1
 
 instance GFinite V1 where
-  gcommute _ = error "gcommute: Can't commute with an empty type"
+  gcommute _ = proc a -> do
+    thing <- constM ask -< ()
+    case thing of
 
 instance Finite Void where
-  commute _ = error "Nope"
+  commute _ = proc a -> do
+    void <- constM ask -< ()
+    returnA -< absurd void
 
 instance GFinite U1 where
   gcommute handler = liftCell $ handler U1
