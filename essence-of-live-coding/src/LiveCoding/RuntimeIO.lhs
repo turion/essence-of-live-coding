@@ -33,12 +33,22 @@ and it can be reused here,
 up to removing the explicit state type.
 The runtime behaviour of a live program is defined by calling this function repeatedly.
 We could of course run the program in the foreground thread:
-\begin{code}
+\begin{spec}
 foreground :: Monad m => LiveProgram m -> m ()
 foreground liveProgram = do
   liveProgram' <- stepProgram liveProgram
   foreground liveProgram'
+\end{spec}
+\begin{comment}
+\begin{code}
+foreground :: Monad m => LiveProgram m -> m ()
+foreground LiveProgram {..} = go liveState
+  where
+    go s = do
+      s' <- liveStep s
+      go s'
 \end{code}
+\end{comment}
 But this would leave no possibility to exchange the program with a new one.
 %But this would then become the main loop,
 %and leave no control to exchange the program with a new one.
