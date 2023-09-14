@@ -114,12 +114,12 @@ runExceptC (Cell state step) = Cell { .. }
     cellStep (NotThrown s) a = do
       stateExcept <- runExceptT $ step s a
       case stateExcept of
-        Right (!b, s')
-          -> return (Right b, NotThrown s')
+        Right (Result s' !b)
+          -> return $! Result (NotThrown s') $ Right b
         Left e
           -> cellStep (Exception e) a
     cellStep (Exception e) _
-      = return (Left e, Exception e)
+      = return $! Result (Exception e) $ Left e
 runExceptC cell = runExceptC $ toCell cell
 \end{code}
 \end{comment}

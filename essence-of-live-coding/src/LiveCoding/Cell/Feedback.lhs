@@ -54,11 +54,11 @@ feedback sAdditional (Cell sPrevious step) = Cell { .. }
   where
     cellState = Feedback { .. }
     cellStep Feedback { .. } a = do
-      ((!b, !sAdditional'), sPrevious') <- step sPrevious (a, sAdditional)
-      return (b, Feedback sPrevious' sAdditional')
+      Result sPrevious' (!b, !sAdditional') <- step sPrevious (a, sAdditional)
+      return $! Result (Feedback sPrevious' sAdditional') b
 feedback cellState (ArrM f) = Cell { .. }
   where
-    cellStep state a = f (a, state)
+    cellStep state a = (\(b, s) -> Result s b) <$> f (a, state)
 \end{code}
 \end{comment}
 It enables us to write delays:

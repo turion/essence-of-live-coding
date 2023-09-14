@@ -45,11 +45,11 @@ nonBlocking abort Cell {..} = proc aMaybe -> do
     nonBlockingStep s (Nothing, threadVar, resultVar) = do
       bsMaybe <- tryTakeMVar resultVar
       case bsMaybe of
-        Just (b, s') -> do
+        Just (Result s' b) -> do
           threadId <- takeMVar threadVar
           killThread threadId
-          return (Just b, s')
-        Nothing -> return (Nothing, s)
+          return $! Result s' (Just b)
+        Nothing -> return $! Result s Nothing
     nonBlockingStep s (Just a, threadVar, resultVar) = do
       noThreadRunning <-
         if abort

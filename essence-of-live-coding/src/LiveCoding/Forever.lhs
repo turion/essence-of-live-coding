@@ -83,7 +83,7 @@ foreverE e (Cell state step) = Cell { .. }
       continueExcept <- runExceptT $ runReaderT (step currentState a) lastException
       case continueExcept of
         Left e' -> cellStep f { lastException = e', currentState = initState } a
-        Right (b, state') -> return (b, f { currentState = state' })
+        Right (Result state' b) -> return $! Result f { currentState = state' } b
 foreverE e cell = foreverE e $ toCell cell
 \end{code}
 \end{comment}

@@ -44,13 +44,13 @@ count = arr (const 1) >>> sumC
 foldC :: (Data b, Monad m) => (a -> b -> b) -> b -> Cell m a b
 foldC step cellState = Cell {..}
   where
-    cellStep b a = let b' = step a b in return (b, b')
+    cellStep b a = let b' = step a b in return $! Result b' b
 
 -- | Like 'foldC', but does not delay the output.
 foldC' :: (Data b, Monad m) => (a -> b -> b) -> b -> Cell m a b
 foldC' step cellState = Cell {..}
   where
-    cellStep b a = let b' = step a b in return (b', b')
+    cellStep b a = let b' = step a b in return $! Result b' b'
 
 {- | Initialise with a value 'a'.
    If the input is 'Nothing', @'hold' a@ will output the stored indefinitely.
@@ -94,8 +94,8 @@ holdFirst :: (Data a, Monad m) => Cell m a a
 holdFirst = Cell {..}
   where
     cellState = Nothing
-    cellStep Nothing x = return (x, Just x)
-    cellStep (Just s) _ = return (s, Just s)
+    cellStep Nothing x = return $! Result (Just x) x
+    cellStep (Just s) _ = return $! Result (Just s) s
 
 -- | @boundedFIFO n@ keeps the first @n@ present values.
 boundedFIFO :: (Data a, Monad m) => Int -> Cell m (Maybe a) (Seq a)
@@ -170,7 +170,7 @@ buffer :: (Monad m, Data a) => Cell m [BufferCommand a] (Maybe a)
 buffer = Cell {..}
   where
     cellState = empty
-    cellStep as commands = return (currentHead as, nextBuffer as commands)
+    cellStep as commands = return $! Result (nextBuffer as commands) (currentHead as)
     currentHead as = case viewl as of
       EmptyL -> Nothing
       a :< as' -> Just a
