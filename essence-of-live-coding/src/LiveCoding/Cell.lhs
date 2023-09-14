@@ -294,6 +294,7 @@ instance Monad m => Category (Cell m) where
         (!b, state1') <- step1 state1 a
         (!c, state2') <- step2 state2 b
         return (c, Composition state1' state2')
+  {-# INLINE CONLIKE (.) #-}
 -- {-# RULES
 -- "arrM/>>>" forall (f :: forall a b m . Monad m => a -> m b) g . arrM f >>> arrM g = arrM (f >=> g)
 -- #-} -- Don't really need rules here because GHC will inline all that anyways
