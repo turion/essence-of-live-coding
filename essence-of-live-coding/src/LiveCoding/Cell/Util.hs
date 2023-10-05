@@ -29,11 +29,11 @@ import LiveCoding.Cell.Util.Internal
 -- * State accumulation
 
 -- | Sum all past inputs, starting by the given number
-sumFrom :: Monad m => Integer -> Cell m Integer Integer
+sumFrom :: (Monad m) => Integer -> Cell m Integer Integer
 sumFrom n0 = feedback n0 $ proc (n, acc) -> returnA -< (acc, acc + n)
 
 -- | Count the number of ticks, starting at 0
-count :: Monad m => Cell m a Integer
+count :: (Monad m) => Cell m a Integer
 count = arr (const 1) >>> sumC
 
 {- | Accumulate all incoming data,
@@ -126,7 +126,7 @@ fifoFoldable :: (Monad m, Data a, Foldable f) => Cell m (f a) (Maybe a)
 fifoFoldable = arr toList >>> fifoList
 
 -- | Returns 'True' iff the current input value is 'True' and the last input value was 'False'.
-edge :: Monad m => Cell m Bool Bool
+edge :: (Monad m) => Cell m Bool Bool
 edge = proc b -> do
   bLast <- delay False -< b
   returnA -< b && not bLast
@@ -134,11 +134,11 @@ edge = proc b -> do
 -- * Debugging utilities
 
 -- | Print the current UTC time, prepended with the first 8 characters of the given message.
-printTime :: MonadIO m => String -> m ()
+printTime :: (MonadIO m) => String -> m ()
 printTime msg = liftIO $ putStrLn . (take 8 msg ++) . show =<< getCurrentTime
 
 -- | Like 'printTime', but as a cell.
-printTimeC :: MonadIO m => String -> Cell m () ()
+printTimeC :: (MonadIO m) => String -> Cell m () ()
 printTimeC msg = constM $ printTime msg
 
 -- * Buffers

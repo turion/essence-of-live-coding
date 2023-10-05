@@ -57,7 +57,7 @@ initHandlingState =
    Since there is no garbage collection, don't use this function for live coding.
 -}
 runHandlingStateT ::
-  Monad m =>
+  (Monad m) =>
   HandlingStateT m a ->
   m a
 runHandlingStateT = flip evalStateT initHandlingState
@@ -97,7 +97,7 @@ runHandlingState LiveProgram {..} =
       }
 
 garbageCollected ::
-  Monad m =>
+  (Monad m) =>
   HandlingStateT m a ->
   HandlingStateT m a
 garbageCollected action = unregisterAll >> action <* destroyUnregistered
@@ -108,7 +108,7 @@ data Destructor m = Destructor
   }
 
 register ::
-  Monad m =>
+  (Monad m) =>
   -- | Destructor
   m () ->
   HandlingStateT m Key
@@ -123,7 +123,7 @@ register destructor = do
   return key
 
 reregister ::
-  Monad m =>
+  (Monad m) =>
   m () ->
   Key ->
   HandlingStateT m ()
@@ -141,7 +141,7 @@ insertDestructor action key destructors =
    in insert key destructor destructors
 
 unregisterAll ::
-  Monad m =>
+  (Monad m) =>
   HandlingStateT m ()
 unregisterAll = do
   HandlingState {..} <- get
@@ -149,7 +149,7 @@ unregisterAll = do
   put HandlingState {destructors = newDestructors, ..}
 
 destroyUnregistered ::
-  Monad m =>
+  (Monad m) =>
   HandlingStateT m ()
 destroyUnregistered = do
   HandlingState {..} <- get
@@ -165,7 +165,7 @@ dataTypeDestructor = mkDataType "Destructor" [destructorConstr]
 destructorConstr :: Constr
 destructorConstr = mkConstr dataTypeDestructor "Destructor" [] Prefix
 
-instance Typeable m => Data (Destructor m) where
+instance (Typeable m) => Data (Destructor m) where
   dataTypeOf _ = dataTypeDestructor
   toConstr Destructor {..} = destructorConstr
   gunfold _ _ = error "Destructor.gunfold"

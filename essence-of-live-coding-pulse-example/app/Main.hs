@@ -44,35 +44,35 @@ sumC' =
     , cellStep = \accum a -> let accum' = accum + a in return (accum', accum')
     }
 
-cellA :: MonadFix m => Cell m () Float
+cellA :: (MonadFix m) => Cell m () Float
 cellA = runReaderC (44100 / 440) fastSine
 
-cellB :: MonadFix m => Cell m () Float
+cellB :: (MonadFix m) => Cell m () Float
 cellB = proc _ -> do
   fDelta <- runReaderC 10 osc -< ()
   runReaderC' osc -< (440 + 5 * fDelta, ())
 
-short :: Monad m => Float -> CellExcept () Float m ()
+short :: (Monad m) => Float -> CellExcept () Float m ()
 short frequency = try $ proc _ -> do
   count <- sumC -< 1 :: Int
   if count > 8000
     then throwC -< ()
     else returnA -< frequency
 
-frequencies :: Monad m => Cell m () Float
+frequencies :: (Monad m) => Cell m () Float
 frequencies = foreverC $ runCellExcept $ sequence $ (short . f) <$> [C, E, G]
 
-cycleThrough :: Monad m => NonEmpty a -> Int -> Cell m () a
+cycleThrough :: (Monad m) => NonEmpty a -> Int -> Cell m () a
 cycleThrough bs cycleLength =
   let vector = Vector.fromList (NonEmpty.toList bs)
    in proc _ -> do
         n <- modSum (cycleLength * length bs) -< 1
         returnA -< vector ! (n `div` cycleLength)
 
-frequencies' :: Monad m => Cell m () Float
+frequencies' :: (Monad m) => Cell m () Float
 frequencies' = cycleThrough (NonEmpty.fromList $ [f D, f G, o $ f Bb]) 8000
 
-pulseCell :: Monad m => PulseCell m () ()
+pulseCell :: (Monad m) => PulseCell m () ()
 pulseCell = frequencies' >>> osc' >>> addSample
 
 liveProgram :: LiveProgram (HandlingStateT IO)

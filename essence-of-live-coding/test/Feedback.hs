@@ -18,7 +18,7 @@ import Test.QuickCheck
 -- essence-of-live-coding
 import LiveCoding
 
-constCell :: Monad m => Int -> Cell m () Int
+constCell :: (Monad m) => Int -> Cell m () Int
 constCell cellState =
   Cell
     { cellStep = \state _ -> return (state, state)

@@ -60,7 +60,7 @@ vividHandleParametrised = ParametrisedHandle {..}
     changeParametrised old new synth = defaultChange createParametrised destroyParametrised old new synth
 
 deriving instance Data SynthState
-deriving instance KnownSymbol a => Data (I a)
+deriving instance (KnownSymbol a) => Data (I a)
 
 {- | Create a synthesizer.
 

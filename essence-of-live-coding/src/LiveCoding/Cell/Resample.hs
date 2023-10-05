@@ -30,10 +30,10 @@ resample :: (Monad m, KnownNat n) => Cell m a b -> Cell m (Vector n a) (Vector n
 resample = traverse'
 
 -- | Execute the cell for as many steps as the input list is long.
-resampleList :: Monad m => Cell m a b -> Cell m [a] [b]
+resampleList :: (Monad m) => Cell m a b -> Cell m [a] [b]
 resampleList = traverse'
 
-resampleMaybe :: Monad m => Cell m a b -> Cell m (Maybe a) (Maybe b)
+resampleMaybe :: (Monad m) => Cell m a b -> Cell m (Maybe a) (Maybe b)
 resampleMaybe = traverse'
 
 {- | Create as many cells as the input list is long and execute them in parallel
@@ -42,7 +42,7 @@ resampleMaybe = traverse'
 
  Similar to Yampa's [parC](https://hackage.haskell.org/package/Yampa-0.13.3/docs/FRP-Yampa-Switches.html#v:parC).
 -}
-resampleListPar :: Monad m => Cell m a b -> Cell m [a] [b]
+resampleListPar :: (Monad m) => Cell m a b -> Cell m [a] [b]
 resampleListPar (Cell initial step) = Cell {..}
   where
     cellState = []

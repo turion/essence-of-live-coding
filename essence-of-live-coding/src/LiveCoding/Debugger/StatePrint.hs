@@ -33,7 +33,7 @@ statePrint = Debugger $ liveCell $ arrM $ const $ do
   s <- get
   lift $ putStrLn $ stateShow s
 
-stateShow :: Data s => s -> String
+stateShow :: (Data s) => s -> String
 stateShow =
   gshow
     `ext2Q` compositionShow
@@ -43,7 +43,7 @@ stateShow =
     `ext2Q` exceptShow
     `ext2Q` choiceShow
 
-isUnit :: Data s => s -> Bool
+isUnit :: (Data s) => s -> Bool
 isUnit =
   mkQ
     False

@@ -23,10 +23,10 @@ data LiveProgramMigration a b = forall s.
   , output2 :: [b]
   }
 
-stepLiveProgramRWS :: Monoid b => LiveProgram (RWS a b s) -> a -> s -> (LiveProgram (RWS a b s), s, b)
+stepLiveProgramRWS :: (Monoid b) => LiveProgram (RWS a b s) -> a -> s -> (LiveProgram (RWS a b s), s, b)
 stepLiveProgramRWS liveProg = runRWS (stepProgram liveProg)
 
-stepsLiveProgramRWS :: Monoid b => LiveProgram (RWS a b s) -> s -> [a] -> (LiveProgram (RWS a b s), s, [b])
+stepsLiveProgramRWS :: (Monoid b) => LiveProgram (RWS a b s) -> s -> [a] -> (LiveProgram (RWS a b s), s, [b])
 stepsLiveProgramRWS liveProg s [] = (liveProg, s, [])
 stepsLiveProgramRWS liveProg s (a : as) =
   let (liveProg', s', b) = stepLiveProgramRWS liveProg a s

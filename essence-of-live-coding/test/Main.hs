@@ -143,7 +143,7 @@ tests =
   , RuntimeIO.Launch.test
   ]
 
-countFrom :: Monad m => Int -> Cell m () Int
+countFrom :: (Monad m) => Int -> Cell m () Int
 countFrom n = arr (const 1) >>> sumC >>> arr (+ n)
 
 fromEither (Left a) = a

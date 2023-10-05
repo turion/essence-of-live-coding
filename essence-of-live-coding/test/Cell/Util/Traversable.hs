@@ -75,7 +75,7 @@ testTraverse' =
 
 traverseArrLaw ::
   forall a b t.
-  Traversable t =>
+  (Traversable t) =>
   Proxy t ->
   [t a] ->
   Fun a b ->
@@ -126,7 +126,7 @@ instance
 
 genTraversableTests' ::
   forall a.
-  GenTests a =>
+  (GenTests a) =>
   String ->
   (forall (t :: * -> *). (Arbitrary (t Int), Show (t Int), Eq (t Int), Traversable t, Typeable t) => Proxy t -> Test) ->
   Test

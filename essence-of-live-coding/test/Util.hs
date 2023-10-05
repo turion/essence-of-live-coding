@@ -47,7 +47,7 @@ instance (Eq b, Show b) => Testable (CellMigrationSimulation a b) where
    and step the migration result with the second input.
    Return both outputs.
 -}
-simulateCellMigration :: Monad m => Cell m a b -> Cell m a b -> [a] -> [a] -> m ([b], [b])
+simulateCellMigration :: (Monad m) => Cell m a b -> Cell m a b -> [a] -> [a] -> m ([b], [b])
 simulateCellMigration cell1 cell2 as1 as2 = do
   (bs1, cell1') <- steps cell1 as1
   let cell2' = hotCodeSwapCell cell2 cell1'
