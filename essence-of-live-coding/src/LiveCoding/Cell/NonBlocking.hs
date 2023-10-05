@@ -32,7 +32,7 @@ The resulting cell can be polled by sending 'Nothing'.
 The boolean flag controls whether the current computation is aborted and restarted when new data arrives.
 -}
 nonBlocking ::
-  Typeable b =>
+  (Typeable b) =>
   -- | Pass 'True' to abort the computation when new data arrives. 'False' discards new data.
   Bool ->
   Cell IO a b ->

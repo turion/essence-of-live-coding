@@ -72,13 +72,13 @@ cellWithActionParametrized action =
     runHandlingStateC $
       handlingParametrised testParametrisedHandle >>> arrM (<$ lift action)
 
-throwAfter2Steps :: Monad m => Cell (ExceptT () m) a Int
+throwAfter2Steps :: (Monad m) => Cell (ExceptT () m) a Int
 throwAfter2Steps = arr (const 1) >>> sumC >>> throwIf_ (> 1)
 
 data Tag (tag :: Nat) = Tag
   deriving (Eq, Show)
 
-testTypelevelHandle :: KnownNat tag => Handle (State Int) (Tag tag)
+testTypelevelHandle :: (KnownNat tag) => Handle (State Int) (Tag tag)
 testTypelevelHandle =
   Handle
     { create = return Tag
@@ -86,7 +86,7 @@ testTypelevelHandle =
     }
 
 cellWithActionTypelevel ::
-  KnownNat tag =>
+  (KnownNat tag) =>
   State Int b ->
   Cell Identity a (Tag tag, Int)
 cellWithActionTypelevel action =

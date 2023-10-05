@@ -66,10 +66,10 @@ glossCell = withDebuggerC glossCell' glossDebugger
 
 -- * To be ported to essence-of-live-coding-gloss (and delete the Arrows)
 
-statePicture :: Data s => s -> Picture
+statePicture :: (Data s) => s -> Picture
 statePicture = Gloss.translate (-100) 100 . scale 0.1 0.1 . color red . getPic . stateBoundedPic
 
-stateBoundedPic :: Data s => s -> BoundedPic
+stateBoundedPic :: (Data s) => s -> BoundedPic
 stateBoundedPic =
   (boundPic . text . stateShow)
     `ext2Q` compPic
@@ -191,7 +191,7 @@ compPic Composition {..}
 glossDebugger :: Debugger PictureM
 glossDebugger = Debugger $ liveCell $ every 100 >>> hold blank >>> arrM (lift . lift . tell)
 
-every :: Data s => Integer -> Cell (StateT s PictureM) () (Maybe Picture)
+every :: (Data s) => Integer -> Cell (StateT s PictureM) () (Maybe Picture)
 every maxN = proc () -> do
   n <- sumC -< 1
   if n `mod` maxN == 0

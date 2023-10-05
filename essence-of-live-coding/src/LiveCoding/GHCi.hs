@@ -46,7 +46,7 @@ instance Exception NoStore
    Returns 'Right Nothing' if the store didn't exist.
 -}
 possiblyLaunchedProgram ::
-  Launchable m =>
+  (Launchable m) =>
   Proxy m ->
   IO (Either SomeException (LaunchedProgram m))
 possiblyLaunchedProgram _ = do
@@ -56,7 +56,7 @@ possiblyLaunchedProgram _ = do
 {- | Try to load a 'LiveProgram' of a given type from the 'Store'.
    If the store doesn't contain a program, it is (re)started.
 -}
-sync :: Launchable m => LiveProgram m -> IO ()
+sync :: (Launchable m) => LiveProgram m -> IO ()
 sync program = do
   launchedProgramPossibly <- possiblyLaunchedProgram $ proxyFromLiveProgram program
   case launchedProgramPossibly of
@@ -71,18 +71,18 @@ sync program = do
       update launchedProgram program
 
 -- | Launch a 'LiveProgram' and save it in the 'Store'.
-launchAndSave :: Launchable m => LiveProgram m -> IO ()
+launchAndSave :: (Launchable m) => LiveProgram m -> IO ()
 launchAndSave = launch >=> save
 
 -- | Save a 'LiveProgram' to the store.
-save :: Launchable m => LaunchedProgram m -> IO ()
+save :: (Launchable m) => LaunchedProgram m -> IO ()
 save = writeStore $ Store 0
 
 {- | Try to retrieve a 'LaunchedProgram' from the 'Store',
    and if successful, stop it.
 -}
 stopStored ::
-  Launchable m =>
+  (Launchable m) =>
   Proxy m ->
   IO ()
 stopStored proxy = do

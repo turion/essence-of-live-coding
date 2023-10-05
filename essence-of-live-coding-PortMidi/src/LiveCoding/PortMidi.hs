@@ -88,22 +88,22 @@ instance Finite PMError
 -- ** Constructing values in 'PortMidiT'
 
 -- | Given an exception value, throw it immediately.
-throwPortMidi :: Monad m => EOLCPortMidiError -> PortMidiT m arbitrary
+throwPortMidi :: (Monad m) => EOLCPortMidiError -> PortMidiT m arbitrary
 throwPortMidi = PortMidiT . throwE
 
 -- | Like 'throwPortMidi', but as a 'Cell'.
-throwPortMidiC :: Monad m => Cell (PortMidiT m) EOLCPortMidiError arbitrary
+throwPortMidiC :: (Monad m) => Cell (PortMidiT m) EOLCPortMidiError arbitrary
 throwPortMidiC = arrM throwPortMidi
 
 {- | Given a monadic action that produces a value or a 'PMError',
    run it as an action in 'PortMidiT'.
    Typically needed to lift PortMidi backend functions.
 -}
-liftPMError :: Monad m => m (Either PMError a) -> PortMidiT m a
+liftPMError :: (Monad m) => m (Either PMError a) -> PortMidiT m a
 liftPMError = PortMidiT . ExceptT . fmap (left PMError) . lift
 
 -- | Given a cell with existing handles, lift it into 'PortMidiT'.
-liftHandlingState :: Monad m => Cell (HandlingStateT m) a b -> Cell (PortMidiT m) a b
+liftHandlingState :: (Monad m) => Cell (HandlingStateT m) a b -> Cell (PortMidiT m) a b
 liftHandlingState = hoistCell $ PortMidiT . lift
 
 -- ** Running values in 'PortMidiT'
@@ -117,7 +117,7 @@ liftHandlingState = hoistCell $ PortMidiT . lift
 3. Shut the MIDI system down
 4. Throw the exception in 'CellExcept'
 -}
-runPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> CellExcept a b (HandlingStateT m) EOLCPortMidiError
+runPortMidiC :: (MonadIO m) => Cell (PortMidiT m) a b -> CellExcept a b (HandlingStateT m) EOLCPortMidiError
 runPortMidiC cell = try $ proc a -> do
   _ <- liftCell $ handling portMidiHandle -< ()
   hoistCell unPortMidiT cell -< a
@@ -127,7 +127,7 @@ runPortMidiC cell = try $ proc a -> do
 Effectively loops over 'runPortMidiC',
 and prints the exception after it occurred.
 -}
-loopPortMidiC :: MonadIO m => Cell (PortMidiT m) a b -> Cell (HandlingStateT m) a b
+loopPortMidiC :: (MonadIO m) => Cell (PortMidiT m) a b -> Cell (HandlingStateT m) a b
 loopPortMidiC cell = foreverC $ runCellExcept $ do
   e <- runPortMidiC cell
   once_ $ liftIO $ do
@@ -166,7 +166,7 @@ You will rarely need this function.
 Consider 'readEventsC' and 'writeEventsC' instead.
 -}
 lookupDeviceID ::
-  MonadIO m =>
+  (MonadIO m) =>
   String ->
   DeviceDirection ->
   m (Either EOLCPortMidiError DeviceID)
@@ -189,7 +189,7 @@ lookupDeviceID nameLookingFor inputOrOutput = do
 
 -- | A 'Handle' that opens a 'PortMidiInputStream' of the given device name.
 portMidiInputStreamHandle ::
-  MonadIO m =>
+  (MonadIO m) =>
   String ->
   Handle m (Either EOLCPortMidiError PortMidiInputStream)
 portMidiInputStreamHandle name =
@@ -204,7 +204,7 @@ portMidiInputStreamHandle name =
 
 -- | Read all events from the 'PortMidiInputStream' that accumulated since the last tick.
 readEventsFrom ::
-  MonadIO m =>
+  (MonadIO m) =>
   Cell (PortMidiT m) PortMidiInputStream [PMEvent]
 readEventsFrom = arrM $ liftPMError . liftIO . readEvents . unPortMidiInputStream
 
@@ -215,7 +215,7 @@ Automatically opens the device.
 This is basically a convenient combination of 'portMidiInputStreamHandle' and 'readEventsFrom'.
 -}
 readEventsC ::
-  MonadIO m =>
+  (MonadIO m) =>
   String ->
   Cell (PortMidiT m) arbitrary [PMEvent]
 readEventsC name = proc _ -> do
@@ -225,7 +225,7 @@ readEventsC name = proc _ -> do
 
 -- | A 'Handle' that opens a 'PortMidiOutputStream' of the given device name.
 portMidiOutputStreamHandle ::
-  MonadIO m =>
+  (MonadIO m) =>
   String ->
   Handle m (Either EOLCPortMidiError PortMidiOutputStream)
 portMidiOutputStreamHandle name =
@@ -240,7 +240,7 @@ portMidiOutputStreamHandle name =
 
 -- | Write all events to the 'PortMidiOutputStream'.
 writeEventsTo ::
-  MonadIO m =>
+  (MonadIO m) =>
   Cell (PortMidiT m) (PortMidiOutputStream, [PMEvent]) ()
 writeEventsTo = arrM writer
   where
@@ -257,7 +257,7 @@ Automatically opens the device.
 This is basically a convenient combination of 'portMidiOutputStreamHandle' and 'writeEventsTo'.
 -}
 writeEventsC ::
-  MonadIO m =>
+  (MonadIO m) =>
   String ->
   Cell (PortMidiT m) [PMEvent] ()
 writeEventsC name = proc events -> do

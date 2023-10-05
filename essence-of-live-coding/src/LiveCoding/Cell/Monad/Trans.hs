@@ -61,14 +61,14 @@ runReaderC r = hoistCell $ flip runReaderT r
 
 -- | Supply a 'ReaderT' environment live
 runReaderC' ::
-  Monad m =>
+  (Monad m) =>
   Cell (ReaderT r m) a b ->
   Cell m (r, a) b
 runReaderC' = hoistCellKleisli_ $ \action (r, a) -> runReaderT (action a) r
 
 -- | Inverse to 'runReaderC''
 readerC' ::
-  Monad m =>
+  (Monad m) =>
   Cell m (r, a) b ->
   Cell (ReaderT r m) a b
 readerC' = hoistCellKleisli_ $ \action a -> ReaderT $ \r -> action (r, a)

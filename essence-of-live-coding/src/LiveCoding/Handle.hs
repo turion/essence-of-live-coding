@@ -57,7 +57,7 @@ In the combined handle, the first handle is created first and destroyed last.
 Note: 'Handle' is not an 'Applicative' because it is not a 'Functor'
 (because the destructor is contravariant in @h@).
 -}
-combineHandles :: Applicative m => Handle m h1 -> Handle m h2 -> Handle m (h1, h2)
+combineHandles :: (Applicative m) => Handle m h1 -> Handle m h2 -> Handle m (h1, h2)
 combineHandles handle1 handle2 =
   Handle
     { create = (,) <$> create handle1 <*> create handle2
@@ -116,7 +116,7 @@ defaultChange creator destructor pOld pNew h
 
 -- | Like 'combineHandles', but for 'ParametrisedHandle's.
 combineParametrisedHandles ::
-  Applicative m =>
+  (Applicative m) =>
   ParametrisedHandle p1 m h1 ->
   ParametrisedHandle p2 m h2 ->
   ParametrisedHandle (p1, p2) m (h1, h2)
@@ -168,7 +168,7 @@ handlingParametrised handleImpl@ParametrisedHandle {..} = Cell {..}
 {- | Every 'Handle' is trivially a 'ParametrisedHandle'
    when the parameter is the trivial type.
 -}
-toParametrised :: Monad m => Handle m h -> ParametrisedHandle () m h
+toParametrised :: (Monad m) => Handle m h -> ParametrisedHandle () m h
 toParametrised Handle {..} =
   ParametrisedHandle
     { createParametrised = const create

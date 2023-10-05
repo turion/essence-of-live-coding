@@ -33,7 +33,7 @@ for example when you have special effects that have to be handled on every reloa
 The only thing necessary is to transform the 'LiveProgram'
 into one in the 'IO' monad, and the rest is taken care of in the framework.
 -}
-class Monad m => Launchable m where
+class (Monad m) => Launchable m where
   runIO :: LiveProgram m -> LiveProgram IO
 
 instance Launchable IO where
@@ -59,13 +59,13 @@ main = liveMain liveProgram
 @
 -}
 liveMain ::
-  Launchable m =>
+  (Launchable m) =>
   LiveProgram m ->
   IO ()
 liveMain = foreground . runIO
 
 -- | Launch a 'LiveProgram' in the foreground thread (blocking).
-foreground :: Monad m => LiveProgram m -> m ()
+foreground :: (Monad m) => LiveProgram m -> m ()
 foreground liveProgram =
   stepProgram liveProgram
     >>= foreground
@@ -83,7 +83,7 @@ The 'ThreadId' represents the thread where the program runs in.
 You're advised not to kill it directly, but to run 'stop' instead.
 -}
 launch ::
-  Launchable m =>
+  (Launchable m) =>
   LiveProgram m ->
   IO (LaunchedProgram m)
 launch liveProg = do
@@ -93,7 +93,7 @@ launch liveProg = do
 
 -- | Migrate (using 'hotCodeSwap') the 'LiveProgram' to a new version.
 update ::
-  Launchable m =>
+  (Launchable m) =>
   LaunchedProgram m ->
   LiveProgram m ->
   IO ()
@@ -108,7 +108,7 @@ This can be used to call cleanup actions encoded in the monad,
 such as 'HandlingStateT'.
 -}
 stop ::
-  Launchable m =>
+  (Launchable m) =>
   LaunchedProgram m ->
   IO ()
 stop launchedProgram@LaunchedProgram {..} = do
@@ -132,7 +132,7 @@ background var = forever $ do
   putMVar var liveProg'
 
 -- | Advance a 'LiveProgram' by a single step.
-stepProgram :: Monad m => LiveProgram m -> m (LiveProgram m)
+stepProgram :: (Monad m) => LiveProgram m -> m (LiveProgram m)
 stepProgram LiveProgram {..} = do
   liveState' <- liveStep liveState
   return LiveProgram {liveState = liveState', ..}

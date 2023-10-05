@@ -25,11 +25,11 @@ type PulseT m = WriterT (Sum Float) m
 type PulseCell m a b = Cell (PulseT m) a b
 
 -- | Compose with this cell to play a sound sample.
-addSample :: Monad m => PulseCell m Float ()
+addSample :: (Monad m) => PulseCell m Float ()
 addSample = arr Sum >>> arrM tell
 
 -- | Globally fix the sample rate to 48000 samples per second.
-sampleRate :: Num a => a
+sampleRate :: (Num a) => a
 sampleRate = 48000
 
 {- | Create a pulse server backend handle.

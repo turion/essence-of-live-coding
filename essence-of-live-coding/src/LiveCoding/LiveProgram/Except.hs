@@ -45,7 +45,7 @@ newtype LiveProgramExcept m e = LiveProgramExcept
 
 -- | Execute a 'LiveProgramExcept', throwing its exceptions in the 'ExceptT' monad.
 runLiveProgramExcept ::
-  Monad m =>
+  (Monad m) =>
   LiveProgramExcept m e ->
   LiveProgram (ExceptT e m)
 runLiveProgramExcept LiveProgramExcept {..} = liveCell $ runCellExcept unLiveProgramExcept
@@ -68,7 +68,7 @@ no exceptions can be thrown,
 and thus we can safely assume that it is a 'LiveProgram' in @m@.
 -}
 safely ::
-  Monad m =>
+  (Monad m) =>
   LiveProgramExcept m Void ->
   LiveProgram m
 safely = liveCell . CellExcept.safely . unLiveProgramExcept
@@ -78,7 +78,7 @@ safely = liveCell . CellExcept.safely . unLiveProgramExcept
 This is always safe in the sense that it has no exceptions.
 -}
 safe ::
-  Monad m =>
+  (Monad m) =>
   LiveProgram m ->
   LiveProgramExcept m Void
 safe = LiveProgramExcept . CellExcept.safe . toLiveCell

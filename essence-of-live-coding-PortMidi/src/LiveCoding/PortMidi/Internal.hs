@@ -13,7 +13,7 @@ import LiveCoding.Handle
 -- | A marker witnessing that PortMidi was initialized
 data PortMidiHandle = PortMidiHandle
 
-portMidiHandle :: MonadIO m => Handle m PortMidiHandle
+portMidiHandle :: (MonadIO m) => Handle m PortMidiHandle
 portMidiHandle =
   Handle
     { create = do

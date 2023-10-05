@@ -1,9 +1,9 @@
 -- essence-of-live-coding
 import LiveCoding
 
-t1 :: Num a => a
+t1 :: (Num a) => a
 t1 = 4
-t2 :: Num a => a
+t2 :: (Num a) => a
 t2 = 8
 
 main = do

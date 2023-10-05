@@ -30,10 +30,10 @@ type PictureM = PictureT IO
 
 -- | Run the effects of the gloss monad stack by explicitly passing events and pictures.
 runPictureT ::
-  Monad m =>
+  (Monad m) =>
   Cell (PictureT m) a b ->
   Cell m ([Event], a) (Picture, b)
 runPictureT = runWriterC . runReaderC'
 
-addPicture :: Monad m => Cell (PictureT m) Picture ()
+addPicture :: (Monad m) => Cell (PictureT m) Picture ()
 addPicture = arrM $ lift . tell
