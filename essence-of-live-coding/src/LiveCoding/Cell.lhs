@@ -32,9 +32,11 @@ import Control.Category
 import Control.Concurrent (threadDelay)
 import Control.Monad
 import Control.Monad.Fix
-import Control.Selective
 import Data.Data
 import Prelude hiding ((.), id)
+
+-- selective
+import Control.Selective
 
 -- transformers
 import Control.Monad.Trans.Class
