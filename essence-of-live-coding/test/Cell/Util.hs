@@ -34,6 +34,9 @@ import Control.Monad.Trans.State.Lazy
 -- vector-sized
 import qualified Data.Vector.Sized as V
 
+-- selective
+import Control.Selective
+
 -- test-framework
 import Test.Framework
 
@@ -208,6 +211,13 @@ test =
           { cell = resampleListPar (sumC :: Cell Identity Int Int)
           , input = [[1, 1, 1], [1, 1], [1, 1, 1]]
           , output = [[0, 0, 0], [1, 1], [2, 2, 0]]
+          }
+    , testProperty
+        "Selective instance is sound"
+        CellSimulation
+          { cell = select C.id (pure length) :: Cell Identity (Either [()] Int) Int
+          , input = [Right 42, Left [(), ()]]
+          , output = [42, 2]
           }
     ]
 
