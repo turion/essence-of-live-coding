@@ -35,6 +35,9 @@ import Control.Monad.Fix
 import Data.Data
 import Prelude hiding ((.), id)
 
+-- selective
+import Control.Selective
+
 -- transformers
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
@@ -487,6 +490,15 @@ instance Applicative m => Applicative (Cell m a) where
     { cellStep = \(Parallel fState aState) a -> (\(f, fState') (a, aState') -> (f a, Parallel fState' aState')) <$> fStep fState a <*> aStep aState a
     , cellState = Parallel fState0 aState0
     }
+
+instance Monad m => Selective (Cell m a) where
+  select cell1 cell2 = proc i -> do
+    ebc <- cell1 -< i
+    case ebc of
+      Left a -> do
+        f <- cell2 -< i
+        returnA -< f a
+      Right b -> returnA -< b
 \end{code}
 \end{comment}
 
