@@ -21,6 +21,7 @@ import Control.Monad.Trans.Writer
 -- gloss
 import Graphics.Gloss as X
 import Graphics.Gloss.Interface.IO.Game as X
+import qualified Graphics.UI.GLUT as GLUT
 
 -- essence-of-live-coding
 import LiveCoding
@@ -104,7 +105,8 @@ stepGloss :: Float -> GlossVars -> IO GlossVars
 stepGloss dTime vars@GlossVars {..} = do
   putMVar glossDTimeVar dTime
   exitNow <- readIORef glossExitRef
-  when exitNow exitSuccess
+  when exitNow $ GLUT.leaveMainLoop
+  -- when exitNow $ GLUT.leaveMainLoop >> exitSuccess
   return vars
 
 {- | Given a cell in the gloss monad 'PictureM',
