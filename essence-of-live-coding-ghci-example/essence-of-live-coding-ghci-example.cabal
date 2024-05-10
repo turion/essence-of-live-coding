@@ -30,7 +30,7 @@ executable essence-of-live-coding-ghci-example
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:
-        base >= 4.11 && < 5
+        base >= 4.13 && < 4.19
       , essence-of-live-coding >= 0.2.7
     hs-source-dirs:   app
     default-language: Haskell2010
