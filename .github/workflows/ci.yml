@@ -78,3 +78,12 @@ jobs:
       - name: Stack build and test
         run: |
           stack build --system-ghc --test --stack-yaml stack.${{ matrix.ghc }}.yaml
+
+  success:
+    name: Successfully build and test
+    needs:
+      - build
+    runs-on:
+      - ubuntu-latest
+    steps:
+      - run: echo "Success"
