@@ -38,7 +38,7 @@ source-repository this
 executable essence-of-live-coding-gloss-example
   main-is:             Main.hs
   build-depends:
-      base >= 4.13 && < 4.19
+      base >= 4.13 && < 4.20
     , transformers >= 0.5
     , gloss >= 1.13
     , essence-of-live-coding >= 0.2.7
