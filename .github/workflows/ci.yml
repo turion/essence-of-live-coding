@@ -86,13 +86,6 @@ jobs:
         if: ${{ matrix.ghc == '9.6.5' }}
         run: |
           cabal test all --enable-tests --test-show-details=Always --project-file cabal.96andAbove.project
-      - name: Cache stack build artifacts
-        uses:  freckle/stack-cache-action@v1.0.1
-        with:
-          stack-yaml: stack.${{ matrix.ghc }}.yaml
-      - name: Stack build and test
-        run: |
-          stack build --system-ghc --test --stack-yaml stack.${{ matrix.ghc }}.yaml
 
   success:
     name: Successfully build and test
