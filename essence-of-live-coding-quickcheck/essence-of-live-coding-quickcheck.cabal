@@ -37,7 +37,7 @@ source-repository this
 library
   exposed-modules:     LiveCoding.QuickCheck
   build-depends:
-      base >= 4.11 && < 5
+      base >= 4.13 && < 4.19
     , essence-of-live-coding >= 0.2.7
     , transformers >= 0.5
     , syb >= 0.7
