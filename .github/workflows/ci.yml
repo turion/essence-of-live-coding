@@ -62,15 +62,30 @@ jobs:
           key: ${{ runner.os }}-cabal-${{ matrix.ghc }}
           restore-keys: |
             ${{ runner.os }}-cabal-${{ matrix.ghc }}
-      - name: Cabal build dependencies
+      - name: Cabal build dependencies (below GHC 9.6)
+        if: ${{ matrix.ghc != '9.6.5' }}
         run: |
           cabal build all  --enable-tests --only-dependencies
-      - name: Cabal build packages
+      - name: Cabal build dependencies (above GHC 9.6)
+        if: ${{ matrix.ghc == '9.6.5' }}
+        run: |
+          cabal build all  --enable-tests --only-dependencies --project-file cabal.96andAbove.project
+      - name: Cabal build packages (below GHC 9.6)
+        if: ${{ matrix.ghc != '9.6.5' }}
         run: |
           cabal build all --enable-tests
-      - name: Cabal test
+      - name: Cabal build packages (above GHC 9.6)
+        if: ${{ matrix.ghc == '9.6.5' }}
+        run: |
+          cabal build all --enable-tests --only-dependencies --project-file cabal.96andAbove.project
+      - name: Cabal test (below GHC 9.6)
+        if: ${{ matrix.ghc != '9.6.5' }}
         run: |
           cabal test all --enable-tests --test-show-details=Always
+      - name: Cabal test (above GHC 9.6)
+        if: ${{ matrix.ghc == '9.6.5' }}
+        run: |
+          cabal test all --enable-tests --test-show-details=Always --project-file cabal.96andAbove.project
       - name: Cache stack build artifacts
         uses:  freckle/stack-cache-action@v1.0.1
         with:
