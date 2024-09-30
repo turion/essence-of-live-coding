@@ -54,7 +54,7 @@ jobs:
       - name: Cabal update
         run: cabal update
       - name: Cache Cabal build artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ${{ steps.setup-haskell-build.outputs.cabal-store }}
