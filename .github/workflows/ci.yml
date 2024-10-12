@@ -41,14 +41,13 @@ jobs:
       - fourmolu
     strategy:
       matrix: ${{ fromJSON(needs.generateMatrix.outputs.matrix) }}
-    name: Haskell GHC ${{ matrix.ghc }} cabal + stack
+    name: Haskell GHC ${{ matrix.ghc }} cabal
     steps:
       - uses: actions/checkout@v4
       - uses: haskell/actions/setup@v2
         id: setup-haskell-build
         with:
           ghc-version: ${{ matrix.ghc }}
-          enable-stack: true
       - name: update apt
         run: sudo apt update      
       - name: Install dependencies
