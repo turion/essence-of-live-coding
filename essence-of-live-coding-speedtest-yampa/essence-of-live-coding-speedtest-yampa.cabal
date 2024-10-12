@@ -39,7 +39,7 @@ executable SpeedTest
   main-is: SpeedTest.hs
   hs-source-dirs: app
   build-depends:
-      base >= 4.13 && < 4.19
+      base >= 4.13 && < 4.21
     , essence-of-live-coding
     , transformers >= 0.5
   default-extensions: StrictData
@@ -48,5 +48,5 @@ executable SpeedTestYampa
   main-is: SpeedTestYampa.hs
   hs-source-dirs: app
   build-depends:
-      base >= 4.13 && < 4.19
+      base >= 4.13 && < 4.21
     , Yampa

@@ -41,14 +41,15 @@ jobs:
       - fourmolu
     strategy:
       matrix: ${{ fromJSON(needs.generateMatrix.outputs.matrix) }}
-    name: Haskell GHC ${{ matrix.ghc }} cabal + stack
+    name: Haskell GHC ${{ matrix.ghc }} cabal
     steps:
       - uses: actions/checkout@v4
       - uses: haskell/actions/setup@v2
         id: setup-haskell-build
         with:
           ghc-version: ${{ matrix.ghc }}
-          enable-stack: true
+      - name: update apt
+        run: sudo apt update      
       - name: Install dependencies
         run: sudo apt-get install -y libxml2-utils libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev libpulse-dev libblas-dev liblapack-dev libasound2-dev wget
       - name: Cabal update
@@ -62,30 +63,15 @@ jobs:
           key: ${{ runner.os }}-cabal-${{ matrix.ghc }}
           restore-keys: |
             ${{ runner.os }}-cabal-${{ matrix.ghc }}
-      - name: Cabal build dependencies (below GHC 9.6)
-        if: ${{ matrix.ghc != '9.6.5' }}
+      - name: Cabal build dependencies
         run: |
           cabal build all  --enable-tests --only-dependencies
-      - name: Cabal build dependencies (above GHC 9.6)
-        if: ${{ matrix.ghc == '9.6.5' }}
-        run: |
-          cabal build all  --enable-tests --only-dependencies --project-file cabal.96andAbove.project
-      - name: Cabal build packages (below GHC 9.6)
-        if: ${{ matrix.ghc != '9.6.5' }}
+      - name: Cabal build packages
         run: |
           cabal build all --enable-tests
-      - name: Cabal build packages (above GHC 9.6)
-        if: ${{ matrix.ghc == '9.6.5' }}
-        run: |
-          cabal build all --enable-tests --only-dependencies --project-file cabal.96andAbove.project
-      - name: Cabal test (below GHC 9.6)
-        if: ${{ matrix.ghc != '9.6.5' }}
+      - name: Cabal test
         run: |
           cabal test all --enable-tests --test-show-details=Always
-      - name: Cabal test (above GHC 9.6)
-        if: ${{ matrix.ghc == '9.6.5' }}
-        run: |
-          cabal test all --enable-tests --test-show-details=Always --project-file cabal.96andAbove.project
 
   success:
     name: Successfully build and test
