@@ -49,6 +49,8 @@ jobs:
         with:
           ghc-version: ${{ matrix.ghc }}
           enable-stack: true
+      - name: update apt
+        run: sudo apt update      
       - name: Install dependencies
         run: sudo apt-get install -y libxml2-utils libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev libpulse-dev libblas-dev liblapack-dev libasound2-dev wget
       - name: Cabal update
