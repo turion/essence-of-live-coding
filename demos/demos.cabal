@@ -1,5 +1,5 @@
 name:                demos
-version:             0.2.7
+version:             0.2.8
 synopsis: General purpose live coding framework - Demo applications
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -34,7 +34,7 @@ source-repository head
 source-repository this
   type:     git
   location: https://github.com/turion/essence-of-live-coding.git
-  tag:      v0.2.7
+  tag:      v0.2.8
 
 executable DemoSine
   main-is: DemoSine.hs
@@ -81,7 +81,7 @@ executable DemoWai
   hs-source-dirs: app
   build-depends:
       base >= 4.13 && < 4.21
-    , essence-of-live-coding >= 0.2.7
+    , essence-of-live-coding >= 0.2.8
     , transformers >= 0.5
     , wai  >= 3.2
     , warp >= 3.2

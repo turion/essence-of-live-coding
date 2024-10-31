@@ -1,6 +1,6 @@
 cabal-version:      2.4
 name:               essence-of-live-coding-ghci-example
-version:            0.2.7
+version:            0.2.8
 
 -- A short (one-line) description of the package.
 -- synopsis:
@@ -31,6 +31,6 @@ executable essence-of-live-coding-ghci-example
     -- other-extensions:
     build-depends:
         base >= 4.13 && < 4.21
-      , essence-of-live-coding >= 0.2.7
+      , essence-of-live-coding >= 0.2.8
     hs-source-dirs:   app
     default-language: Haskell2010

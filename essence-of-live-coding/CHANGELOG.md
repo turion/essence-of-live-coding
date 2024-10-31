@@ -1,5 +1,10 @@
 # Revision history for essence-of-live-coding
 
+## 0.2.8
+
+* Support GHC 9.10
+* Add Selective instances
+
 ## 0.2.7
 
 * Add support for GHC 9.2
