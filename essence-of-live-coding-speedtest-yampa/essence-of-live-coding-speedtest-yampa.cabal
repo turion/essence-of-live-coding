@@ -49,4 +49,4 @@ executable SpeedTestYampa
   hs-source-dirs: app
   build-depends:
       base >= 4.13 && < 4.21
-    , Yampa
+    , Yampa >= 0.14
