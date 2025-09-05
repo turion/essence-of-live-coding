@@ -90,12 +90,3 @@ jobs:
       - name: Cabal test
         run: |
           cabal test all --enable-tests --test-show-details=Always
-
-  success:
-    name: Successfully build and test
-    needs:
-      - build
-    runs-on:
-      - ubuntu-latest
-    steps:
-      - run: echo "Success"
