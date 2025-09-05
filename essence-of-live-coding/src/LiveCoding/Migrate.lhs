@@ -18,7 +18,7 @@ import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
 
 -- syb
-import Data.Generics.Aliases
+import Data.Generics.Aliases (GenericT, GenericR, GenericT' (..))
 import Data.Generics.Twins
 
 -- essence-of-live-coding
@@ -133,6 +133,8 @@ tryOneField = do
 getChildrenSetters :: Data a => Migration -> a -> [GenericT']
 getChildrenSetters specific = gmapQ $ \child -> GT $ flip (runSafeMigration $ treeMigration specific) child
 
+-- This exists in https://hackage-content.haskell.org/package/syb-0.7.3/docs/Data-Generics-Aliases.html#t:GenericR-39-
+-- starting at version 0.7.3, migrate eventually
 newtype GenericR' m = GR { unGR :: GenericR m }
 
 getChildrenMaybe :: Data a => a -> [GenericR' Maybe]
