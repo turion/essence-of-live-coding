@@ -107,8 +107,8 @@
             (ghcVersion: haskellPackages: haskellPackages.shellFor {
               packages = hps: attrValues (localPackagesFor haskellPackagesExtended.${ghcVersion});
               nativeBuildInputs = (
-                lib.optional (versionAtLeast ghcVersion "9.2")
-                  haskellPackages.${ghcVersion}.haskell-language-server)
+                lib.optional (versionAtLeast haskellPackages.ghc.version "9.4")
+                  haskellPackages.haskell-language-server)
               ++ (with pkgs;
                 [ cabal-install ]
               )
