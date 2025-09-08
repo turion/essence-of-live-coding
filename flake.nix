@@ -50,7 +50,7 @@
         "ghc96"
         "ghc98"
         "ghc910"
-        # "ghc912" # Uncomment as soon as nixpkgs is more advanced
+        "ghc912"
       ];
 
     in

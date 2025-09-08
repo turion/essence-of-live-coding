@@ -54,10 +54,10 @@ nonBlocking abort Cell {..} = proc aMaybe -> do
       noThreadRunning <-
         if abort
           then -- Abort the current computation if it is still running
-          do
-            maybeThreadId <- tryTakeMVar threadVar
-            mapM_ killThread maybeThreadId
-            return True
+            do
+              maybeThreadId <- tryTakeMVar threadVar
+              mapM_ killThread maybeThreadId
+              return True
           else -- No computation currently running
             isEmptyMVar threadVar
       when noThreadRunning $ do

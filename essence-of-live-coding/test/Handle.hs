@@ -70,7 +70,8 @@ cellWithActionParametrized ::
 cellWithActionParametrized action =
   flip runStateC 0 $
     runHandlingStateC $
-      handlingParametrised testParametrisedHandle >>> arrM (<$ lift action)
+      handlingParametrised testParametrisedHandle
+        >>> arrM (<$ lift action)
 
 throwAfter2Steps :: (Monad m) => Cell (ExceptT () m) a Int
 throwAfter2Steps = arr (const 1) >>> sumC >>> throwIf_ (> 1)
@@ -92,7 +93,8 @@ cellWithActionTypelevel ::
 cellWithActionTypelevel action =
   flip runStateC 0 $
     runHandlingStateC $
-      handling testTypelevelHandle >>> arrM (<$ lift action)
+      handling testTypelevelHandle
+        >>> arrM (<$ lift action)
 
 test =
   testGroup
@@ -122,7 +124,8 @@ test =
         CellMigrationSimulation
           { cell1 =
               flip runStateC 22 $
-                constM (modify (+ 1)) >>> runHandlingStateC (handling testHandle)
+                constM (modify (+ 1))
+                  >>> runHandlingStateC (handling testHandle)
           , cell2 = cellWithAction $ return ()
           , input1 = replicate 3 ()
           , input2 = replicate 3 ()
@@ -152,7 +155,8 @@ test =
           , cell2 =
               flip runStateC 0 $
                 runHandlingStateC $
-                  handling testUnitHandle >>> arr (const "")
+                  handling testUnitHandle
+                    >>> arr (const "")
           , input1 = replicate 3 ()
           , input2 = replicate 3 ()
           , output1 = ("Handle #0",) <$> replicate 3 0

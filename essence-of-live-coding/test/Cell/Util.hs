@@ -116,7 +116,8 @@ test =
         -- Make sure each message arrived exactly once, in order
         return $
           counterexample labelString $
-            catMaybes inputs === catMaybes outputs
+            catMaybes inputs
+              === catMaybes outputs
               .||. bufferNotEmpty
     , testProperty "delay a >>> changes >>> hold a = delay a" $
         \(inputs :: [Int]) (startValue :: Int) ->
@@ -173,17 +174,18 @@ test =
           , output2 = [4, 10, 10, 10] :: [Int]
           }
     , testProperty "resampleListPar works as expected" $
-        forAll (vector 100) $ \(inputs :: [(Int, Int)]) ->
-          let
-            inputs' = fmap pairToList inputs
-            pairToList :: (a, a) -> [a]
-            pairToList (x, y) = [x, y]
-           in
-            CellSimulation
-              { cell = resampleListPar (sumC :: Cell Identity Int Int)
-              , input = inputs'
-              , output = fmap sum . transpose <$> [[0 :: Int, 0]] : tail (inits (init inputs'))
-              }
+        forAll (vector 100) $
+          \(inputs :: [(Int, Int)]) ->
+            let
+              inputs' = fmap pairToList inputs
+              pairToList :: (a, a) -> [a]
+              pairToList (x, y) = [x, y]
+             in
+              CellSimulation
+                { cell = resampleListPar (sumC :: Cell Identity Int Int)
+                , input = inputs'
+                , output = fmap sum . transpose <$> [[0 :: Int, 0]] : tail (inits (init inputs'))
+                }
     , testProperty
         "resampleListPar grow"
         CellSimulation

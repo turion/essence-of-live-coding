@@ -45,7 +45,9 @@ test =
           { liveProgram1 =
               runHandlingState $
                 liveCell $
-                  handling testHandle >>> arrM (lift . tell . return) >>> constM inspectHandlingState
+                  handling testHandle
+                    >>> arrM (lift . tell . return)
+                    >>> constM inspectHandlingState
           , liveProgram2 = runHandlingState mempty
           , input1 = replicate 3 ()
           , input2 = replicate 3 ()
