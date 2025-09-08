@@ -40,20 +40,26 @@ test =
         [ testGroup
             "castMigration"
             [ testProperty "Migrates for same data type" $
-                runSafeMigration castMigration Foo1.same Foo1.same == Foo1.same
+                runSafeMigration castMigration Foo1.same Foo1.same
+                  == Foo1.same
             , testProperty "Does not migrate for different data types" $
-                runSafeMigration castMigration Foo1.same Foo2.same == Foo1.same
+                runSafeMigration castMigration Foo1.same Foo2.same
+                  == Foo1.same
             , testProperty "Migrates for same builtin type" $
-                runSafeMigration castMigration (23 :: Int) (42 :: Int) == 42
+                runSafeMigration castMigration (23 :: Int) (42 :: Int)
+                  == 42
             , testProperty "Does not migrate for different builtin types" $
-                runSafeMigration castMigration (23 :: Int) (42 :: Integer) == 23
+                runSafeMigration castMigration (23 :: Int) (42 :: Integer)
+                  == 23
             ]
         , testGroup
             "sameConstructorMigration"
             [ testProperty "Migrates when constructor names and arity match" $
-                runSafeMigration (sameConstructorMigration castMigration) Foo1.same Foo2.same == Foo1.same'
+                runSafeMigration (sameConstructorMigration castMigration) Foo1.same Foo2.same
+                  == Foo1.same'
             , testProperty "Migrates for same data type" $
-                runSafeMigration (sameConstructorMigration castMigration) Foo1.same Foo1.same' == Foo1.same'
+                runSafeMigration (sameConstructorMigration castMigration) Foo1.same Foo1.same'
+                  == Foo1.same'
             ]
         ]
     , Migrate.NoMigration.test

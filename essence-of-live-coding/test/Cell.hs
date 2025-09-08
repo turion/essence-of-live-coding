@@ -33,9 +33,10 @@ test =
     [ testProperty "steps produces outputs" $
         \(inputs :: [Int]) -> inputs === fst (runIdentity $ steps (id :: Cell Identity Int Int) inputs)
     , testProperty "sumC works as expected" $
-        forAll (vector 100) $ \(inputs :: [Int]) ->
-          sum (init inputs)
-            === last (fst (runIdentity $ steps (sumC :: Cell Identity Int Int) inputs))
+        forAll (vector 100) $
+          \(inputs :: [Int]) ->
+            sum (init inputs)
+              === last (fst (runIdentity $ steps (sumC :: Cell Identity Int Int) inputs))
     , Cell.Util.test
     , Cell.Util.Traversable.testTraverse'
     , Cell.Monad.Trans.test

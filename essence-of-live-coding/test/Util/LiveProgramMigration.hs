@@ -7,12 +7,13 @@ module Util.LiveProgramMigration where
 import Control.Monad.Trans.RWS.Strict (RWS, runRWS)
 
 -- QuickCheck
-import Test.QuickCheck
 
 -- essence-of-live-coding
 import LiveCoding
+import Test.QuickCheck
 
-data LiveProgramMigration a b = forall s.
+data LiveProgramMigration a b
+  = forall s.
   LiveProgramMigration
   { liveProgram1 :: LiveProgram (RWS a b s)
   , liveProgram2 :: LiveProgram (RWS a b s)

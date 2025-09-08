@@ -48,9 +48,11 @@ tests =
   , testGroup
       "Product types"
       [ testProperty "Adds default field" $
-          Foo1.foo' === migrate Foo1.foo Foo2.foo
+          Foo1.foo'
+            === migrate Foo1.foo Foo2.foo
       , testProperty "Keeps only sensible field" $
-          Foo2.foo' === migrate Foo2.foo Foo1.foo
+          Foo2.foo'
+            === migrate Foo2.foo Foo1.foo
       ]
   , testGroup
       "Records"
@@ -58,7 +60,8 @@ tests =
           \barA barB barC barC2 barD ->
             Foo2.Bar {barC = barC2, ..} === migrate Foo2.Bar {barC = barC2, ..} Foo1.Bar {..}
       , testProperty "Migrates nested records" $
-          Foo2.baz' === migrate Foo2.baz Foo1.baz
+          Foo2.baz'
+            === migrate Foo2.baz Foo1.baz
       ]
   , testGroup
       "Constructors"
@@ -69,12 +72,14 @@ tests =
       , testProperty "Finds correct constructor if type doesn't change" $
           \(x :: Int) -> migrate Nothing (Just x) === Just x
       , testProperty "Does not migrate for different types" $
-          migrate Foo1.same Foo2.similar === Foo1.same
+          migrate Foo1.same Foo2.similar
+            === Foo1.same
       ]
   , testGroup
       "User migration"
       [ testProperty "Can add migration from Int to Integer" $
-          Foo2.frob' === migrateWith (userMigration intToInteger) Foo2.frob Foo1.frob
+          Foo2.frob'
+            === migrateWith (userMigration intToInteger) Foo2.frob Foo1.frob
       ]
   , testGroup
       "Newtypes"
