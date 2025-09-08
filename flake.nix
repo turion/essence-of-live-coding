@@ -73,6 +73,9 @@
                 (hfinal: hprev: lib.optionalAttrs (lib.versionOlder hprev.ghc.version "9.2") {
                   gloss = doJailbreak hprev.gloss;
                   gloss-rendering = doJailbreak hprev.gloss-rendering;
+
+                  # For some reason, the test suite fails on GHC 9.0 and older
+                  vivid-osc = dontCheck hprev.vivid-osc;
                 })
               ];
             }))
