@@ -29,7 +29,7 @@ library
   exposed-modules:
     LiveCoding.Pulse
   build-depends:
-      base >= 4.13 && < 4.21
+      base >= 4.13 && < 4.22
     , essence-of-live-coding >= 0.2.8
     , transformers >= 0.5
     , pulse-simple >= 0.1

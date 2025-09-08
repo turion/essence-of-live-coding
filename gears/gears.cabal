@@ -37,7 +37,7 @@ source-repository this
 executable gears
   main-is:             Gears.hs
   build-depends:
-      base >= 4.13 && < 4.21
+      base >= 4.13 && < 4.22
     , gloss
     , transformers
     , essence-of-live-coding

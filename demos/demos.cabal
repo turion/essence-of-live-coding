@@ -38,7 +38,7 @@ source-repository this
 
 common deps
   build-depends:
-      base >= 4.13 && < 4.21
+      base >= 4.13 && < 4.22
     , essence-of-live-coding
 
 executable DemoSine
