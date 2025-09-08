@@ -1,3 +1,4 @@
+cabal-version:       2.2
 name:                demos
 version:             0.2.8
 synopsis: General purpose live coding framework - Demo applications
@@ -17,7 +18,7 @@ description:
   (https://www.manuelbaerenz.de/essence-of-live-coding/EssenceOfLiveCoding.pdf),
   such as sine generators, control flow and a WAI webserver example.
 
-license:             BSD3
+license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Manuel Bärenz
 maintainer:          programming@manuelbaerenz.de
@@ -25,7 +26,6 @@ homepage:            https://www.manuelbaerenz.de/#computerscience
 category:            FRP, Live coding
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
-cabal-version:       >=1.10
 
 source-repository head
   type:     git
@@ -36,43 +36,41 @@ source-repository this
   location: https://github.com/turion/essence-of-live-coding.git
   tag:      v0.2.8
 
+common deps
+  build-depends:
+      base >= 4.13 && < 4.21
+    , essence-of-live-coding
+
 executable DemoSine
+  import: deps
   main-is: DemoSine.hs
   other-modules:
       Examples
   hs-source-dirs: app
-  build-depends:
-      base >= 4.13 && < 4.21
-    , essence-of-live-coding
 
 executable DemoSineWait
+  import: deps
   main-is: DemoSineWait.hs
   other-modules:
       Examples
   hs-source-dirs: app
-  build-depends:
-      base >= 4.13 && < 4.21
-    , essence-of-live-coding
 
 executable DemoSineWaitChange
+  import: deps
   main-is: DemoSineWaitChange.hs
   other-modules:
       Examples
   hs-source-dirs: app
-  build-depends:
-      base >= 4.13 && < 4.21
-    , essence-of-live-coding
 
 executable DemoSinesForever
+  import: deps
   main-is: DemoSinesForever.hs
   other-modules:
       Examples
   hs-source-dirs: app
-  build-depends:
-      base >= 4.13 && < 4.21
-    , essence-of-live-coding
 
 executable DemoWai
+  import: deps
   main-is: DemoWai.hs
   other-modules:
       DemoWai.Env
@@ -80,9 +78,7 @@ executable DemoWai
       DemoWai.DemoWai2
   hs-source-dirs: app
   build-depends:
-      base >= 4.13 && < 4.21
-    , essence-of-live-coding >= 0.2.8
-    , transformers >= 0.5
+      transformers >= 0.5
     , wai  >= 3.2
     , warp >= 3.2
     , http-types >= 0.12

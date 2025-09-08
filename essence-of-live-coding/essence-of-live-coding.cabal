@@ -1,3 +1,4 @@
+cabal-version:       2.2
 name:                essence-of-live-coding
 version:             0.2.8
 synopsis: General purpose live coding framework
@@ -13,7 +14,7 @@ description:
   and allows to develop live programs from reusable, modular components.
   There are also useful utilities for debugging and quickchecking.
 
-license:             BSD3
+license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Manuel Bärenz
 maintainer:          programming@manuelbaerenz.de
@@ -21,7 +22,6 @@ homepage:            https://www.manuelbaerenz.de/#computerscience
 category:            FRP, Live coding
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
-cabal-version:       >=1.10
 tested-with:
   GHC == 8.8
   GHC == 8.10
@@ -41,8 +41,17 @@ source-repository this
   location: https://github.com/turion/essence-of-live-coding.git
   tag:      v0.2.8
 
+common opts
+  build-depends:
+      base >= 4.13 && < 4.21
+    , transformers >= 0.5
+    , containers >= 0.6
+    , syb >= 0.7
+    , vector-sized >= 1.2
+    , selective >= 0.4
 
 library
+  import: opts
   exposed-modules:
       LiveCoding
     , LiveCoding.Bind
@@ -91,21 +100,16 @@ library
 
   other-extensions:    DeriveDataTypeable
   build-depends:
-      base >= 4.13 && < 4.21
-    , transformers >= 0.5
-    , containers >= 0.6
-    , syb >= 0.7
-    , vector-sized >= 1.2
-    , foreign-store >= 0.2
+      foreign-store >= 0.2
     , time >= 1.9
     , mmorph >= 1.1
     , profunctors >= 5.2
-    , selective >= 0.4
   hs-source-dirs:      src
   default-language:    Haskell2010
   default-extensions: StrictData
 
 test-suite test
+  import: opts
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
@@ -127,19 +131,13 @@ test-suite test
     , Util.LiveProgramMigration
   hs-source-dirs: test
   build-depends:
-      base >= 4.13 && < 4.21
-    , syb >= 0.7
-    , transformers >= 0.5
-    , containers >= 0.6
+      essence-of-live-coding
     , mtl >= 2.2
-    , essence-of-live-coding
     , test-framework >= 0.8
     , test-framework-quickcheck2 >= 0.3
     , QuickCheck >= 2.12
-    , selective >= 0.4
     , test-framework-hunit >= 0.3
     , HUnit >= 1.3
-    , vector-sized >= 1.2
   default-language:    Haskell2010
 
 executable TestExceptions
