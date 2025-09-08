@@ -1,5 +1,9 @@
 # Revision history for essence-of-live-coding
 
+## 0.2.9
+
+* Support GHC 9.12
+
 ## 0.2.8
 
 * Support GHC 9.10
