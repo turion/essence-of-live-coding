@@ -14,12 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: cachix/install-nix-action@v31
+    - uses: haskell-actions/run-fourmolu@v11
       with:
-        nix_path: nixpkgs=channel:nixos-unstable
-    - name: Set up and run fourmolu
-      run: |
-        nix shell nixpkgs#haskellPackages.fourmolu --command fourmolu --mode check .
+        version: "0.14.0.0"
 
   generateMatrix:
     name: "Generate matrix from cabal"
@@ -91,11 +88,48 @@ jobs:
         run: |
           cabal test all --enable-tests --test-show-details=Always
 
-  success:
-    name: Successfully build and test
-    needs:
-      - build
-    runs-on:
-      - ubuntu-latest
+  generate-flake-ghc-matrix:
+    name: Generate GHC versions for nix flake build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.generate-versions.outputs.versions }}
     steps:
-      - run: echo "Success"
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - name: Generate versions
+        id: generate-versions
+        run: |
+          echo -n "versions=" >> "$GITHUB_OUTPUT"
+          nix eval .#supportedGhcs --json >> "$GITHUB_OUTPUT"
+
+  check-flake:
+    name: Check Flake
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - run: nix flake check
+      - name: Check whether .nix files are formatted
+        run: |
+          nix fmt
+          git diff --exit-code
+
+  build-flake:
+    name: Nix Flake
+    needs:
+      - generate-flake-ghc-matrix
+    strategy:
+      matrix:
+        version: ${{ fromJSON(needs.generate-flake-ghc-matrix.outputs.versions) }}
+      fail-fast: false # So the cache is still filled
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - uses: cachix/cachix-action@v15
+        with:
+          name: essence-of-live-coding
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - run: nix build .#${{ matrix.version }}.essence-of-live-coding-all --accept-flake-config
+      - run: nix develop .#${{ matrix.version }} --accept-flake-config -c cabal update -fdev
+      - run: nix develop .#${{ matrix.version }} --accept-flake-config -c cabal test all -fdev
