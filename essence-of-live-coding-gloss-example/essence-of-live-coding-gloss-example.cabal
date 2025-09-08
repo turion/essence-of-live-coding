@@ -1,5 +1,5 @@
 name:                essence-of-live-coding-gloss-example
-version:             0.2.8
+version:             0.2.9
 synopsis: General purpose live coding framework - Gloss example
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -32,7 +32,7 @@ source-repository head
 source-repository this
   type:     git
   location: https://github.com/turion/essence-of-live-coding.git
-  tag:      v0.2.8
+  tag:      v0.2.9
 
 
 executable essence-of-live-coding-gloss-example
@@ -41,8 +41,8 @@ executable essence-of-live-coding-gloss-example
       base >= 4.13 && < 4.22
     , transformers >= 0.5
     , gloss >= 1.13
-    , essence-of-live-coding >= 0.2.8
-    , essence-of-live-coding-gloss >= 0.2.8
+    , essence-of-live-coding >= 0.2.9
+    , essence-of-live-coding-gloss >= 0.2.9
     , syb >= 0.7
   hs-source-dirs:      app
   default-language:    Haskell2010

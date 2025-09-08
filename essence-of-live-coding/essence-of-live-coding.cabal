@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                essence-of-live-coding
-version:             0.2.8
+version:             0.2.9
 synopsis: General purpose live coding framework
 description:
   essence-of-live-coding is a general purpose and type safe live coding framework.
@@ -40,7 +40,7 @@ source-repository head
 source-repository this
   type:     git
   location: https://github.com/turion/essence-of-live-coding.git
-  tag:      v0.2.8
+  tag:      v0.2.9
 
 common opts
   build-depends:
