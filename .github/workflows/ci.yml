@@ -94,7 +94,7 @@ jobs:
     outputs:
       versions: ${{ steps.generate-versions.outputs.versions }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
       - name: Generate versions
         id: generate-versions
@@ -106,7 +106,7 @@ jobs:
     name: Check Flake
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
       - run: nix flake check
       - name: Check whether .nix files are formatted
@@ -124,7 +124,7 @@ jobs:
       fail-fast: false # So the cache is still filled
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
       - uses: cachix/cachix-action@v16
         with:
