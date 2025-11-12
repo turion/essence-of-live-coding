@@ -28,8 +28,8 @@ jobs:
         id: set-matrix
         with:
           cabal-file: "essence-of-live-coding/essence-of-live-coding.cabal"
-          ubuntu: true
-          version: 0.1.6.0
+          ubuntu-version: latest
+          version: 0.1.9.0
 
   build:
     runs-on: ubuntu-latest
