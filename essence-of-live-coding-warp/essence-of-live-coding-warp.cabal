@@ -53,6 +53,9 @@ test-suite test
   type: exitcode-stdio-1.0
   main-is: Main.hs
   hs-source-dirs: test
+  -- The test starts a WARP server, which needs the threaded runtime
+  -- (otherwise: "the TimerManager requires linking against the threaded runtime").
+  ghc-options: -threaded
   build-depends:
       base >= 4.13 && < 4.22
     , http-client >= 0.6.4.1
