@@ -21,6 +21,7 @@ import LiveCoding.Cell
 import LiveCoding.Exceptions
 import LiveCoding.CellExcept
 import LiveCoding.LiveProgram
+import LiveCoding.Exceptions.Finite (commute, Finite)
 
 \end{code}
 \end{comment}
@@ -141,3 +142,20 @@ Let us run it:
 
 \fxerror{``Forever and ever?'' Show graceful shutdown with ExceptT. Have to change the runtime slightly for this.}
 \fxnote{Awesome idea: Electrical circuits simulation where we can change the circuits live!}
+
+\begin{comment}
+\begin{code}
+foreverCE :: (Monad m, Data e, Finite e) =>
+  e ->
+  (e -> CellExcept a b m e) ->
+  Cell m a b
+foreverCE e f = foreverE e $ commute $ runCellExcept . f
+
+foreverCE' ::
+  (Monad m, Data void, Finite void, Data e, Finite e) =>
+  e ->
+  (e -> CellExcept a b m e) ->
+  CellExcept a b m void
+foreverCE' e = try . liftCell . foreverCE e
+\end{code}
+\end{comment}
