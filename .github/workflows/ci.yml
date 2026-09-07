@@ -133,3 +133,29 @@ jobs:
       - run: nix build .#${{ matrix.version }}.essence-of-live-coding-all --accept-flake-config
       - run: nix develop .#${{ matrix.version }} --accept-flake-config -c cabal update -fdev
       - run: nix develop .#${{ matrix.version }} --accept-flake-config -c cabal test all -fdev
+
+  success:
+    name: Successfully build and test on all systems
+    # A single required check that fails unless every other job succeeded, so
+    # branch protection does not have to name them one by one. Every job
+    # defined above must appear below: the list is hand-maintained, and a job
+    # missing from it cannot turn the gate red.
+    # `if: always()` is load-bearing — GitHub skips a job whose dependency
+    # failed, and branch protection counts a skipped required check as
+    # passing, so without it the gate would go green on a red build. Do not
+    # change it to `!cancelled()` — a cancelled dependency would then skip
+    # this job, and a skipped required check reports Success.
+    needs:
+      - fourmolu
+      - generateMatrix
+      - build
+      - generate-flake-ghc-matrix
+      - check-flake
+      - build-flake
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any dependency did not succeed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
